@@ -16,4 +16,4 @@ with other tools at a higher abstraction level than just WebAssembly itself.
 These conventions are also not exclusive. There could be multiple conventions
 for a given language for a given purpose. There are natural benefits to
 interoperability, but there are many reasons where having more than one way to
-do things can also make sense in m any circumstances.
+do things can also make sense in many circumstances.
