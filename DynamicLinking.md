@@ -15,8 +15,8 @@ A WebAssembly shared library has some conventions for how it should be loaded an
 The loader must know how much space in the memory and table to reserve for the module, and must know that *before* the module is created. To that end, a WebAssembly shared library is a small wrapper around a WebAssembly module, with suffix `.wso` (WebAssembly Shared Object), and contents
 
  * 4 bytes: `\0wso`
- * 8 bytes: Size of memory (unsigned little-endian integer) (note: can be larger than the memory segments in the module)
- * 8 bytes: Size of table (unsigned little-endian integer)
+ * 8 bytes: Size of the memory area the loader should reserve for the module, which will begin at `memoryBase` (unsigned little-endian integer) (note: can be larger than the memory segments in the module)
+ * 8 bytes: Size of the table area the loader should reserve for the module, which will begin at `tableBase` (unsigned little-endian integer)
  * The rest of the file is the WebAssembly module itself.
 
 ## Implementation Status
