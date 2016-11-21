@@ -3,6 +3,8 @@ WebAssembly Dynamic Linking
 
 This document describes the early plans for how dynamic linking of WebAssembly modules might work.
 
+Note: there is no stable ABI here yet.
+
 # Shared Libraries
 
 A WebAssembly shared library has some conventions for how it should be loaded and used:
