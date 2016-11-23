@@ -2,9 +2,10 @@ WebAssembly Object File Linking
 ===============================
 
 This document describes the early plans for how linking of WebAssembly modules
-might work in the clang/LLVM WebAssembly backend.  As mentioned in
-[README](README.md), it is not the only possible way to link WebAssembly
-modules.
+might work in the clang/LLVM WebAssembly backend and other tools.  As mentioned
+in [README](README.md), it is not the only possible way to link WebAssembly
+modules.  Note: the ABI described in the document is a work in progress and
+**should not be considered stable**.
 
 Each compilation unit is compiled with a single WebAssembly module.  Each
 module contains a single code section and a single data section.  The goal
@@ -35,45 +36,69 @@ a `relocation_entry` is:
 
 A relocation type can be one of the following:
 
-- `0 - R_CALL` - a local function call
-- `1 / R_GLOBAL` - a global data reference
+- `0 - R_FUNCTION_INDEX_LEB` - a function index encoded as a LEB128.  Used
+  for the immediate argument of a call instruction in the code section.
+- `1 - R_FUNCTION_INDEX_SLEB` - a function index encoded as a signed LEB128.
+  Used to refer to the immediate argument of an `i32.const` instruction
+  in the code section. e.g. a local variable storing a function address.
+- `2 - R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
+  the immediate value of `get_global` / `set_global` instructions.
+- `3 / R_DATA` - a wam global used to refer to a global data location
 
-For `R_CALL` relocations the following fields are presnet:
+For `R_FUNCTION_INDEX_[U]LEB` and `R_GLOBAL_INDEX` relocations the following
+fields are present:
 
-| Field    | Type                | Description                    |
-| -------- | ------------------- | ------------------------------ |
-| location | `varuint32`         | location of call opcode        |
+| Field  | Type                | Description                           |
+| ------ | ------------------- | ------------------------------------- |
+| offset | `varuint32`         | offset of LEB within the code section |
 
-For `R_GLOBAL` relocations the following fields are presnet:
+For `R_DATA` relocations the following fields are presnet:
 
 | Field         | Type              | Description                    |
 | ------------- | ----------------- | ------------------------------ |
 | global\_index | `varuint32`       | the index of the global used   |
-| size          | `varuint32`       | the size of the referenced data|
+
+Merging Globals
+---------------
+
+Merging of globals sections requires re-numbering of the globals.  To allow
+this a `R_GLOBAL_INDEX` entry in the `reloc` section is generated for each
+`get_global` / `set_global` instruction.  The immediate values of all
+`get_global` / `set_global` instruction are stored as padded LEB123 such that
+they can be rewritten without altering the side of the code section.
 
 Merging Function Sections
 -------------------------
 
 Merging of the function sections requires the re-numbering of functions.  This
-requires each of the call sites in the code section to be modified.  In order
-to achieve this the code is generated such that the immediate `function_index`
-of each `call` instruction is stored as a padded LEB128 that can be modified in
-place without requiring any additional bytes of storage.  An `R_CALL` entry
-in the `reloc` section is then generated pointing to location of each `call`
-opcode.
+requires that modification code sections for at each location where a function
+index is embedded.  There are currently two ways in which function indices are
+used in the code section:
 
-The same technique works for all function calls weather the function is
+1. Immediate argument of the `call` instruction
+2. Immediate argument of the `i32.load` instruction for address taken
+   functions.
+
+The immediate argument of all such instruction are stored as padded LEB123
+such that they can be rewritten without altering the side of the code section.
+For each such instruction a `R_FUNCTION_INDEX_LEB` or `R_FUNCTION_INDEX_SLEB`
+`reloc` entry is generated pointing to the offset of the immediate within the
+code section.
+
+The same technique applies for all function calls whether the function is
 imported or defined locally.
 
 Merging Data Sections
 ---------------------
 
-References to global data are modeled as wasm
-[globals](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables).
-Each access to a global memory location generates a `get_global` instruction
-and the value of the global can then be modified by the linker when it relocates
-data segments.  For each global that is used in this way an entry
-in the `reloc` of type `R_GLOBAL` is generated.
+References to global data are modeled as loads or stores via a wasm
+[global](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables).
+Each C global is assigned a wasm global, and access to global variables will
+generate a `get_global` followed by the load or store the resulting address.
+The address stored in these wasm globals can then be set by the linker when it
+relocates data segments.  For each wasm global that is used in this way an entry
+in the `reloc` of type `R_DATA` is generated so that the linker knows which
+wasm globals to modify.
 
 External references
 -------------------
