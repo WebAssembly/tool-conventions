@@ -12,14 +12,17 @@ module contains a single code section and a single data section.  The goal
 of the linker is to take two or more modules and merge them into single module.
 In order to achieve this the following tasks need to be performed:
 
-- Merging of function section (re-numbering functions)
+- Merging of function sections (re-numbering functions)
+- Merging of globals sections (re-numbering globals)
 - Merging of data segments (re-positioning data)
 - Resolving undefined external references
 
-The linking technique described here is designed to be fast, and avoid having
-the decode the WebAssembly op-codes in the code section.  A `user-defined`
-section called called "reloc" to used to store additional information required
-by the linker.
+The linking technique described here is designed to be fast, and avoids having
+the disassemble the the code section.  A `user-defined` section called called
+"reloc" is used to store additional information required by the linker.
+
+The "reloc" Section
+-------------------
 
 The "reloc" section is defined as:
 
@@ -36,12 +39,12 @@ a `relocation_entry` is:
 
 A relocation type can be one of the following:
 
-- `0 - R_FUNCTION_INDEX_LEB` - a function index encoded as a LEB128.  Used
+- `0 / R_FUNCTION_INDEX_LEB` - a function index encoded as a LEB128.  Used
   for the immediate argument of a call instruction in the code section.
-- `1 - R_FUNCTION_INDEX_SLEB` - a function index encoded as a signed LEB128.
+- `1 / R_FUNCTION_INDEX_SLEB` - a function index encoded as a signed LEB128.
   Used to refer to the immediate argument of an `i32.const` instruction
   in the code section. e.g. a local variable storing a function address.
-- `2 - R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
+- `2 / R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
   the immediate value of `get_global` / `set_global` instructions.
 - `3 / R_DATA` - a wam global used to refer to a global data location
 
