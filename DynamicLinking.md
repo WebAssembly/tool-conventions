@@ -18,7 +18,7 @@ The "dylink" section is defined as:
 | memorysize | `varuint32` | Size of the memory area the loader should reserve for the module, which will begin at `env.memoryBase` |
 | tablesize  | `varuint32` | Size of the table area the loader should reserve for the module, which will begin at `env.tableBase` |
 
-`env.memoryBase` and `env.tableBase` are `i32` imports that contain offsets into the linked memory and table, respectively. If the dynamic library has `memorysize > 0` then the loader will reserve room in memory of that size and initialize it to zero (note: can be larger than the memory segments in the module, if the dynamic library wants additional space) at offset `env.memoryBase`, and similarly for the table (although there is no concept of zero-initialization there). The library can then place memory and table segments at the proper locations using those imports.
+`env.memoryBase` and `env.tableBase` are `i32` imports that contain offsets into the linked memory and table, respectively. If the dynamic library has `memorysize > 0` then the loader will reserve room in memory of that size and initialize it to zero (note: can be larger than the memory segments in the module, if the dynamic library wants additional space) at offset `env.memoryBase`, and similarly for the table (where initialization is to `null`, i.e., a trap will occur if it is called). The library can then place memory and table segments at the proper locations using those imports.
 
 The "dylink" section should be the very first section in the module; this allows detection of whether a binary is a dynamic library without having to scan the entire contents.
 
