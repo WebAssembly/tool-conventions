@@ -55,8 +55,7 @@ A relocation type can be one of the following:
   address of the function.
 - `3 / R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
   the immediate value of `get_global` / `set_global` instructions.
-- `4 / R_GLOBAL_INDEX` - a type index encoded as a LEB128.
-- `5 / R_DATA` - an index into the global space which is used store the address
+- `4 / R_DATA` - an index into the global space which is used store the address
   of a C global
 
 For relocation types other than `R_DATA` the following fields are present:
