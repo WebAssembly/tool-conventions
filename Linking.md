@@ -18,18 +18,24 @@ In order to achieve this the following tasks need to be performed:
 - Resolving undefined external references
 
 The linking technique described here is designed to be fast, and avoids having
-the disassemble the the code section.  A `user-defined` section called "reloc"
-is used to store additional information required by the linker.
+the disassemble the the code section.  The relocation information required by
+the linker is stored in custom sections whos names begin with "reloc.".  For
+each section that requires relocation a "reloc" section will be present in the
+wasm file.  By convension the reloc section names end with name of the section
+thet they refer to: e.g. "reloc.CODE" for code section relocations.  However
+everything after the period is ignored and the specific target section is
+encoded in the reloc section itself.
 
 The "reloc" Section
 -------------------
 
 The "reloc" section is defined as:
 
-| Field   | Type                | Description                    |
-| ------- | ------------------- | ------------------------------ |
-| count   | `varuint32`         | count of entries to follow     |
-| entries | `relocation_entry*` | sequence of relocation entries |
+| Field          | Type                | Description                    |
+| -------------- | ------------------- | ------------------------------ |
+| section\_index | `varuint32`         | the section to which the relocations refer. An integer betweeen 1 and N where N is the number of section in the wasm object file |
+| count          | `varuint32`         | count of entries to follow     |
+| entries        | `relocation_entry*` | sequence of relocation entries |
 
 a `relocation_entry` is:
 
@@ -39,21 +45,25 @@ a `relocation_entry` is:
 
 A relocation type can be one of the following:
 
-- `0 / R_FUNCTION_INDEX_LEB` - a function index encoded as a LEB128.  Used
+- `0 / R_FUNCTION_INDEX` - a function index encoded as a LEB128.  Used
   for the immediate argument of a `call` instruction in the code section.
 - `1 / R_FUNCTION_INDEX_SLEB` - a function index encoded as a signed LEB128.
   Used to refer to the immediate argument of a `i32.const` instruction
   in the code section. e.g. taking the address of a function.
-- `2 / R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
+- `2 / R_TABLE_INDEX` - a table index encoded as a LEB128.  Used
+  for the immediates that refer to the table index space. e.g. loading the
+  address of the function.
+- `3 / R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
   the immediate value of `get_global` / `set_global` instructions.
-- `3 / R_DATA` - a wasm global used to store the address of a C global
+- `4 / R_GLOBAL_INDEX` - a type index encoded as a LEB128.
+- `5 / R_DATA` - an index into the global space which is used store the address
+  of a C global
 
-For `R_FUNCTION_INDEX_[U]LEB` and `R_GLOBAL_INDEX` relocations the following
-fields are present:
+For relocation types other than `R_DATA` the following fields are present:
 
-| Field  | Type             | Description                              |
-| ------ | ---------------- | ---------------------------------------- |
-| offset | `varuint32`      | offset of [S]LEB within the code section |
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| offset | `varuint32`      | offset of [S]LEB within the section |
 
 For `R_DATA` relocations the following fields are presnet:
 
@@ -61,8 +71,8 @@ For `R_DATA` relocations the following fields are presnet:
 | ------------- | ----------------- | ------------------------------ |
 | global\_index | `varuint32`       | the index of the global used   |
 
-Merging Globals
----------------
+Merging Global Section
+----------------------
 
 Merging of globals sections requires re-numbering of the globals.  To enable
 this an `R_GLOBAL_INDEX` entry in the `reloc` section is generated for each
@@ -70,7 +80,7 @@ this an `R_GLOBAL_INDEX` entry in the `reloc` section is generated for each
 `get_global` / `set_global` instruction are stored as padded LEB123 such that
 they can be rewritten without altering the size of the code section.  The
 relocation points to the offset of the padded immediate value within the code
-section, allowing the linker can both read current value and write an updated
+section, allowing the linker to both read the current value and write an updated
 one.
 
 Merging Function Sections
