@@ -45,17 +45,14 @@ a `relocation_entry` is:
 
 A relocation type can be one of the following:
 
-- `0 / R_FUNCTION_INDEX` - a function index encoded as a LEB128.  Used
+- `0 / R_FUNCTION_INDEX` - a function index encoded as an LEB128.  Used
   for the immediate argument of a `call` instruction in the code section.
-- `1 / R_FUNCTION_INDEX_SLEB` - a function index encoded as a signed LEB128.
-  Used to refer to the immediate argument of a `i32.const` instruction
-  in the code section. e.g. taking the address of a function.
-- `2 / R_TABLE_INDEX` - a table index encoded as a LEB128.  Used
+- `1 / R_TABLE_INDEX` - a table index encoded as an SLEB128.  Used
   for the immediates that refer to the table index space. e.g. loading the
-  address of the function.
-- `3 / R_GLOBAL_INDEX` - a global index encoded as a LEB128.  Points to
+  address of the function using `i32.const`.
+- `2 / R_GLOBAL_INDEX` - a global index encoded as an LEB128.  Points to
   the immediate value of `get_global` / `set_global` instructions.
-- `4 / R_DATA` - an index into the global space which is used store the address
+- `3 / R_DATA` - an index into the global space which is used store the address
   of a C global
 
 For relocation types other than `R_DATA` the following fields are present:
