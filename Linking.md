@@ -26,16 +26,18 @@ thet they refer to: e.g. "reloc.CODE" for code section relocations.  However
 everything after the period is ignored and the specific target section is
 encoded in the reloc section itself.
 
-The "reloc" Section
+Relocation Sections
 -------------------
 
-The "reloc" section is defined as:
+A "reloc" section is defined as:
 
-| Field          | Type                | Description                    |
-| -------------- | ------------------- | ------------------------------ |
-| section\_index | `varuint32`         | the section to which the relocations refer. An integer betweeen 1 and N where N is the number of section in the wasm object file |
-| count          | `varuint32`         | count of entries to follow     |
-| entries        | `relocation_entry*` | sequence of relocation entries |
+| Field      | Type                | Description                    |
+| -----------| ------------------- | ------------------------------ |
+| section_id | `varuint32`         | the section to which the relocations refer. |
+| name_len   | `varuint32` ?       | the length of name in bytes, present if `section_id == 0` |
+| name       | `bytes` ?           | the name of custom section, present if `section_id == 0` |
+| count      | `varuint32`         | count of entries to follow     |
+| entries    | `relocation_entry*` | sequence of relocation entries |
 
 a `relocation_entry` is:
 
