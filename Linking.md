@@ -58,14 +58,15 @@ A relocation type can be one of the following:
   5-byte [varint32]. Used to refer to the immediate argument of a `i32.const`
   instruction, e.g. taking the address of a function.
 - `2 / R_WEBASSEMBLY_TABLE_INDEX_I32` - a function table index encoded as a
-  [uint32].
+  [uint32], e.g. taking the address of a function in a static data initializer.
 - `3 / R_WEBASSEMBLY_GLOBAL_ADDR_LEB` - a global index encoded as a 5-byte
   [varuint32]. Used for the immediate argument of a `load` or `store`
-  instruction.
+  instruction, e.g. directly loading from or storing to a C++ global.
 - `4 / R_WEBASSEMBLY_GLOBAL_ADDR_SLEB` - a global index encoded as a 5-byte
   [varint32]. Used for the immediate argument of a `i32.const` instruction,
-  e.g. taking the address of a function.
-- `5 / R_WEBASSEMBLY_GLOBAL_ADDR_I32` - a global index encoded as a [uint32].
+  e.g. taking the address of a C++ global.
+- `5 / R_WEBASSEMBLY_GLOBAL_ADDR_I32` - a global index encoded as a [uint32],
+  e.g. taking the address of a C++ global in a static data initializer.
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
