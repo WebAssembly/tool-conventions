@@ -19,7 +19,7 @@ In order to achieve this the following tasks need to be performed:
 
 The linking technique described here is designed to be fast, and avoids having
 the disassemble the the code section.  The relocation information required by
-the linker is stored in custom sections whos names begin with "reloc.".  For
+the linker is stored in custom sections whose names begin with "reloc.".  For
 each section that requires relocation a "reloc" section will be present in the
 wasm file.  By convension the reloc section names end with name of the section
 thet they refer to: e.g. "reloc.CODE" for code section relocations.  However
@@ -29,7 +29,12 @@ encoded in the reloc section itself.
 Relocation Sections
 -------------------
 
-A "reloc" section is defined as:
+A relocation section is a user-defined section with a name starting with
+"reloc." Relocation sections start with an identifier specifying which
+section they apply to, and must be sequenced in the module after that
+section.
+
+Relocation contain the following fields:
 
 | Field      | Type                | Description                    |
 | -----------| ------------------- | ------------------------------ |
@@ -39,7 +44,7 @@ A "reloc" section is defined as:
 | count      | `varuint32`         | count of entries to follow     |
 | entries    | `relocation_entry*` | sequence of relocation entries |
 
-a `relocation_entry` is:
+A `relocation_entry` is:
 
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
@@ -47,39 +52,105 @@ a `relocation_entry` is:
 
 A relocation type can be one of the following:
 
-- `0 / R_FUNCTION_INDEX` - a function index encoded as an LEB128.  Used
-  for the immediate argument of a `call` instruction in the code section.
-- `1 / R_TABLE_INDEX` - a table index encoded as an SLEB128.  Used
-  for the immediates that refer to the table index space. e.g. loading the
-  address of the function using `i32.const`.
-- `2 / R_GLOBAL_INDEX` - a global index encoded as an LEB128.  Points to
-  the immediate value of `get_global` / `set_global` instructions.
-- `3 / R_DATA` - an index into the global space which is used store the address
-  of a C global
+- `0 / R_WEBASSEMBLY_FUNCTION_INDEX_LEB` - a function index encoded as a 5-byte
+  [varuint32]. Used for the immediate argument of a `call` instruction.
+- `1 / R_WEBASSEMBLY_TABLE_INDEX_SLEB` - a function table index encoded as a
+  5-byte [varint32]. Used to refer to the immediate argument of a `i32.const`
+  instruction, e.g. taking the address of a function.
+- `2 / R_WEBASSEMBLY_TABLE_INDEX_I32` - a function table index encoded as a
+  [uint32], e.g. taking the address of a function in a static data initializer.
+- `3 / R_WEBASSEMBLY_MEMORY_ADDR_LEB` - a linear memory index encoded as a 5-byte
+  [varuint32]. Used for the immediate argument of a `load` or `store`
+  instruction, e.g. directly loading from or storing to a C++ global.
+- `4 / R_WEBASSEMBLY_MEMORY_ADDR_SLEB` - a linear memory index encoded as a 5-byte
+  [varint32]. Used for the immediate argument of a `i32.const` instruction,
+  e.g. taking the address of a C++ global.
+- `5 / R_WEBASSEMBLY_MEMORY_ADDR_I32` - a linear memory index encoded as a
+  [uint32], e.g. taking the address of a C++ global in a static data
+  initializer.
+- `6 / R_WEBASSEMBLY_TYPE_INDEX_LEB` - a type table index encoded as a
+  5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
+- `7 / R_WEBASSEMBLY_GLOBAL_INDEX_LEB` - a global index encoded as a
+  5-byte [varuint32], e.g. the type immediate in a `get_global`.
 
-For relocation types other than `R_DATA` the following fields are present:
+[varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
+[varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
+[uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
+
+For `R_WEBASSEMBLY_FUNCTION_INDEX_LEB`, `R_WEBASSEMBLY_TABLE_INDEX_SLEB`,
+and `R_WEBASSEMBLY_TABLE_INDEX_I32` relocations the following fields are
+present:
+
+| Field  | Type             | Description                              |
+| ------ | ---------------- | ---------------------------------------- |
+| offset | `varuint32`      | offset of the value to rewrite           |
+| index  | `varuint32`      | the index of the function used           |
+
+For `R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB`,
+and `R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations the following fields are
+present:
 
 | Field  | Type             | Description                         |
 | ------ | ---------------- | ----------------------------------- |
-| offset | `varuint32`      | offset of [S]LEB within the section |
+| offset | `varuint32`      | offset of the value to rewrite      |
+| index  | `varuint32`      | the index of the global used        |
+| addend | `varint32`       | addend to add to the address        |
 
-For `R_DATA` relocations the following fields are presnet:
+For `R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations the following fields are
+present:
 
-| Field         | Type              | Description                    |
-| ------------- | ----------------- | ------------------------------ |
-| global\_index | `varuint32`       | the index of the global used   |
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| offset | `varuint32`      | offset of the value to rewrite      |
+| index  | `varuint32`      | the index of the type used          |
+
+For `R_WEBASSEMBLY_GLOBAL_INDEX_LEB` relocations the following fields
+are present:
+
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| offset | `varuint32`      | offset of the value to rewrite      |
+| index  | `varuint32`      | the index of the global used        |
+
+Linking Metadata Sections
+-------------------------
+
+A linking metadata section is a user-defined section with the name
+"linking".
+
+A linking metadata section contain the following fields:
+
+| Field      | Type                | Description                    |
+| -----------| ------------------- | ------------------------------ |
+| count      | `varuint32`         | count of entries to follow     |
+| entries    | `linking_entry*`    | sequence of linking metadata entries |
+
+A `linking_entry` is:
+
+| Field    | Type                | Description                     |
+| -------- | ------------------- | ------------------------------- |
+| type     | `varuint32`         | the linking metadata entry type |
+
+A linking metadata entry type can be one of the following:
+
+- `0 / R_WEBASSEMBLY_STACK_POINTER` - This specifies which global
+  variable is to be treated as the stack pointer.
+
+For `R_WEBASSEMBLY_STACK_POINTER` linking metadata entries, the following
+fields are present:
+
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| index  | `varuint32`      | index of the global which is the stack pointer |
 
 Merging Global Section
 ----------------------
 
-Merging of globals sections requires re-numbering of the globals.  To enable
-this an `R_GLOBAL_INDEX` entry in the `reloc` section is generated for each
-`get_global` / `set_global` instruction.  The immediate values of all
-`get_global` / `set_global` instruction are stored as padded LEB123 such that
-they can be rewritten without altering the size of the code section.  The
-relocation points to the offset of the padded immediate value within the code
-section, allowing the linker to both read the current value and write an updated
-one.
+Merging of globals sections requires re-numbering of the globals.
+
+The global identified in the linking metadata section as the stack pointer is
+handled specially. During linking, only one of these globals is kept, and all
+references to stack-pointer globals are rewritten to use it.
 
 Merging Function Sections
 -------------------------
@@ -95,9 +166,9 @@ stored in the code section:
 
 The immediate argument of all such instruction are stored as padded LEB123
 such that they can be rewritten without altering the size of the code section.
-For each such instruction a `R_FUNCTION_INDEX_LEB` or `R_FUNCTION_INDEX_SLEB`
-`reloc` entry is generated pointing to the offset of the immediate within the
-code section.
+For each such instruction a `R_WEBASSEMBLY_FUNCTION_INDEX_LEB` or
+`R_WEBASSEMBLY_TABLE_INDEX_SLEB` `reloc` entry is generated pointing to the
+offset of the immediate within the code section.
 
 The same technique applies for all function calls whether the function is
 imported or defined locally.
