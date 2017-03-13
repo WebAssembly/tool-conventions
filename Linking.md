@@ -112,16 +112,45 @@ are present:
 | offset | `varuint32`      | offset of the value to rewrite      |
 | index  | `varuint32`      | the index of the global used        |
 
+Linking Metadata Sections
+-------------------------
+
+A linking metadata section is a user-defined section with the name
+"linking".
+
+A linking metadata section contain the following fields:
+
+| Field      | Type                | Description                    |
+| -----------| ------------------- | ------------------------------ |
+| count      | `varuint32`         | count of entries to follow     |
+| entries    | `linking_entry*`    | sequence of linking metadata entries |
+
+A `linking_entry` is:
+
+| Field    | Type                | Description                     |
+| -------- | ------------------- | ------------------------------- |
+| type     | `varuint32`         | the linking metadata entry type |
+
+A linking metadata entry type can be one of the following:
+
+- `0 / R_WEBASSEMBLY_STACK_POINTER` - This specifies which global
+  variable is to be treated as the stack pointer.
+
+For `R_WEBASSEMBLY_STACK_POINTER` linking metadata entries, the following
+fields are present:
+
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| index  | `varuint32`      | index of the global which is the stack pointer |
+
 Merging Global Section
 ----------------------
 
 Merging of globals sections requires re-numbering of the globals.
 
-This convention requires the first global in the global section to be a mutable
-i32 global initialized to "STACKTOP" in the "env" module. During linking, only
-one of these globals is kept, and it remains the first global. This is a
-simple convention which allows code to reference global `0` without needing to
-be rewritten.
+The global identified in the linking metadata section as the stack pointer is
+handled specially. During linking, only one of these globals is kept, and all
+references to stack-pointer globals are rewritten to use it.
 
 Merging Function Sections
 -------------------------
