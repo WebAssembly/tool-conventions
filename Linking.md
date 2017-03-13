@@ -68,6 +68,8 @@ A relocation type can be one of the following:
 - `5 / R_WEBASSEMBLY_MEMORY_ADDR_I32` - a linear memory index encoded as a
   [uint32], e.g. taking the address of a C++ global in a static data
   initializer.
+- `6 / R_WEBASSEMBLY_TYPE_INDEX_LEB` - a type table index encoded as a
+  5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
@@ -91,6 +93,14 @@ present:
 | offset | `varuint32`      | offset of the value to rewrite      |
 | index  | `varuint32`      | the index of the global used        |
 | addend | `varint32`       | addend to add to the address        |
+
+For `R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations the following fields are
+present:
+
+| Field  | Type             | Description                         |
+| ------ | ---------------- | ----------------------------------- |
+| offset | `varuint32`      | offset of the value to rewrite      |
+| index  | `varuint32`      | the index of the type used          |
 
 Merging Global Section
 ----------------------
