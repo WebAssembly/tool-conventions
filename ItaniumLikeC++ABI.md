@@ -5,7 +5,7 @@ clang/LLVM WebAssembly backend is currently using, and any other C++ compiler
 wishing to be ABI-compatible with it.
 
 Most details follow
-[the base Itanium C++ ABI](https://mentorembedded.github.io/cxx-abi/abi.html).
+[the base Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html).
 
 The following is a brief summary of deviations from this base:
 
