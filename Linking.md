@@ -132,7 +132,7 @@ The current list of valid `type` codes are:
 - `0 / WASM_STACK_POINTER` - This specifies which global variable is to be
   treated as the stack pointer.
 
-- `1 / WASM_SYMBOL_INFO` - Specifes extra information about the symbols present
+- `1 / WASM_SYMBOL_INFO` - Specifies extra information about the symbols present
   in the module.
 
 For `WASM_STACK_POINTER` the following fields are present in the
@@ -154,8 +154,8 @@ where a `syminfo` is encoded as:
 
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
-| is_import    | `varuint1`     | boolean specfiying if this entry refers to an import (1) or an export (0) |
-| index        | `varuint32`    | The index of the import or export           |
+| name_len     | `varuint32`    | length of `name_str` in bytes               |
+| name_str     | `bytes`        | UTF-8 encoding of the name                  |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
 The current set of valid flags for symbols are:
