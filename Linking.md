@@ -118,30 +118,50 @@ Linking Metadata Sections
 A linking metadata section is a user-defined section with the name
 "linking".
 
-A linking metadata section contain the following fields:
+A linking metadata section contains a series of sub-sections layed
+out in the same way as the ["names"][names_sec] section:
 
-| Field      | Type                | Description                    |
-| -----------| ------------------- | ------------------------------ |
-| count      | `varuint32`         | count of entries to follow     |
-| entries    | `linking_entry*`    | sequence of linking metadata entries |
+| Field        | Type        | Description                          |
+| -------------| ------------| ------------------------------------ |
+| type         | `varuint7`  | code identifying type of subsection  |
+| payload_len  | `varuint32` | size of this subsection in bytes     |
+| payload_data | `bytes`     | content of this subsection, of length `payload_len` |
 
-A `linking_entry` is:
+The current list of valid `type` codes are:
 
-| Field    | Type                | Description                     |
-| -------- | ------------------- | ------------------------------- |
-| type     | `varuint32`         | the linking metadata entry type |
+- `0 / WASM_STACK_POINTER` - This specifies which global variable is to be
+  treated as the stack pointer.
 
-A linking metadata entry type can be one of the following:
+- `1 / WASM_SYMBOL_INFO` - Specifies extra information about the symbols present
+  in the module.
 
-- `0 / R_WEBASSEMBLY_STACK_POINTER` - This specifies which global
-  variable is to be treated as the stack pointer.
+For `WASM_STACK_POINTER` the following fields are present in the
+subsection:
 
-For `R_WEBASSEMBLY_STACK_POINTER` linking metadata entries, the following
-fields are present:
+| Field  | Type        | Description                                    |
+| ------ | ------------| ---------------------------------------------- |
+| index  | `varuint32` | index of the global which is the stack pointer |
 
-| Field  | Type             | Description                         |
-| ------ | ---------------- | ----------------------------------- |
-| index  | `varuint32`      | index of the global which is the stack pointer |
+For `WASM_SYMBOL_INFO` the following fields are present in the
+subsection:
+
+| Field  | Type            | Description                  |
+| -------| --------------- | -----------------------------|
+| count  | `varuint32`     | number of `syminfo` in infos |
+| infos  | `syminfo*`      | sequence of `syminfo`        |
+
+where a `syminfo` is encoded as:
+
+| Field        | Type           | Description                                 |
+| -------------| -------------- | ------------------------------------------- |
+| name_len     | `varuint32`    | length of `name_str` in bytes               |
+| name_str     | `bytes`        | UTF-8 encoding of the name                  |
+| flags        | `varuint32`    | a bitfield containing flags for this symbol |
+
+The current set of valid flags for symbols are:
+
+- `1 / WASM_SYM_FLAG_WEAK` - Indicating that this is a weak symbol
+
 
 Merging Global Section
 ----------------------
@@ -196,3 +216,5 @@ Exported functions
 
 Non-static functions are modeled as [function
 exports](https://github.com/WebAssembly/design/blob/master/Modules.md#exports).
+
+[names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
