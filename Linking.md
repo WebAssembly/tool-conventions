@@ -21,8 +21,8 @@ The linking technique described here is designed to be fast, and avoids having
 the disassemble the the code section.  The relocation information required by
 the linker is stored in custom sections whose names begin with "reloc.".  For
 each section that requires relocation a "reloc" section will be present in the
-wasm file.  By convension the reloc section names end with name of the section
-thet they refer to: e.g. "reloc.CODE" for code section relocations.  However
+wasm file.  By convention the reloc section names end with name of the section
+that they refer to: e.g. "reloc.CODE" for code section relocations.  However
 everything after the period is ignored and the specific target section is
 encoded in the reloc section itself.
 
