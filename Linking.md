@@ -1,16 +1,22 @@
 WebAssembly Object File Linking
 ===============================
 
-This document describes the early plans for how linking of WebAssembly modules
+This document describes the early plans for how static linking of WebAssembly
 might work in the clang/LLVM WebAssembly backend and other tools.  As mentioned
 in [README](README.md), it is not the only possible way to link WebAssembly
 modules.  Note: the ABI described in the document is a work in progress and
 **should not be considered stable**.
 
-Each compilation unit is compiled as a single WebAssembly module.  Each
-module contains a single code section and a single data section.  The goal
-of the linker is to take two or more modules and merge them into single module.
-In order to achieve this the following tasks need to be performed:
+Each compilation unit is compiled as a "relocatable" WebAssembly module.  These
+modules are not expected to be directly executable and have have certain
+constraints on them, but are otherwise well-formed WebAssembly modules.  In
+order to distinguish relocatable modules the linker can check for the presence
+of the ["linking"](#linking-metadata-section) custom section which must exist in
+all relocatable modules.
+
+The goal of the linker is to take one or more modules and merge them into
+single executable module.  In order to achieve this the following tasks need to
+be performed:
 
 - Merging of function sections (re-numbering functions)
 - Merging of globals sections (re-numbering globals)
@@ -18,13 +24,14 @@ In order to achieve this the following tasks need to be performed:
 - Resolving undefined external references
 
 The linking technique described here is designed to be fast, and avoids having
-the disassemble the the code section.  The relocation information required by
-the linker is stored in custom sections whose names begin with "reloc.".  For
-each section that requires relocation a "reloc" section will be present in the
-wasm file.  By convention the reloc section names end with name of the section
-that they refer to: e.g. "reloc.CODE" for code section relocations.  However
-everything after the period is ignored and the specific target section is
-encoded in the reloc section itself.
+to disassemble the the code section.  The extra metadata required my the linker
+is stored in a custom ["linking"](#linking-metadata-section) section and zero or
+more relocation sections whose names begin with "reloc.".  For each section that
+requires relocation a "reloc" section will be present in the wasm file.  By
+convention the reloc section names end with name of the section that they refer
+to: e.g. "reloc.CODE" for code section relocations.  However everything after
+the period is ignored and the specific target section is encoded in the reloc
+section itself.
 
 Relocation Sections
 -------------------
@@ -112,8 +119,8 @@ are present:
 | offset | `varuint32`      | offset of the value to rewrite      |
 | index  | `varuint32`      | the index of the global used        |
 
-Linking Metadata Sections
--------------------------
+Linking Metadata Section
+------------------------
 
 A linking metadata section is a user-defined section with the name
 "linking".
@@ -134,6 +141,13 @@ The current list of valid `type` codes are:
 
 - `1 / WASM_SYMBOL_INFO` - Specifies extra information about the symbols present
   in the module.
+
+- `2 / WASM_DATA_SIZE` - Specifies the total size of the static data used by the
+  module, including both initialized and zero-initialized (bss) data.
+
+- `3 / WASM_DATA_ALIGNMENT` - Specifies the alignment of the data section.  This
+  tells the linking what constraints are placed on the location of the data
+  section in the final binary.
 
 For `WASM_STACK_POINTER` the following fields are present in the
 subsection:
@@ -161,6 +175,20 @@ where a `syminfo` is encoded as:
 The current set of valid flags for symbols are:
 
 - `1 / WASM_SYM_FLAG_WEAK` - Indicating that this is a weak symbol
+
+For `WASM_DATA_SIZE` the following fields are present in the
+subsection:
+
+| Field  | Type        | Description                                    |
+| ------ | ------------| ---------------------------------------------- |
+| size   | `varuint32` | size of the module's static data in bytes      |
+
+For `WASM_DATA_ALIGNMENT` the following fields are present in the
+subsection:
+
+| Field  | Type        | Description                                    |
+| ------ | ------------| ---------------------------------------------- |
+| align  | `varuint32` | alignment requirement of the data stored as a power of 2 (`log2(alignment)`) |
 
 
 Merging Global Section
