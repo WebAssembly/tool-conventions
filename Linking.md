@@ -24,7 +24,7 @@ be performed:
 - Resolving undefined external references
 
 The linking technique described here is designed to be fast, and avoids having
-the disassemble the the code section.  The extra metadata required my the linker
+to disassemble the the code section.  The extra metadata required my the linker
 is stored in a custom ["linking"](#linking-metadata-section) section and zero or
 more relocation sections whose names begin with "reloc.".  For each section that
 requires relocation a "reloc" section will be present in the wasm file.  By
