@@ -8,7 +8,7 @@ modules.  Note: the ABI described in the document is a work in progress and
 **should not be considered stable**.
 
 Each compilation unit is compiled as a "relocatable" WebAssembly module.  These
-modules are not expected to be directly executable and have have certain
+modules are not expected to be directly executable and have certain
 constraints on them, but are otherwise well-formed WebAssembly modules.  In
 order to distinguish relocatable modules the linker can check for the presence
 of the ["linking"](#linking-metadata-section) custom section which must exist in
@@ -24,7 +24,7 @@ be performed:
 - Resolving undefined external references
 
 The linking technique described here is designed to be fast, and avoids having
-to disassemble the the code section.  The extra metadata required my the linker
+to disassemble the code section.  The extra metadata required by the linker
 is stored in a custom ["linking"](#linking-metadata-section) section and zero or
 more relocation sections whose names begin with "reloc.".  For each section that
 requires relocation a "reloc" section will be present in the wasm file.  By
@@ -78,7 +78,7 @@ A relocation type can be one of the following:
 - `6 / R_WEBASSEMBLY_TYPE_INDEX_LEB` - a type table index encoded as a
   5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WEBASSEMBLY_GLOBAL_INDEX_LEB` - a global index encoded as a
-  5-byte [varuint32], e.g. the type immediate in a `get_global`.
+  5-byte [varuint32], e.g. the index immediate in a `get_global`.
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
@@ -212,7 +212,7 @@ stored in the code section:
 2. Immediate argument of the `i32.const` instruction (taking the address of a
    function).
 
-The immediate argument of all such instruction are stored as padded LEB123
+The immediate argument of all such instruction are stored as padded LEB128
 such that they can be rewritten without altering the size of the code section.
 For each such instruction a `R_WEBASSEMBLY_FUNCTION_INDEX_LEB` or
 `R_WEBASSEMBLY_TABLE_INDEX_SLEB` `reloc` entry is generated pointing to the
