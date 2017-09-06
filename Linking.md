@@ -78,7 +78,8 @@ A relocation type can be one of the following:
 - `6 / R_WEBASSEMBLY_TYPE_INDEX_LEB` - a type table index encoded as a
   5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WEBASSEMBLY_GLOBAL_INDEX_LEB` - a global index encoded as a
-  5-byte [varuint32], e.g. the index immediate in a `get_global`.
+  5-byte [varuint32], e.g. the index immediate in a `get_global` (Not currently
+  used by llvm).
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
@@ -224,14 +225,16 @@ imported or defined locally.
 Merging Data Sections
 ---------------------
 
-References to global data are modeled as loads or stores via a wasm
-[global](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables).
-Each C global is assigned a wasm global, and access to C global variables will
-generate a `get_global` followed by a load/store to/from the resulting address.
-The addresses stored in these wasm globals can then be set by the linker when it
-relocates data segments.  For each wasm global that is used in this way an entry
-in the `reloc` of type `R_DATA` is generated so that the linker knows which
-wasm globals require modification.
+The output data section is formed, essentially, by concatenating the data
+sections of the input files.  Since the final location in linear memory of
+any give symbol (C global) is not known until link time, all references to
+global addresses generate `R_WEBASSEMBLY_MEMORY_ADDR_*` relocation entries.
+The compiler ensures that each C global is assigned a wasm
+[global](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables)
+and references to C globals generate relocations referencing the
+corresponding wasm global.  The addresses stored in these wasm globals are
+offsets into linear memory.  In this way the wasm globals act as symbol table
+mapping names to addresses in linear memory.
 
 External references
 -------------------
