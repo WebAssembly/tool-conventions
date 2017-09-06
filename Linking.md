@@ -195,11 +195,15 @@ subsection:
 Merging Global Section
 ----------------------
 
-Merging of globals sections requires re-numbering of the globals.
+Global data symbols (C/C+ globals) are represented in the object file as wasm
+globals.  Defined symbols are modeled as exported I32 globals that contain the
+address of the symbol in linear memory.  Undefined globals are modeled as
+imported I32 globals.  These wasm globals are not used at runtime (i.e. there
+are no `get_global/set_global` instructions that reference them) but are instead
+referenced by `R_WEBASSEMBLY_MEMORY_ADDR*` relocation entries.
 
-The global identified in the linking metadata section as the stack pointer is
-handled specially. During linking, only one of these globals is kept, and all
-references to stack-pointer globals are rewritten to use it.
+In the final linked binary all these global are resolved and the only remaining
+wasm global is the one that stores the explicit stack pointer.
 
 Merging Function Sections
 -------------------------
@@ -226,15 +230,15 @@ Merging Data Sections
 ---------------------
 
 The output data section is formed, essentially, by concatenating the data
-sections of the input files.  Since the final location in linear memory of
-any give symbol (C global) is not known until link time, all references to
-global addresses generate `R_WEBASSEMBLY_MEMORY_ADDR_*` relocation entries.
-The compiler ensures that each C global is assigned a wasm
+sections of the input files.  Since the final location in linear memory of any
+given symbol (C global) is not known until link time, all references to global
+addresses with the code and data sections generate `R_WEBASSEMBLY_MEMORY_ADDR_*`
+relocation entries.  The compiler ensures that each C global is assigned a wasm
 [global](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables)
-and references to C globals generate relocations referencing the
-corresponding wasm global.  The addresses stored in these wasm globals are
-offsets into linear memory.  In this way the wasm globals act as symbol table
-mapping names to addresses in linear memory.
+and references to C globals generate relocations referencing the corresponding
+wasm global.  The addresses stored in these wasm globals are offsets into the
+linear memory of the object file in question.  In this way the wasm globals act
+as symbol table mapping names to addresses in linear memory.
 
 External references
 -------------------
