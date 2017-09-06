@@ -202,7 +202,7 @@ imported I32 globals.  These wasm globals are not used at runtime (i.e. there
 are no `get_global/set_global` instructions that reference them) but are instead
 referenced by `R_WEBASSEMBLY_MEMORY_ADDR*` relocation entries.
 
-In the final linked binary all these global are resolved and the only remaining
+In the final linked binary all these globals are resolved and the only remaining
 wasm global is the one that stores the explicit stack pointer.
 
 Merging Function Sections
