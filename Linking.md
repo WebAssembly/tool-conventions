@@ -234,7 +234,7 @@ sections of the input files.  Since the final location in linear memory of any
 given symbol (C global) is not known until link time, all references to global
 addresses with the code and data sections generate `R_WEBASSEMBLY_MEMORY_ADDR_*`
 relocation entries.  The compiler ensures that each C global is assigned a wasm
-[global](https://github.com/WebAssembly/design/blob/master/Modules.md#global-variables)
+[global](https://github.com/WebAssembly/design/blob/master/Semantics.md#global-variables)
 and references to C globals generate relocations referencing the corresponding
 wasm global.  The addresses stored in these wasm globals are offsets into the
 linear memory of the object file in question.  In this way the wasm globals act

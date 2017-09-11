@@ -12,5 +12,5 @@ This is just an initial sketch of some content. Obviously, it would be desirable
 to go into a lot more detail.
 
 Eventually, some content from the design repo's
-[CAndC++](https://github.com/WebAssembly/design/blob/master/CAndC++) should also
+[CAndC++](https://github.com/WebAssembly/design/blob/master/CAndC++.md) should also
 be moved here.
