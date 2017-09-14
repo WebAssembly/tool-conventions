@@ -22,7 +22,7 @@ This document assumes you have general knowledge about Itanium C++ ABI based
 exception handling.
 
 This spec is tentative and may change in future. The prototype implementation
-work is in progress, and is currently only targeting C+.
+work is in progress, and is currently only targeting C++.
 
 
 ## Background
@@ -88,7 +88,7 @@ instruction throws an exception within a `try` block or callees of it, the
 control flow is transferred to `catch (C++)` instruction, after which the thrown
 exception object is placed on top of WebAssembly value stack. This means, from
 user code's point of view, `catch` instruction returns the thrown exception
-object.  For more information, refer to [Try and catch
+object. For more information, refer to [Try and catch
 blocks](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#try-and-catch-blocks)
 section in the exception proposal.
 
@@ -188,7 +188,7 @@ stop, it does three things:
 * Gives the _selector value_ corresponding to the type of exception thrown.
 
 Can WebAssembly EH get all this information without calling a personality
-function?  Program control flow is transferred to `catch (C++ tag)` by the
+function? Program control flow is transferred to `catch (C++ tag)` by the
 unwinder in JS engine automatically. (WebAssembly code cannot touch IP by itself
 anyway.) WebAssembly `catch` instruction's result is the address of a thrown
 object. **But we cannot get a selector without calling a personality function.**
@@ -242,24 +242,23 @@ struct _Unwind_LandingPadContext {
 };
 
 // Communication channel between WebAssembly code and personality function
-struct _Unwind_LandingPadContext __wasm_landingpad_context = ...;
+struct _Unwind_LandingPadContext __wasm_lpad_context = ...;
 
 // Personality function wrapper
 _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
- struct _Unwind_Exception *exception_obj =
-     (struct _Unwind_Exception *) exception_ptr;
- _Unwind_Reason_Code ret =
-     (*__wasm_lpad_context->personality)(1, _UA_CLEANUP_PHASE,
-                                         exception_obj->exception_class,
-                                         exception_obj,
-                                         (struct _Unwind_Context *)
-                                         __wasm_lpad_context);
- return ret;
+  struct _Unwind_Exception *exception_obj =
+      (struct _Unwind_Exception *)exception_ptr;
+
+  // Call personality function
+  _Unwind_Reason_Code ret = (*__wasm_lpad_context->personality)(
+      1, _UA_CLEANUP_PHASE, exception_obj->exception_class, exception_obj,
+      (struct _Unwind_Context *)__wasm_lpad_context);
+  return ret;
 }
 ```
 
 As you can see in the code above, here's the list of input and output parameters
-communicated by `__wasm_landingpad_context`:
+communicated by `__wasm_lpad_context`:
 * Input parameters
   * Landing pad index
   * Personality function address
@@ -286,9 +285,9 @@ callsite that can throw has an index starting from 0, and the index serves as
 callsite information to query the action table. In WebAssembly EH scheme,
 because a call to the personality function wrapper is inserted at the position
 of each landing pad, we give each landing pad an index starting from 0 and use
-this as callsite information.  We also need to pass the address of the
+this as callsite information. We also need to pass the address of the
 personality function associated with the current function so that the wrapper
-can call it.  The address of LSDA for the current function is also required
+can call it. The address of LSDA for the current function is also required
 because the personality function examines the tables there to look for a
 matching catch clause.
 
@@ -300,16 +299,16 @@ be in some IR or assembly level.)
 void *exn = catch(0); // WebAssembly catch instruction
 
 // Set input parameters
-__wasm_landingpad_context.lpad_index = index;
-__wasm_landingpad_context.personality = __gxx_personality_v0;
+__wasm_lpad_context.lpad_index = index;
+__wasm_lpad_context.personality = __gxx_personality_v0;
 // LSDA address of this function
-__wasm_landingpad_context.lsda = &GCC_except_table0;
+__wasm_lpad_context.lsda = &GCC_except_table0;
 
 // Call personality wrapper function
 _Unwind_CallPersonality(exn);
 
 // Retrieve output parameter
-int selector = __wasm.landingpad_context.selector;
+int selector = __wasm_lpad_context.selector;
 
 // use exn and selector hereafter
 ```
@@ -476,15 +475,20 @@ the same.
 
 ## WebAssembly C++ Exception Handling ABI
 
-We discussed in a [prior section](#code-transformation) about some modifications
+We discussed in a [prior section](#code-transformation) about some additions
 required for the C++ ABI library and the unwind library to implement WebAssembly
-EH scheme. Here we list up required changes and APIs to the libraries.
+EH scheme. Here we list up required additional data structure/functions and
+WebAssembly implementation of required APIs.
 
 
 ### Base ABI
 
-This section describes deviations from or additions to [Itanium C++ Base
-ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi).
+This section defines the unwind library interface, expected to be provided by
+any Itanium ABI-compliant system. This is the interface on which the C++ ABI
+exception-handling facilities are built. This section describes what WebAssembly
+version of the ABI functions do and additional structures or functions we need
+to add. For the complete Itanium C++ base ABI, refer to the spec
+[here](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi).
 
 
 #### Data Structures
@@ -492,8 +496,8 @@ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi).
 ##### Landing Pad Context
 
 This serves as a communication channel between WebAssembly code and the
-personality function. A global variable `__wasm_landingpad_context` is an
-instance of this struct.
+personality function. A global variable `__wasm_lpad_context` is an instance of
+this struct.
 
 ```
 struct _Unwind_LandingPadContext {
@@ -507,33 +511,13 @@ struct _Unwind_LandingPadContext {
 };
 
 // Communication channel between WebAssembly code and personality function
-struct _Unwind_LandingPadContext __wasm_landingpad_context = ...;
+struct _Unwind_LandingPadContext __wasm_lpad_context = ...;
 ```
 
-##### Personality Function Wrapper
-
-A wrapper function used to call the actual personality function. This is
-supposed to be called from compiler-generated user code.  Refer to [Code
-Transformation](#code-transformation) for details.
-
-```
-_Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
- struct _Unwind_Exception *exception_obj =
-     (struct _Unwind_Exception *) exception_ptr;
- _Unwind_Reason_Code ret =
-     (*__wasm_lpad_context->personality)(1, _UA_CLEANUP_PHASE,
-                                         exception_obj->exception_class,
-                                         exception_obj,
-                                         (struct _Unwind_Context *)
-                                         __wasm_lpad_context);
- return ret;
-}
-```
 
 #### Throwing an Exception
 
 ##### _Unwind_RaiseException
-
 ```
 _Unwind_Reason_Code
 _Unwind_RaiseException(struct _Unwind_Exception *exception_object);
@@ -543,7 +527,11 @@ Raise an exception by WebAssembly
 instruction. The arguments to the throw instruction is a tag number for C++ and
 a pointer to an exception object.
 
-#### _Unwind_Resume
+##### _Unwind_ForcedUnwind
+
+Not used.
+
+##### _Unwind_Resume
 ```
 void _Unwind_Resume (struct _Unwind_Exception *exception_object);
 ```
@@ -558,24 +546,101 @@ pads that does not have a matching catch clause.
 
 #### Context Management
 
-#### _Unwind_GetGR
-
+##### _Unwind_GetGR / _Unwind_SetGR
 ```
 uint64 _Unwind_GetGR(struct _Unwind_Context *context, int index);
-```
-
-#### _Unwind_SetGR
-
-```
 void
 _Unwind_SetGR(struct _Unwind_Context *context, int index, uint64 new_value);
 ```
+The original API means it sets/returns the value of the given general register.
+But in WebAssembly EH, `_Unwind_SetGR` is only used to [set a selector
+value](https://github.com/llvm-mirror/libcxxabi/blob/05e2ac5c83553f9678f018bd8032357f40882a80/src/cxa_personality.cpp#L528)
+found to `__wasm_lpad_context.selector`.
+
+These expect the first argument to be a pointer to `struct
+_Unwind_LandingPadContext`, and only 1 is accepted as the second argument, in
+which case they set/get the first argument's `selector` field.
+
+##### _Unwind_GetIP / _Unwind_SetIP
+```
+uint64 _Unwind_GetIP (struct _Unwind_Context *context);
+void _Unwind_SetIP (struct _Unwind_Context *context, uint64 new_value);
+```
+This sets/gets real IP address in Dwarf CFI, but in our scheme `_Unwind_GetIP`
+returns a landing pad index - 1 (`__wasm_lpad_context.lpad_index`), which is set
+by compiler-generated user code as discussed in [Code
+Transformation](#code-transformation). This information is used in the
+personality function to query the call site table.
+
+##### _Unwind_GetLanguageSpecificData
+```
+uint64 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context);
+```
+Returns the address of the current function's LSDA information
+(`__wasm_lpad_context.lsda`, set by compiler-generated user code as discussed in
+ [Code Transformation](#code-transformation).
+
+
+##### _Unwind_GetRegionStart
+
+Not used.
+
+#### Personality Routine
+
+##### Personality Function Wrapper
+A wrapper function used to call the actual personality function. This is
+supposed to be called from compiler-generated user code. Refer to [Code
+Transformation](#code-transformation) for details.
+
+```
+_Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
+  struct _Unwind_Exception *exception_obj =
+      (struct _Unwind_Exception *)exception_ptr;
+
+  // Call personality function
+  _Unwind_Reason_Code ret = (*__wasm_lpad_context->personality)(
+      1, _UA_CLEANUP_PHASE, exception_obj->exception_class, exception_obj,
+      (struct _Unwind_Context *)__wasm_lpad_context);
+  return ret;
+}
+```
+
+##### Transferring Control to a Landing Pad
+Refer to [WebAssembly Stack Unwinding and Personality
+Function](#webassesmbly-stack-unwinding-and-personality-function) section.
+
 
 ### C++ ABI
+
+The second level of specification is the minimum required to allow
+interoperability. This part contains the definition of an exception object and
+high-level APIs required to allocate an exception object, throw / catch /
+rethrow an exception, and so on. Functions in this section rely on the [base
+API](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi) to do
+low-level architecture-dependent tasks. WebAssembly EH scheme does not have a
+lot of things to add on this level because architecture-dependent components are
+usually taken care of in the base API level. But we still need some
+modifications on the personality function and functions called from it to handle
+some subtle differences between WebAssembly EH and Dwarf CFI/SjLj EH. For the
+complete Itanium C++ ABI, refer to the spec
+[here](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#cxx-abi).
 
 
 ## Exception Structure Recovery
 
+To regroup instructions into this `try`-`catch i`-...-`try-end` structure
+described in the [WebAssembly EH
+proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md),
+the compiler should recover the near-original try-catch clause structure from
+intermediate CFG. We already presented a very simple example of this grouping in
+[WebAssembly try and catch Blocks](#webassembly-try-and-catch-blocks) section.
+How we do this is more of an internal algorithm than the spec for our EH scheme
+and this is not the only way blocks can be grouped, but we present the current
+algorithm implemented in LLVM here to show an example. Note that this only
+supports C++ exceptions: it generates neither `catch` instructions for other
+language tags nor `catch_all` intructions.
+
+*TODO: to be filled once LLVM patch for this part is landed*
 
 
 ## References
