@@ -14,13 +14,15 @@ WebAssembly exception support for WebAssembly has been
 [proposed](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
 and is currently being implemented in V8 JavaScript engine.
 
-Here we propose a new exception handling scheme for WebAssembly (hereafer called
-Wasm exception handling scheme) for toolchain side to generate compatible Wasm
-binary files to match the aforementioned [WebAssembly exception handling
+Here we propose a new exception handling scheme for WebAssembly for toolchain
+side to generate compatible wasm binary files to match the aforementioned
+[WebAssembly exception handling
 proposal](https://github.com/WebAssembly/excption-handling/blob/master/proposals/Exceptions.md).
+This document assumes you have general knowledge about Itanium C++ ABI based
+exception handling.
 
-**The prototype implementation work is in progress, and is currently only
-targeting C+.**
+This spec is tentative and may change in future. The prototype implementation
+work is in progress, and is currently only targeting C+.
 
 
 ## Background
@@ -44,9 +46,9 @@ A `catch` instruction in WebAssembly does not correspond to a C++ `catch`
 clause. **In WebAssembly, there is a single `catch` instruction for all C++
 exceptions.** `catch` instruction for other languages ane `catch_all`
 instructions are not generated for the current version of implementation. **All
-`catch` clauses for various C++ types go into this big `catch (C++ tag)`
-block.** Each language will have a tag number assigned to it, so you can think
-C++ tag as a fixed integer here. So the simplified form will look like
+catch clauses for various C++ types go into this big `catch (C++ tag)` block.**
+Each language will have a tag number assigned to it, so you can think C++ tag as
+a fixed integer here. So the simplified form will look like
 ```
 try
   instruction*
@@ -66,7 +68,7 @@ try {
 }
 ```
 
-The resulting grouping of Wasm instructions will be, in pseudocode, like this:
+The resulting grouping of WebAssembly instructions will be, in pseudocode, like this:
 ```
 try
   foo();
@@ -84,9 +86,9 @@ When a
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
 instruction throws an exception within a `try` block or callees of it, the
 control flow is transferred to `catch (C++)` instruction, after which the thrown
-exception object is placed on top of Wasm value stack. This means, from user
-code's point of view, `catch` instruction returns the thrown exception object.
-For more information, refer to [Try and catch
+exception object is placed on top of WebAssembly value stack. This means, from
+user code's point of view, `catch` instruction returns the thrown exception
+object.  For more information, refer to [Try and catch
 blocks](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#try-and-catch-blocks)
 section in the exception proposal.
 
@@ -95,7 +97,7 @@ section in the exception proposal.
 
 Here we only discuss C++ libraries because currenly we only support C++
 exceptions , but every language that supports exceptions should have some kind
-of libraries that play similar roles, which we can extend to support Wasm
+of libraries that play similar roles, which we can extend to support WebAssembly
 exceptions once we add support for that language.
 
 Two C++ runtime libraries participate in exception handling: [C++ ABI
@@ -113,7 +115,7 @@ include LLVM's [libc++abi](https://github.com/llvm-mirror/libcxxabi) and GNU
 GCC's
 [libsupc++](https://github.com/gcc-mirror/gcc/tree/master/libstdc%2B%2B-v3/libsupc%2B%2B).
 
-The Unwind library provides a family of `_Unwind_*` functions implementing the
+The unwind library provides a family of `_Unwind_*` functions implementing the
 language-neutral stack unwinding portion of the Itanium C++ ABI ([Level
 I](http://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi)). It is a
 dependency of the C++ ABI library, and sometimes is a dependency of other
@@ -125,12 +127,7 @@ libunwind](https://github.com/llvm-mirror/libunwind).
 
 Our prototype implementation will be based on LLVM's
 [libc++abi](https://github.com/llvm-mirror/libcxxabi) (also written as
-libcxxabi) and [libunwind](https://github.com/llvm-mirror/libunwind). Although
-libcxxabi and libunwind are specific implementations of [Itanium C++ exception
-handling ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html), in this
-document we will use them to denote C++ ABI library and Unwind library in
-general, and the Wasm EH scheme can be also implemented in other library
-implementations as well.
+libcxxabi) and [libunwind](https://github.com/llvm-mirror/libunwind).
 
 
 ## Why New Exception Handing Scheme?
@@ -140,47 +137,49 @@ compilers such as GCC or LLVM. LLVM supports four kinds of EH schemes: Dwarf
 CFI, SjLj, ARM, and WinEH. Then why do we need the support for a new EH scheme
 in a compiler as well as libraries supporting C++ ABI?
 
-The most different aspect about Wasm EH handling that necessiates a new EH
-scheme is the way it unwinds stack. Because of security concerns, Wasm code is
-not allowed to touch its execution stack by itself. When an exception is thrown,
-the stack is unwound by not libunwind bug a JavaScript engine. This affects
-various components of Wasm EH that will be discussed in detail hereafter in this
-document.
+The most different aspect about WebAssembly EH handling that necessiates a new
+EH scheme is the way it unwinds stack. Because of security concerns, WebAssembly
+code is not allowed to touch its execution stack by itself. When an exception is
+thrown, the stack is unwound by not the unwind library but a JavaScript engine.
+This affects various components of WebAssembly EH that will be discussed in
+detail hereafter in this document.
 
 The definition of an exception scheme can be different from a compiler's point
-of view and that of libraries (libcxxabi / libunwind). LLVM currently supports
-four EH schemes: Dwarf CFI, SjLj, ARMEH, and WinEH, among which all of them use
-Itanium C++ ABI with an exception of WinEH. ARMEH resembles Dwarf CFI in many
-ways other than a few architectural differences. Unwind libraries also implement
-different unwinding mechanism for many architectures, each of which can be
-considered as a separate scheme. In this document we mostly describe Wasm EH
-scheme using comparisons with with two Itanium-based schemes: Dwarf CFI and
-SjLj. Even though the unwinding process itself is very different, code
-transformation required by compiler and the way libcxxabi and libunwind
-communicates in part resemble that of SjLj exception handling scheme.
+of view and that of libraries. LLVM currently supports four EH schemes: Dwarf
+CFI, SjLj, ARMEH, and WinEH, among which all of them use Itanium C++ ABI with an
+exception of WinEH. ARMEH resembles Dwarf CFI in many ways other than a few
+architectural differences. unwind libraries also implement different unwinding
+mechanism for many architectures, each of which can be considered as a separate
+scheme. In this document we mostly describe WebAssembly EH scheme using
+comparisons with with two Itanium-based schemes: Dwarf CFI and SjLj. Even though
+the unwinding process itself is very different, code transformation required by
+compiler and the way C++ ABI library and Unwind library communicates in part
+resemble that of SjLj exception handling scheme.
 
 
 ## Active Personality Function Call
 
 ### WebAssembly Stack Unwinding and Personality Function
 
-For other schemes, stack unwinding is performed by libunwind: for example, DWARF
-CFI scheme uses call frame information stored in DWARF format to access callers'
-frames, whereas SjLj scheme traverses in-memory chain of structures recorded for
-every `try` clause to find a matching one. And while these EH schemes examine
-every possible call frame that can catch an exception, i.e., a call frame with
-`try`-`catch` clauses, they call the _personality function_ in libcxxabi to
-check if we need to stop at the current fall frame, in which case there is a
-matching `catch` clause or cleanup actions to perform.
+For other schemes, stack unwinding is performed by the unwind library: for
+example, DWARF CFI scheme uses call frame information stored in DWARF format to
+access callers' frames, whereas SjLj scheme traverses in-memory chain of
+structures recorded for every try clause to find a matching one. And while
+these EH schemes examine every possible call frame that can catch an exception,
+i.e., a call frame with try-catch clauses, they call the _personality function_
+in the C++ ABI library to check if we need to stop at the current fall frame, in
+which case there is a matching catch clause or cleanup actions to perform.
 
-On the other hand, from Wasm code's point of view, after a
+On the other hand, from WebAssembly code's point of view, after a
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
 instruction within a try block throws an exception, the control flow is
 magically transferred to a matching `catch` block, which returns an exception
-object. So the unwinding process is completely hidden from Wasm code. That means
-it's not possible to call the personality function from libunwind anymore.
-**Unlike this process, Wasm unwinding process is performed by a JS engine, and
-it stops at every call frame that has `catch (C++ tag)` instruction.**
+object. So the unwinding process is completely hidden from WebAssembly code.
+That means it's not possible to call the personality function from unwind
+library
+anymore. **Unlike this process, WebAssembly unwinding process is performed by a
+JS engine, and it stops at every call frame that has `catch (C++ tag)`
+instruction.**
 
 For other EH schemes, after the personality functinon figures out which frame to
 stop, it does three things:
@@ -188,15 +187,15 @@ stop, it does three things:
 * Gives the address of the thrown exception object.
 * Gives the _selector value_ corresponding to the type of exception thrown.
 
-Can Wasm EH get all this information without calling a personality function?
-Program control flow is transferred to `catch (C++ tag)` by the unwinder in JS
-engine automatically. (Wasm code cannot touch IP by itself anyway.) Wasm `catch`
-instruction's result is the address of a thrown object. **But we cannot get a
-selector without calling a personality function.**
+Can WebAssembly EH get all this information without calling a personality
+function?  Program control flow is transferred to `catch (C++ tag)` by the
+unwinder in JS engine automatically. (WebAssembly code cannot touch IP by itself
+anyway.) WebAssembly `catch` instruction's result is the address of a thrown
+object. **But we cannot get a selector without calling a personality function.**
 
-So we need to call the personality function _actively_ from the Wasm code to
-compute a selector value. To do that, Wasm compiler inserts a call to the
-personality function at the start of each landing pad.
+So we need to call the personality function _actively_ from the WebAssembly code
+to compute a selector value. To do that, WebAssembly compiler inserts a call to
+the personality function at the start of each landing pad.
 
 
 ### Code Transformation
@@ -216,11 +215,11 @@ functions performs the actual stack unwinding process and calls the personality
 function for each eligible call frame. You can see libcxxabi's personality
 function implementation
 [here](https://github.com/llvm-mirror/libcxxabi/blob/caa78daf9285dada17e3e6b8aebcf7d128427f83/src/cxa_personality.cpp#L936).
-As discussed above Wasm does not do
-unwinding by itself, the compiler inserts a call to a personality function,
-more precisely, a _wrapper_ to the personality function after Wasm `catch`
-instruction, passing the thrown exception object returned from the `catch`
-instruction. The wrapper function lives in libunwind, and its signature will be
+As discussed above WebAssembly does not do unwinding by itself, the compiler
+inserts a call to a personality function, more precisely, a _wrapper_ to the
+personality function after WebAssembly `catch` instruction, passing the thrown
+exception object returned from the `catch` instruction. The wrapper function
+lives in the unwind library, and its signature will be
 ```
 _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr);
 ```
@@ -229,20 +228,20 @@ Even though the signature looks simple, we use an auxiliary struct to pass more
 information to the personality and retrieve a selector computed after it
 returns. It is used as a communication channel: we set input parameters within
 the structure before calling the wrapper function, and reads output parameters
-after the personality function returns. This structure lives in libunwind and
-this is how it looks like:
+after the personality function returns. This structure lives in the unwind
+library and this is how it looks like:
 ```
 struct _Unwind_LandingPadContext {
   // Input information to personality function
-  uintptr_t lpad_index;
-  __personality_routine personality;
-  uintptr_t lsda;
+  uintptr_t lpad_index;                // landing pad index
+  __personality_routine personality;   // personality function
+  uintptr_t lsda;                      // LSDA address
 
   // Output information computed by personality function
-  uintptr_t selector;
+  uintptr_t selector;                  // selector value
 };
 
-// Communication channel between Wasm code and personality function
+// Communication channel between WebAssembly code and personality function
 struct _Unwind_LandingPadContext __wasm_landingpad_context = ...;
 
 // Personality function wrapper
@@ -264,17 +263,17 @@ communicated by `__wasm_landingpad_context`:
 * Input parameters
   * Landing pad index
   * Personality function address
-  * LSDA (exception handling table) address
+  * LSDA information (exception handling table) address
 * Output parameters
   * Selector value
 
 These three input parameters are not directly passed to the personality function
 as arguments, but are read from it using various `_Unwind_Get***` functions
-exported by libunwind. The output parameter, a selector value is also not
-directly returned by the personality function but will be set using
+exported by the unwind library. The output parameter, a selector value is also
+not directly returned by the personality function but will be set using
 `_Unwind_SetGR` function. (`SetGR` here means setting a general register, and it
-does set a physical register in Dwarf CFI. But for SjLj and Wasm schemes it sets
-some field in a struct instead. Same for `_Unwind_GetGR`.)
+does set a physical register in Dwarf CFI. But for SjLj and WebAssembly schemes
+it sets some field in a struct instead. Same for `_Unwind_GetGR`.)
 
 When looking for a matching catch clause in each call frame, what a personality
 function does is querying the call site table within the current function's LSDA
@@ -284,26 +283,27 @@ queries such as "If an exception is thrown at this call site, which action table
 entry should I check?" In Dwarf CFI scheme, the offset of actual callsite
 relative to function start is used as callsite information. In SjLj scheme, each
 callsite that can throw has an index starting from 0, and the index serves as
-callsite information to query the action table. In Wasm EH scheme, because a
-call to the personality function wrapper is inserted at the position of each
-landing pad, we give each landing pad an index starting from 0 and use this as
-callsite information.  We also need to pass the address of the personality
-function associated with the current function so that the wrapper can call it.
-The address of LSDA for the current function is also required because the
-personality function examines the tables there to look for a matching `catch`
-clause.
+callsite information to query the action table. In WebAssembly EH scheme,
+because a call to the personality function wrapper is inserted at the position
+of each landing pad, we give each landing pad an index starting from 0 and use
+this as callsite information.  We also need to pass the address of the
+personality function associated with the current function so that the wrapper
+can call it.  The address of LSDA for the current function is also required
+because the personality function examines the tables there to look for a
+matching catch clause.
 
 Putting it all together, the compiler inserts this code snippet at the beginning
 of each landing pad. (This is C-style pseudocode; the real code inserted will
 be in some IR or assembly level.)
 ```
 // Gets a thrown exception object
-void *exn = catch(0); // Wasm catch instruction
+void *exn = catch(0); // WebAssembly catch instruction
 
 // Set input parameters
 __wasm_landingpad_context.lpad_index = index;
 __wasm_landingpad_context.personality = __gxx_personality_v0;
-__wasm_landingpad_context.lsda = &GCC_except_table0; // LSDA address of function
+// LSDA address of this function
+__wasm_landingpad_context.lsda = &GCC_except_table0;
 
 // Call personality wrapper function
 _Unwind_CallPersonality(exn);
@@ -350,22 +350,226 @@ Some compilers, such as LLVM,
 [prunes](https://github.com/llvm-mirror/llvm/blob/c1e866c7f106668016372d945e397d2b003c6c84/lib/CodeGen/DwarfEHPrepare.cpp#L132)
 basic blocks like `eh.resume` in the code above, considering it unreachable,
 which holds true in other EH schemes, because if there is neither matching
-`catch` clause nor cleanup actions (such as calling destructors to
-stack-allocated objects) to do, the unwinder does not even stops at this call
-frame. But as we mentioned earlier, Wasm unwinding is done by JS engine and it
-stops at every call frame that has Wasm `catch` instruction, i.e., every call
-frame with try-catch clauses.
+catch clause nor cleanup actions (such as calling destructors to stack-allocated
+objects) to do, the unwinder does not even stops at this call frame. But as we
+mentioned earlier, WebAssembly unwinding is done by JS engine and it stops at
+every call frame that has WebAssembly `catch` instruction. So, in the example
+above, after we get a selector value from active personality function call, we
+actually need to execute the remaining parts of WebAssembly code to reach the
+eh.resume block, within which the exception gets thrown to the caller. So when
+we implement WebAssembly EH scheme on a compiler, we should disable this kind of
+optimizations.
 
 
+## No Two-Phase Unwinding
 
-## One-Phase Unwinding
+In Itanium-style two-phase unwinding typically consisits of two phases: search
+and cleanup. In the search phase, a matching catch clause that can catch the
+type of exception thrown or one that needs some cleanup action is searched as
+the stack is unwound. If one is found, it enters the cleanup phase in which the
+unwinder stops at the stack frame with the matching `catch` found and starts to
+run the code there. (Second search is usually avoided by reusing cached
+information from the first search phase.) If no matching clause is found, the
+program aborts.
+
+**WebAssembly unwinder does not perform two-phase unwinding.** Therefore,
+effectively, it only runs the second, cleanup phase. As discussed, because the
+unwinding is done by a JS engine, the unwind library and the C++ ABI library
+cannot drive its two-phase unwinding itself. Because we do not have any cached
+information from the first search stage, we do all searches as in the first
+search stage of two-phse unwinding.
 
 
 ## LSDA Information
 
+LSDA (Language Specific Data Area) contains various tables used by a personality
+function to check if there is any matching catch clauses or a cleanup code to
+run. Every function that has landing pads has its own LSDA information area.
+Usually symbols with prefix `GCC_except_table` or `gcc_except_table` are used to
+point the start of a LSDA information. For some EH schemes LSDA information is
+stored in its own section, but WebAssembly uses [data
+section](https://github.com/WebAssembly/design/blob/master/Modules.md#data-section).
+
+There are three tables in LSDA information:
+* Call site table
+  * Maps call sites to landing pads and action table entries.
+* Action table
+  * Each entry contains the current action (type information and whether to
+    catch it or filter it) and the next action entry to proceed. Refers type
+    information table on which type to catch/filter.
+* Type information table
+  * List of type information
+
+In WebAssembly EH scheme, the format of action table and type information is the
+same with that of Dwarf CFI and SjLj scheme. The primary difference of our
+scheme is we use landing pad indices as call sites.
+
+```
+    Exception Handling Table Layout:
+
++-----------------+--------+----------------------+
+| lpStartEncoding | (char) | always DW_EH_PE_omit |
++---------+-------+--------+---------------+----------+
+| lpStart | (encoded with lpStartEncoding) | Not used |
++---------+-----+--------+-----------------+---------------+
+| ttypeEncoding | (char) | Encoding of the type_info table |
++---------------+-+------+----+----------------------------+----------------+
+| classInfoOffset | (ULEB128) | Offset to type_info table, defaults to null |
++-----------------++--------+-+----------------------------+----------------+
+| callSiteEncoding | (char) | Encoding for Call Site Table |
++------------------+--+-----+-----+------------------------+--------------------------+
+| callSiteTableLength | (ULEB128) | Call Site Table length, used to find Action table |
++---------------------+-----------+---------------------------------------------------+
++---------------------+-----------+------------------------------------------------+
+| Beginning of Call Site Table            landing pad index is a index into this   |
+|                                         table.                                   |
+| +-------------+---------------------------------+------------------------------+ |
+| | landingPad  | (ULEB128)                       | landingpad index             | |
+| | actionEntry | (ULEB128)                       | Action Table Index 1-based   | |
+| |             |                                 | actionEntry == 0 -> cleanup  | |
+| +-------------+---------------------------------+------------------------------+ |
+| ...                                                                              |
++----------------------------------------------------------------------------------+
++---------------------------------------------------------------------+
+| Beginning of Action Table       ttypeIndex == 0 : cleanup           |
+| ...                             ttypeIndex  > 0 : catch             |
+|                                 ttypeIndex  < 0 : exception spec    |
+| +--------------+-----------+--------------------------------------+ |
+| | ttypeIndex   | (SLEB128) | Index into type_info Table (1-based) | |
+| | actionOffset | (SLEB128) | Offset into next Action Table entry  | |
+| +--------------+-----------+--------------------------------------+ |
+| ...                                                                 |
++---------------------------------------------------------------------+-----------------+
+| type_info Table, but classInfoOffset does *not* point here!                           |
+| +----------------+------------------------------------------------+-----------------+ |
+| | Nth type_info* | Encoded with ttypeEncoding, 0 means catch(...) | ttypeIndex == N | |
+| +----------------+------------------------------------------------+-----------------+ |
+| ...                                                                                   |
+| +----------------+------------------------------------------------+-----------------+ |
+| | 1st type_info* | Encoded with ttypeEncoding, 0 means catch(...) | ttypeIndex == 1 | |
+| +----------------+------------------------------------------------+-----------------+ |
+| +---------------------------------------+-----------+------------------------------+  |
+| | 1st ttypeIndex for 1st exception spec | (ULEB128) | classInfoOffset points here! |  |
+| | ...                                   | (ULEB128) |                              |  |
+| | Mth ttypeIndex for 1st exception spec | (ULEB128) |                              |  |
+| | 0                                     | (ULEB128) |                              |  |
+| +---------------------------------------+------------------------------------------+  |
+| ...                                                                                   |
+| +---------------------------------------+------------------------------------------+  |
+| | 0                                     | (ULEB128) | throw()                      |  |
+| +---------------------------------------+------------------------------------------+  |
+| ...                                                                                   |
+| +---------------------------------------+------------------------------------------+  |
+| | 1st ttypeIndex for Nth exception spec | (ULEB128) |                              |  |
+| | ...                                   | (ULEB128) |                              |  |
+| | Mth ttypeIndex for Nth exception spec | (ULEB128) |                              |  |
+| | 0                                     | (ULEB128) |                              |  |
+| +---------------------------------------+------------------------------------------+  |
++---------------------------------------------------------------------------------------+
+```
+
+You can see the exception table structure for DwarfCFI and SjLj scheme
+[here](https://github.com/llvm-mirror/libcxxabi/blob/05e2ac5c83553f9678f018bd8032357f40882a80/src/cxa_personality.cpp#L26).
+Other than call site table, the structure for WebAssembly EH scheme is mostly
+the same.
+
+
+## WebAssembly C++ Exception Handling ABI
+
+We discussed in a [prior section](#code-transformation) about some modifications
+required for the C++ ABI library and the unwind library to implement WebAssembly
+EH scheme. Here we list up required changes and APIs to the libraries.
+
 
 ### Base ABI
 
+This section describes deviations from or additions to [Itanium C++ Base
+ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi).
+
+
+#### Data Structures
+
+##### Landing Pad Context
+
+This serves as a communication channel between WebAssembly code and the
+personality function. A global variable `__wasm_landingpad_context` is an
+instance of this struct.
+
+```
+struct _Unwind_LandingPadContext {
+  // Input information to personality function
+  uintptr_t lpad_index;                // landing pad index
+  __personality_routine personality;   // personality function
+  uintptr_t lsda;                      // LSDA address
+
+  // Output information computed by personality function
+  uintptr_t selector;                  // selector value
+};
+
+// Communication channel between WebAssembly code and personality function
+struct _Unwind_LandingPadContext __wasm_landingpad_context = ...;
+```
+
+##### Personality Function Wrapper
+
+A wrapper function used to call the actual personality function. This is
+supposed to be called from compiler-generated user code.  Refer to [Code
+Transformation](#code-transformation) for details.
+
+```
+_Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
+ struct _Unwind_Exception *exception_obj =
+     (struct _Unwind_Exception *) exception_ptr;
+ _Unwind_Reason_Code ret =
+     (*__wasm_lpad_context->personality)(1, _UA_CLEANUP_PHASE,
+                                         exception_obj->exception_class,
+                                         exception_obj,
+                                         (struct _Unwind_Context *)
+                                         __wasm_lpad_context);
+ return ret;
+}
+```
+
+#### Throwing an Exception
+
+##### _Unwind_RaiseException
+
+```
+_Unwind_Reason_Code
+_Unwind_RaiseException(struct _Unwind_Exception *exception_object);
+```
+Raise an exception by WebAssembly
+[`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
+instruction. The arguments to the throw instruction is a tag number for C++ and
+a pointer to an exception object.
+
+#### _Unwind_Resume
+```
+void _Unwind_Resume (struct _Unwind_Exception *exception_object);
+```
+Resume propagation of an existing exception. Unlike other `_Unwind_*` functions,
+this is called from compiler-generated user code. In other EH schemes, this
+function is mostly used when a call frame does not have a matching `catch` but
+has cleanup code to run, so the unwinder stops there only to run the cleanup
+and resume propagation. But in WebAssembly EH, because the unwinder stops at
+every call frame with landing pads, this runs on every call frame with landing
+pads that does not have a matching catch clause.
+
+
+#### Context Management
+
+#### _Unwind_GetGR
+
+```
+uint64 _Unwind_GetGR(struct _Unwind_Context *context, int index);
+```
+
+#### _Unwind_SetGR
+
+```
+void
+_Unwind_SetGR(struct _Unwind_Context *context, int index, uint64 new_value);
+```
 
 ### C++ ABI
 
@@ -373,5 +577,19 @@ frame with try-catch clauses.
 ## Exception Structure Recovery
 
 
-## Wasm C++ Exception Handling ABI
 
+## References
+
+* [Exception Handling in LLVM](https://llvm.org/docs/ExceptionHandling.html)
+* [Itanium C++ ABI: Exception
+Handling](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html)
+
+* Github mirror
+  * LLVM
+    * [llvm](https://github.com/llvm-mirror/llvm)
+    * [libcxxabi](https://github.com/llvm-mirror/libcxxabi)
+    * [libunwind](https://github.com/llvm-mirror/libunwind)
+  * GCC
+    * [gcc](https://github.com/gcc-mirror/gcc)
+    * [libsupc++](https://github.com/gcc-mirror/gcc/tree/master/libstdc%2B%2B-v3/libsupc%2B%2B)
+    * [libgcc_s](https://github.com/gcc-mirror/gcc/tree/master/libgcc)
