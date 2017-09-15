@@ -660,7 +660,7 @@ CFI or SjLj. For the complete Itanium C++ ABI, refer to the spec
 ## Exception Structure Recovery
 
 To regroup instructions in CFG into this `try`-`catch i`-...-`try-end` structure
-described in the [WebAssembly EH
+described in the [WebAssembly exception handling
 proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md),
 the compiler should recover the near-original try-catch clause structure from
 the CFG. We presented a very simple example of this grouping in [WebAssembly try
