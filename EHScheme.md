@@ -276,7 +276,7 @@ communicated throw `__wasm_lpad_context`:
   * Selector value
 
 These three input parameters are not directly passed to the personality function
-as arguments, but are read from it using various `_Unwind_Get***` functions in
+as arguments, but are read from it using various `_Unwind_Get*` functions in
 unwind library API. The output parameter, a selector value is also not directly
 returned by the personality function but will be set by the personality function
 using `_Unwind_SetGR`. (`SetGR` here means setting a general register, and it
@@ -393,7 +393,7 @@ search stage of two-phase unwinding.
 
 LSDA (Language Specific Data Area) contains various tables used by the
 personality function to check if there is any matching catch sites or cleanup
-code to run.  Every function that has landing pads has its own LSDA information
+code to run. Every function that has landing pads has its own LSDA information
 area. Usually symbols with prefix `GCC_except_table` or `gcc_except_table` are
 used to denote the start of a LSDA information. For some exception handling
 schemes LSDA information is stored in its own section, but WebAssembly uses
@@ -487,9 +487,22 @@ Other than call site table, the structure for WebAssembly EH is mostly the same.
 ## WebAssembly C++ Exception Handling ABI
 
 We discussed in a [prior section](#code-transformation) about some additions
-required for the C++ ABI library and the unwind library to implement WebAssembly
+required to the C++ ABI library and the unwind library to implement WebAssembly
 EH. Here we list up required additional data structure/functions and
-WebAssembly implementation of required APIs.
+WebAssembly's implementation of required APIs.
+
+### Compiler Builtins
+
+##### __builtin_wasm_throw
+Compiler implementations for WebAssembly EH need to support a compiler builtin
+function with this signature:
+```
+void __builtin_wasm_throw(unsigned int, void *);
+```
+A call to this builtin function is converted to a WebAssembly
+[`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
+instruction in the instruction selection stage in the backend. This builtin
+function is used to implement exception-throwing functions in the base ABI.
 
 
 ### Base ABI
@@ -497,15 +510,14 @@ WebAssembly implementation of required APIs.
 This section defines the unwind library interface, expected to be provided by
 any Itanium ABI-compliant system. This is the interface on which the C++ ABI
 exception-handling facilities are built. This section describes what WebAssembly
-version of the ABI functions do and additional structures or functions we need
-to add. For the complete Itanium C++ base ABI, refer to the spec
+version of the ABI functions do and additional data structures or functions we
+need to add. For the complete Itanium C++ base ABI, refer to the spec
 [here](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi).
 
 
 #### Data Structures
 
 ##### Landing Pad Context
-
 This serves as a communication channel between WebAssembly code and the
 personality function. A global variable `__wasm_lpad_context` is an instance of
 this data structure.
@@ -533,26 +545,29 @@ struct _Unwind_LandingPadContext __wasm_lpad_context = ...;
 _Unwind_Reason_Code
 _Unwind_RaiseException(struct _Unwind_Exception *exception_object);
 ```
-Raise an exception by WebAssembly
+Raise an exception using the [`__builtin_wasm_throw` builtin
+function](#__builtin_wasm_throw), which will be converted to WebAssembly
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
-instruction. The arguments to the throw instruction is a tag number for C++ and
-a pointer to an exception object.
+instruction. The arguments to the builtin function are the tag number for C++
+and a pointer to an exception object.
 
 ##### _Unwind_ForcedUnwind
-
 Not used.
 
 ##### _Unwind_Resume
 ```cpp
 void _Unwind_Resume (struct _Unwind_Exception *exception_object);
 ```
-Resume propagation of an existing exception. Unlike other `_Unwind_*` functions,
-this is called from compiler-generated user code. In other exception handling
-schemes, this function is mostly used when a call frame does not have a matching
-`catch` but has cleanup code to run, so the unwinder stops there only to run the
-cleanup and resume propagation. But in WebAssembly EH, because the unwinder
-stops at every call frame with landing pads, this runs on every call frame with
-landing pads that does not have a matching catch site.
+Resume propagation of an existing exception. Unlike other `_Unwind_*` functions
+that are called from the C++ ABI library, this is called from compiler-generated
+user code. In other exception handling schemes, this function is mostly used
+when a call frame does not have a matching catch site but has cleanup code to
+run so that the unwinder stops there only to run the cleanup and resume the
+exception's propagation. But in WebAssembly EH, because the unwinder stops at
+every call frame with landing pads, this runs on every call frame with landing
+pads that does not have a matching catch site. This function also makes use of
+[`__builtin_wasm_throw` builtin function](#__builtin_wasm_throw) to resume the
+propagation of an exception.
 
 
 #### Context Management
@@ -563,38 +578,40 @@ uint64 _Unwind_GetGR(struct _Unwind_Context *context, int index);
 void
 _Unwind_SetGR(struct _Unwind_Context *context, int index, uint64 new_value);
 ```
-The original API means it sets/returns the value of the given general register.
-But in WebAssembly EH, `_Unwind_SetGR` is only used to [set a selector
+The meaning of the original API name is it gets/sets the value of the given
+general register. But in WebAssembly EH, `_Unwind_SetGR` is only used to [set a
+selector
 value](https://github.com/llvm-mirror/libcxxabi/blob/05ba3281482304ae8de31123a594972a495da06d/src/cxa_personality.cpp#L528)
-found to `__wasm_lpad_context.selector`.
+to a data structure used as a communication channel
+(`__wasm_lpad_context.selector`).
 
-These expect the first argument to be a pointer to `struct
-_Unwind_LandingPadContext`, and only 1 is accepted as the second argument, in
-which case they set/get the first argument's `selector` field.
+In WebAssembly EH, `_Unwind_SetGR` expects the first argument to be a pointer to
+`struct _Unwind_LandingPadContext` instance, and only 1 is accepted as the
+second argument, in which case it sets the first argument's `selector` field.
+`_Unwind_GetGR` is not used.
 
 ##### _Unwind_GetIP / _Unwind_SetIP
 ```cpp
 uint64 _Unwind_GetIP (struct _Unwind_Context *context);
 void _Unwind_SetIP (struct _Unwind_Context *context, uint64 new_value);
 ```
-This sets/gets real IP address in Dwarf CFI, but in our scheme `_Unwind_GetIP`
-returns a landing pad index - 1 (`__wasm_lpad_context.lpad_index`), which is set
-by compiler-generated user code as discussed in [Code
-Transformation](#code-transformation). This information is used in the
-personality function to query the call site table.
+This sets/gets a real IP address in Dwarf CFI, but in our scheme `_Unwind_GetIP`
+returns the value of (landing pad index - 1). The landing pad index is set by
+compiler-generated user code to `__wasm_lpad_context.lpad_index` as discussed in
+[Code Transformation](#code-transformation). This information is used in the
+personality function to query the call site table. `_Unwind_SetIP` is not used.
 
 ##### _Unwind_GetLanguageSpecificData
 ```cpp
 uint64 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context);
 ```
 Returns the address of the current function's LSDA information
-(`__wasm_lpad_context.lsda`, set by compiler-generated user code as discussed in
- [Code Transformation](#code-transformation).
-
+(`__wasm_lpad_context.lsda`), set by compiler-generated user code as discussed
+in [Code Transformation](#code-transformation).
 
 ##### _Unwind_GetRegionStart
-
 Not used.
+
 
 #### Personality Routine
 
@@ -617,42 +634,46 @@ _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
 ```
 
 ##### Transferring Control to a Landing Pad
-Refer to [WebAssembly Stack Unwinding and Personality
-Function](#webassesmbly-stack-unwinding-and-personality-function) section.
+Transferring program control to a landing pad is done by not the unwind library
+but the JavaScript engine. Refer to [WebAssembly Stack Unwinding and Personality
+Function](#webassesmbly-stack-unwinding-and-personality-function) section for
+details.
 
 
 ### C++ ABI
 
 The second level of specification is the minimum required to allow
-interoperability. This part contains the definition of an exception object and
-high-level APIs required to allocate an exception object, throw / catch /
-rethrow an exception, and so on. Functions in this section rely on the [base
+interoperability of C++ implementations. This part contains the definition of an
+exception object, and various high-level APIs including functions required to
+allocate / throw / catch / rethrow an exception object. Functions in this
+section rely on the [base
 API](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#base-abi) to do
-low-level architecture-dependent tasks. WebAssembly EH does not have a
-lot of things to add on this level because architecture-dependent components are
+low-level architecture-dependent tasks. WebAssembly EH does not have a lot of
+things to add on this level because architecture-dependent components are
 usually taken care of in the base API level. But we still need some
 modifications on the personality function and functions called from it to handle
-some subtle differences between WebAssembly EH and Dwarf CFI/SjLj EH. For the
-complete Itanium C++ ABI, refer to the spec
+some subtle differences between WebAssembly EH and other schemes, such as Dwarf
+CFI or SjLj. For the complete Itanium C++ ABI, refer to the spec
 [here](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#cxx-abi).
 
 ---
 
 ## Exception Structure Recovery
 
-To regroup instructions into this `try`-`catch i`-...-`try-end` structure
+To regroup instructions in CFG into this `try`-`catch i`-...-`try-end` structure
 described in the [WebAssembly EH
 proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md),
 the compiler should recover the near-original try-catch clause structure from
-intermediate CFG. We already presented a very simple example of this grouping in
-[WebAssembly try and catch Blocks](#webassembly-try-and-catch-blocks) section.
-How we do this is more of an internal algorithm than the spec for our exception
-handling scheme and this is not the only way blocks can be grouped, but we
-present the current algorithm implemented in LLVM here to show an example. Note
-that this only supports C++ exceptions: it generates neither `catch`
-instructions for other language tags nor `catch_all` intructions.
+the CFG. We presented a very simple example of this grouping in [WebAssembly try
+and catch Blocks](#webassembly-try-and-catch-blocks) section. How we do this is
+more of an internal algorithm than the spec for our exception handling scheme,
+but we present the current algorithm implemented in LLVM here to show an
+example. Note that this is not the only way blocks can be grouped and other
+compiler implementations may use other algorithms. This currently only supports
+C++ exceptions: it generates neither `catch` instructions for other language
+tags nor `catch_all` intructions.
 
-_TODO: to be filled once LLVM patch for this part is landed._
+_TODO: This section will be filled once LLVM patch for this part is landed._
 
 ---
 
