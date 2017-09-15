@@ -24,6 +24,7 @@ exception handling.
 This spec is tentative and may change in future. The prototype implementation
 work is in progress, and is currently only targeting C++.
 
+---
 
 ## Background
 
@@ -157,6 +158,7 @@ SjLj. Even though the unwinding process itself is very different, code
 transformation required by compiler and the way C++ ABI library and unwind
 library communicate in part resemble that of SjLj exception handling scheme.
 
+---
 
 ## Active Personality Function Call
 
@@ -360,6 +362,7 @@ eh.resume block, within which the exception gets thrown to the caller. So when
 we implement WebAssembly EH scheme on a compiler, we should disable this kind of
 optimizations.
 
+---
 
 ## No Two-Phase Unwinding
 
@@ -379,6 +382,7 @@ cannot drive its two-phase unwinding itself. Because we do not have any cached
 information from the first search stage, we do all searches as in the first
 search stage of two-phse unwinding.
 
+---
 
 ## LSDA Information
 
@@ -473,6 +477,7 @@ You can see the exception table structure for DwarfCFI and SjLj scheme
 Other than call site table, the structure for WebAssembly EH scheme is mostly
 the same.
 
+---
 
 ## WebAssembly C++ Exception Handling ABI
 
@@ -626,6 +631,7 @@ some subtle differences between WebAssembly EH and Dwarf CFI/SjLj EH. For the
 complete Itanium C++ ABI, refer to the spec
 [here](https://itanium-cxx-abi.github.io/cxx-abi/abi-eh.html#cxx-abi).
 
+---
 
 ## Exception Structure Recovery
 
@@ -643,6 +649,7 @@ language tags nor `catch_all` intructions.
 
 _TODO: to be filled once LLVM patch for this part is landed._
 
+---
 
 ## References
 
