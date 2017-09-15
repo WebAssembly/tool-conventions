@@ -1,11 +1,11 @@
 # WebAssembly Exception Handling Scheme
 
 This document describes the plans for a new exception handling scheme for
-WebAssembly, and what each tool components does and how they interact with each
-other to implement the scheme.
+WebAssembly, regarding what each tool components does and how they interact with
+each other to implement the scheme.
 
-The exception handling support implemented in [WebAssembly upstream
-backend](https://github.com/llvm-mirror/llvm/tree/master/lib/Target/WebAssembly)
+The exception handling support implemented in [WebAssembly upstream backend in
+LLVM](https://github.com/llvm-mirror/llvm/tree/master/lib/Target/WebAssembly)
 and other tools ([binaryen](https://github.com/WebAssembly/binaryen/) and
 [emscripten](https://github.com/kripken/emscripten)) as for Sep 2017 uses
 library functions in asm.js, which is slow because there are many foreign
@@ -14,9 +14,9 @@ WebAssembly exception support for WebAssembly has been
 [proposed](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
 and is currently being implemented in V8 JavaScript engine.
 
-Here we propose a new exception handling scheme for WebAssembly for toolchain
-side to generate compatible wasm binary files to match the aforementioned
-[WebAssembly exception handling
+Here we propose a new exception handling scheme for WebAssembly for the
+toolchain side to generate compatible wasm binary files to support the
+aforementioned [WebAssembly exception handling
 proposal](https://github.com/WebAssembly/excption-handling/blob/master/proposals/Exceptions.md).
 This document assumes you have general knowledge about Itanium C++ ABI based
 exception handling.
@@ -44,11 +44,12 @@ try_end
 ```
 A `catch` instruction in WebAssembly does not correspond to a C++ `catch`
 clause. **In WebAssembly, there is a single `catch` instruction for all C++
-exceptions.** `catch` instruction for other languages ane `catch_all`
+exceptions.** `catch` instruction with tags for other languages and `catch_all`
 instructions are not generated for the current version of implementation. **All
-catch clauses for various C++ types go into this big `catch (C++ tag)` block.**
-Each language will have a tag number assigned to it, so you can think C++ tag as
-a fixed integer here. So the simplified form will look like
+catch clauses for various C++ types go into this big `catch (C++ tag)`
+block.** Each language will have a tag number assigned to it, so you can think
+the C++ tag as a fixed integer here. So the structure for the prototype will
+look like
 ```
 try
   instruction*
@@ -84,11 +85,11 @@ try_end
 
 When a
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
-instruction throws an exception within a `try` block or callees of it, the
-control flow is transferred to `catch (C++)` instruction, after which the thrown
-exception object is placed on top of WebAssembly value stack. This means, from
-user code's point of view, `catch` instruction returns the thrown exception
-object. For more information, refer to [Try and catch
+instruction throws an exception within a `try` block or functions called from
+it, the control flow is transferred to `catch (C++ tag)` instruction, after
+which the thrown exception object is placed on top of WebAssembly value stack.
+This means, from user code's point of view, `catch` instruction returns the
+thrown exception object. For more information, refer to [Try and catch
 blocks](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#try-and-catch-blocks)
 section in the exception proposal.
 
@@ -96,7 +97,7 @@ section in the exception proposal.
 ### C++ Libraries
 
 Here we only discuss C++ libraries because currenly we only support C++
-exceptions , but every language that supports exceptions should have some kind
+exceptions, but every language that supports exceptions should have some kind
 of libraries that play similar roles, which we can extend to support WebAssembly
 exceptions once we add support for that language.
 
@@ -137,24 +138,24 @@ compilers such as GCC or LLVM. LLVM supports four kinds of EH schemes: Dwarf
 CFI, SjLj, ARM, and WinEH. Then why do we need the support for a new EH scheme
 in a compiler as well as libraries supporting C++ ABI?
 
-The most different aspect about WebAssembly EH handling that necessiates a new
-EH scheme is the way it unwinds stack. Because of security concerns, WebAssembly
-code is not allowed to touch its execution stack by itself. When an exception is
-thrown, the stack is unwound by not the unwind library but a JavaScript engine.
-This affects various components of WebAssembly EH that will be discussed in
-detail hereafter in this document.
+The most distinguished aspect about WebAssembly EH handling that necessiates a
+new EH scheme is the component that unwinds the stack. Because of security
+concerns, WebAssembly code is not allowed to touch its execution stack by
+itself. When an exception is thrown, the stack is unwound by not the unwind
+library but the JavaScript engine. This affects various components of
+WebAssembly EH that will be discussed in detail in this document.
 
-The definition of an exception scheme can be different from a compiler's point
-of view and that of libraries. LLVM currently supports four EH schemes: Dwarf
-CFI, SjLj, ARMEH, and WinEH, among which all of them use Itanium C++ ABI with an
-exception of WinEH. ARMEH resembles Dwarf CFI in many ways other than a few
-architectural differences. unwind libraries also implement different unwinding
-mechanism for many architectures, each of which can be considered as a separate
-scheme. In this document we mostly describe WebAssembly EH scheme using
-comparisons with with two Itanium-based schemes: Dwarf CFI and SjLj. Even though
-the unwinding process itself is very different, code transformation required by
-compiler and the way C++ ABI library and Unwind library communicates in part
-resemble that of SjLj exception handling scheme.
+The definition of an exception scheme can be different when defined from a
+compiler's point of view and when from libraries. LLVM currently supports four
+EH schemes: Dwarf CFI, SjLj, ARMEH, and WinEH, where all of them use
+Itanium C++ ABI with an exception of WinEH. ARMEH resembles Dwarf CFI in many
+ways other than a few architectural differences. Unwind libraries implement
+different unwinding mechanism for many architectures, each of which can be
+considered as a separate scheme. In this document we mostly describe WebAssembly
+EH scheme using comparisons with with two Itanium-based schemes: Dwarf CFI and
+SjLj. Even though the unwinding process itself is very different, code
+transformation required by compiler and the way C++ ABI library and unwind
+library communicate in part resemble that of SjLj exception handling scheme.
 
 
 ## Active Personality Function Call
@@ -640,7 +641,7 @@ algorithm implemented in LLVM here to show an example. Note that this only
 supports C++ exceptions: it generates neither `catch` instructions for other
 language tags nor `catch_all` intructions.
 
-*TODO: to be filled once LLVM patch for this part is landed*
+_TODO: to be filled once LLVM patch for this part is landed._
 
 
 ## References
