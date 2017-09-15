@@ -166,7 +166,7 @@ exception handling scheme.
 
 ## Active Personality Function Call
 
-### WebAssembly Stack Unwinding and Personality Function
+### Stack Unwinding and Personality Function
 
 For other schemes, stack unwinding is performed by the unwind library: for
 example, DWARF CFI scheme uses call frame information stored in DWARF format to
@@ -545,18 +545,18 @@ struct _Unwind_LandingPadContext __wasm_lpad_context = ...;
 _Unwind_Reason_Code
 _Unwind_RaiseException(struct _Unwind_Exception *exception_object);
 ```
-Raise an exception using the [`__builtin_wasm_throw` builtin
-function](#__builtin_wasm_throw), which will be converted to WebAssembly
+Raise an exception using the [`__builtin_wasm_throw`
+builtin](#__builtin_wasm_throw), which will be converted to WebAssembly
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
-instruction. The arguments to the builtin function are the tag number for C++
-and a pointer to an exception object.
+instruction. The arguments to the builtin are the tag number for C++ and a
+pointer to an exception object.
 
 ##### _Unwind_ForcedUnwind
 Not used.
 
 ##### _Unwind_Resume
 ```cpp
-void _Unwind_Resume (struct _Unwind_Exception *exception_object);
+void _Unwind_Resume(struct _Unwind_Exception *exception_object);
 ```
 Resume propagation of an existing exception. Unlike other `_Unwind_*` functions
 that are called from the C++ ABI library, this is called from compiler-generated
@@ -566,7 +566,7 @@ run so that the unwinder stops there only to run the cleanup and resume the
 exception's propagation. But in WebAssembly EH, because the unwinder stops at
 every call frame with landing pads, this runs on every call frame with landing
 pads that does not have a matching catch site. This function also makes use of
-[`__builtin_wasm_throw` builtin function](#__builtin_wasm_throw) to resume the
+[`__builtin_wasm_throw` builtin](#__builtin_wasm_throw) to resume the
 propagation of an exception.
 
 
@@ -592,8 +592,8 @@ second argument, in which case it sets the first argument's `selector` field.
 
 ##### _Unwind_GetIP / _Unwind_SetIP
 ```cpp
-uint64 _Unwind_GetIP (struct _Unwind_Context *context);
-void _Unwind_SetIP (struct _Unwind_Context *context, uint64 new_value);
+uint64 _Unwind_GetIP(struct _Unwind_Context *context);
+void _Unwind_SetIP(struct _Unwind_Context *context, uint64 new_value);
 ```
 This sets/gets a real IP address in Dwarf CFI, but in our scheme `_Unwind_GetIP`
 returns the value of (landing pad index - 1). The landing pad index is set by
@@ -603,7 +603,7 @@ personality function to query the call site table. `_Unwind_SetIP` is not used.
 
 ##### _Unwind_GetLanguageSpecificData
 ```cpp
-uint64 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context);
+uint64 _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context);
 ```
 Returns the address of the current function's LSDA information
 (`__wasm_lpad_context.lsda`), set by compiler-generated user code as discussed
@@ -635,9 +635,8 @@ _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
 
 ##### Transferring Control to a Landing Pad
 Transferring program control to a landing pad is done by not the unwind library
-but the JavaScript engine. Refer to [WebAssembly Stack Unwinding and Personality
-Function](#webassesmbly-stack-unwinding-and-personality-function) section for
-details.
+but the JavaScript engine. Refer to [Stack Unwinding and Personality
+Function](#stack-unwinding-and-personality-function) section for details.
 
 
 ### C++ ABI
