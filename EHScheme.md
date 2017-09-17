@@ -12,7 +12,7 @@ library functions in asm.js, which is slow because there are many foreign
 function calls between WebAssembly and JavaScript involved. A new, low-cost
 WebAssembly exception support for WebAssembly has been
 [proposed](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
-and is currently being implemented in V8 JavaScript engine.
+and is currently being implemented in V8.
 
 Here we propose a new exception handling scheme for WebAssembly for the
 toolchain side to generate compatible wasm binary files to support the
@@ -136,16 +136,16 @@ libcxxabi) and [libunwind](https://github.com/llvm-mirror/libunwind).
 
 Currently there are several exception handling schemes supported by major
 compilers such as GCC or LLVM. LLVM supports four kinds of exception handling
-schemes: Dwarf CFI, SjLj, ARM, and WinEH. Then why do we need the support for a
-new exception handling scheme in a compiler as well as libraries supporting C++
-ABI?
+schemes: Dwarf CFI, SjLj (setjmp/longjmp), ARM (EABI), and WinEH. Then why do we
+need the support for a new exception handling scheme in a compiler as well as
+libraries supporting C++ ABI?
 
 The most distinguished aspect about WebAssembly EH that necessiates a new
 exception handling scheme is the component that unwinds the stack. Because of
 security concerns, WebAssembly code is not allowed to touch its execution stack
 by itself. When an exception is thrown, the stack is unwound by not the unwind
-library but the JavaScript engine. This affects various components of
-WebAssembly EH that will be discussed in detail in this document.
+library but the VM. This affects various components of WebAssembly EH that will
+be discussed in detail in this document.
 
 The definition of an exception handling scheme can be different when defined
 from a compiler's point of view and when from libraries. LLVM currently supports
@@ -177,32 +177,34 @@ the _personality function_ in the C++ ABI library to check if we need to stop at
 the call frame, in which case there is a matching catch site or cleanup actions
 to perform.
 
-**Unlike this process, WebAssembly unwinding process is performed by a JS
-engine, and it stops at every call frame that has `catch (C++ tag)`
-instruction.** From WebAssembly code's point of view, after a
+**Unlike this process, WebAssembly unwinding process is performed by a VM, and
+it stops at every call frame that has `catch (C++ tag)` instruction.** From
+WebAssembly code's point of view, after a
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
 instruction within a try block throws, the control flow is magically transferred
 to a corresponding `catch (C++ tag)` instruction, which returns an exception
 object. So the unwinding process is completely hidden from WebAssembly code,
-which means it's not possible to call the personality function from unwind
-library anymore.
+which means the personality function cannot be called before control returns to
+the compiler-generated user code.
 
-For example, after the personality function figures out which frame to stop,
-Dwraf CFI scheme does three things (SjLj scheme doesn't need the landingpad
-setting because it uses `longjmp`):
-* Sets IP to the start of a matching landing pad block.
+For example, in Dwarf CFI scheme, after the personality function figures out
+which frame to stop, the function does three things (in SjLj scheme the
+personality function doesn't do the landing pad setting because it uses
+`longjmp`):
+* Sets IP to the start of a matching landing pad block (so that the unwinder
+will jump to this block after the personality routine returns).
 * Gives the address of the thrown exception object.
 * Gives the _selector value_ corresponding to the type of exception thrown.
 
 Can WebAssembly EH get all this information without calling a personality
 function? Program control flow is transferred to `catch (C++ tag)` instruction
-by the unwinder in a JavaScript engine; WebAssembly code cannot access or modify
-IP. WebAssembly `catch` instruction's result is the address of a thrown object.
-**But we cannot get a selector without calling a personality function.** What
-WebAssembly EH does is, to make the user code call the personality function
-_actively_ in order to compute a selector value. To do that, WebAssembly
-compiler inserts a call to the personality function at the start of each landing
-pad.
+by the unwinder in a VM; WebAssembly code cannot access or modify IP.
+WebAssembly `catch` instruction's result is the address of a thrown object.
+**But we cannot get a selector without calling a personality function.** In
+WebAssembly EH, the personality function is _actively_ called from the
+compiler-generated user code rather than from the unwind library. To do that,
+WebAssembly compiler inserts a call to the personality function at the start of
+each landing pad.
 
 
 ### Code Transformation
@@ -223,22 +225,22 @@ function for each eligible call frame. You can see libcxxabi's personality
 function implementation
 [here](https://github.com/llvm-mirror/libcxxabi/blob/05ba3281482304ae8de31123a594972a495da06d/src/cxa_personality.cpp#L936).
 
-As discussed above, WebAssembly does not do unwinding by itself, the compiler
-inserts a call to a personality function, more precisely, a _wrapper_ to the
-personality function after WebAssembly `catch` instruction, passing the thrown
-exception object returned from the `catch` instruction. The wrapper function
-lives in the unwind library, and its signature will be
+As discussed above, in WebAssembly EH stack unwinding is not done by the unwind
+library, the compiler inserts a call to a personality function, more precisely,
+a _wrapper_ to the personality function after WebAssembly `catch` instruction,
+passing the thrown exception object returned from the `catch` instruction. The
+wrapper function lives in the unwind library, and its signature will be
 ```cpp
 _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr);
 ```
 
 Even though the wrapper signature looks simple, we use an auxiliary data
-structure to pass more information to the personality function and retrieve a
-selector computed after the function returns. The structure is used as a
-communication channel: we set input parameters within the structure before
-calling the wrapper function, and reads output parameters after the function
-returns. This structure lives in the unwind library and this is how it looks
-like:
+structure to pass more information from the compiler-generated user code to the
+personality function and retrieve a selector computed after the function
+returns. The structure is used as a communication channel: we set input
+parameters within the structure before calling the wrapper function, and reads
+output parameters after the function returns. This structure lives in the unwind
+library and this is how it looks like:
 ```cpp
 struct _Unwind_LandingPadContext {
   // Input information to personality function
@@ -247,7 +249,7 @@ struct _Unwind_LandingPadContext {
   uintptr_t lsda;                      // LSDA address
 
   // Output information computed by personality function
-  uintptr_t selector;                  // selector value
+  uintptr_t selector;       // selector value, used to select a C++ catch clause
 };
 
 // Communication channel between WebAssembly code and personality function
@@ -359,13 +361,13 @@ basic blocks like `eh.resume` in the code above, considering it unreachable,
 which holds true in other exception handling schemes, because if there is
 neither matching catch site nor cleanup actions (such as calling destructors to
 stack-allocated objects) to do, the unwinder does not even stop at this call
-frame. But as we mentioned earlier, WebAssembly unwinding is done by a
-JavaScript engine and it stops at every call frame that has WebAssembly `catch`
-instruction. So, in the example above, after we get a selector value from active
-personality function call, we actually need to execute the remaining parts of
-WebAssembly code to reach the eh.resume block, within which the exception is
-passed to the caller. So when we implement WebAssembly EH on a compiler, we
-should disable this kind of optimizations.
+frame. But as we mentioned earlier, WebAssembly unwinding is done by a VM and it
+stops at every call frame that has WebAssembly `catch` instruction. So, in the
+example above, after we get a selector value from active personality function
+call, we actually need to execute the remaining parts of WebAssembly code to
+reach the eh.resume block, within which the exception is passed to the caller.
+So when we implement WebAssembly EH on a compiler, we should disable this kind
+of optimizations.
 
 ---
 
@@ -382,10 +384,10 @@ no matching clause is found in the first phase, the program aborts.
 
 **WebAssembly unwinder does not perform two-phase unwinding.** Therefore,
 effectively, it only runs the second, cleanup phase. As discussed, because the
-unwinding is done by a JavaScript engine, the unwind library and the C++ ABI
-library cannot drive its two-phase unwinding. Because we do not have any cached
-information from the first search stage, we do full searches as in the first
-search stage of two-phase unwinding.
+unwinding is done by a VM, the unwind library and the C++ ABI library cannot
+drive its two-phase unwinding. Because we do not have any cached information
+from the first search stage, we do full searches as in the first search stage of
+two-phase unwinding.
 
 ---
 
@@ -405,8 +407,8 @@ There are three tables in WebAssembly LSDA information:
   * Maps call sites (landing pad indices) to action table entries.
 * Action table
   * Each entry contains the current action (type information and whether to
-    catch it or filter it) and the next action entry to proceed. Refers to type
-    information table on which type to catch or filter.
+catch it or filter it) and the next action entry to proceed. Refers to type
+information table on which type to catch or filter.
 * Type information table
   * List of type information
 
@@ -635,7 +637,7 @@ _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
 
 ##### Transferring Control to a Landing Pad
 Transferring program control to a landing pad is done by not the unwind library
-but the JavaScript engine. Refer to [Stack Unwinding and Personality
+but the VM. Refer to [Stack Unwinding and Personality
 Function](#stack-unwinding-and-personality-function) section for details.
 
 
