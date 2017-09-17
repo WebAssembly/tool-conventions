@@ -495,9 +495,10 @@ WebAssembly's implementation of required APIs.
 
 ### Compiler Builtins
 
+This section describes compiler builtins that require support from compiler
+implementations.
+
 ##### __builtin_wasm_throw
-Compiler implementations for WebAssembly EH need to support a compiler builtin
-function with this signature:
 ```
 void __builtin_wasm_throw(unsigned int, void *);
 ```
@@ -505,6 +506,15 @@ A call to this builtin function is converted to a WebAssembly
 [`throw`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#throws)
 instruction in the instruction selection stage in the backend. This builtin
 function is used to implement exception-throwing functions in the base ABI.
+
+##### __builtin_wasm_rethrow
+```
+void __builtin_wasm_rethrow();
+```
+A call to this builtin function is converted to a WebAssembly
+[`rethrow`](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md#rethrows)
+instruction in the instruction selection stage in the backend. This builtin
+function is used to implement rethrowing exceptions in the base API.
 
 
 ### Base ABI
