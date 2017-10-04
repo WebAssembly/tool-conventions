@@ -18,11 +18,11 @@ Here we propose a new exception handling scheme for WebAssembly for the
 toolchain side to generate compatible wasm binary files to support the
 aforementioned [WebAssembly exception handling
 proposal](https://github.com/WebAssembly/excption-handling/blob/master/proposals/Exceptions.md).
-This document assumes you have general knowledge about Itanium C++ ABI based
-exception handling.
 
 This spec is tentative and may change in future. The prototype implementation
-work is in progress, and is currently only targeting C++.
+work is in progress, and is currently only targeting C++ based on Itanium C++
+ABI. This document assumes you have general knowledge about Itanium C++ ABI
+based exception handling.
 
 ---
 
@@ -141,11 +141,11 @@ need the support for a new exception handling scheme in a compiler as well as
 libraries supporting C++ ABI?
 
 The most distinguished aspect about WebAssembly EH that necessiates a new
-exception handling scheme is the component that unwinds the stack. Because of
-security concerns, WebAssembly code is not allowed to touch its execution stack
-by itself. When an exception is thrown, the stack is unwound by not the unwind
-library but the VM. This affects various components of WebAssembly EH that will
-be discussed in detail in this document.
+exception handling scheme is WebAssembly code is not allowed to inspect or
+modify the call stack, and cannot jump indirectly.  As a result, when an
+exception is thrown, the stack is unwound by not the unwind library but the VM.
+This affects various components of WebAssembly EH that will be discussed in
+detail in this document.
 
 The definition of an exception handling scheme can be different when defined
 from a compiler's point of view and when from libraries. LLVM currently supports
@@ -164,7 +164,7 @@ exception handling scheme.
 
 ---
 
-## Active Personality Function Call
+## Direct Personality Function Call
 
 ### Stack Unwinding and Personality Function
 
@@ -201,13 +201,13 @@ function? Program control flow is transferred to `catch (C++ tag)` instruction
 by the unwinder in a VM; WebAssembly code cannot access or modify IP.
 WebAssembly `catch` instruction's result is the address of a thrown object.
 **But we cannot get a selector without calling a personality function.** In
-WebAssembly EH, the personality function is _actively_ called from the
+WebAssembly EH, the personality function is _directly_ called from the
 compiler-generated user code rather than from the unwind library. To do that,
 WebAssembly compiler inserts a call to the personality function at the start of
 each landing pad.
 
 
-### Code Transformation
+### Landing Pad Code
 
 In exception handling schemes based on Itanium C++ ABI, C++ `throw` keyword is
 compiled into a call to
@@ -488,7 +488,7 @@ Other than call site table, the structure for WebAssembly EH is mostly the same.
 
 ## WebAssembly C++ Exception Handling ABI
 
-We discussed in a [prior section](#code-transformation) about some additions
+We discussed in a [prior section](#landing-pad-code) about some additions
 required to the C++ ABI library and the unwind library to implement WebAssembly
 EH. Here we list up required additional data structure/functions and
 WebAssembly's implementation of required APIs.
@@ -610,7 +610,7 @@ void _Unwind_SetIP(struct _Unwind_Context *context, uint64 new_value);
 This sets/gets a real IP address in Dwarf CFI, but in our scheme `_Unwind_GetIP`
 returns the value of (landing pad index - 1). The landing pad index is set by
 compiler-generated user code to `__wasm_lpad_context.lpad_index` as discussed in
-[Code Transformation](#code-transformation). This information is used in the
+[Landing Pad Code](#landing-pad-code). This information is used in the
 personality function to query the call site table. `_Unwind_SetIP` is not used.
 
 ##### _Unwind_GetLanguageSpecificData
@@ -619,7 +619,7 @@ uint64 _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context);
 ```
 Returns the address of the current function's LSDA information
 (`__wasm_lpad_context.lsda`), set by compiler-generated user code as discussed
-in [Code Transformation](#code-transformation).
+in [Landing Pad Code](#landing-pad-code).
 
 ##### _Unwind_GetRegionStart
 Not used.
@@ -629,8 +629,8 @@ Not used.
 
 ##### Personality Function Wrapper
 A wrapper function used to call the actual personality function. This is
-supposed to be called from compiler-generated user code. Refer to [Code
-Transformation](#code-transformation) for details.
+supposed to be called from compiler-generated user code. Refer to [Landing Pad
+Code](#landing-pad-code) for details.
 
 ```cpp
 _Unwind_Reason_Code _Unwind_CallPersonality(void *exception_ptr) {
