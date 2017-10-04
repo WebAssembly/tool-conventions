@@ -30,7 +30,7 @@ based exception handling.
 
 ### WebAssembly try and catch Blocks
 
-_Disclaimer: Changes to the current spec has been
+_Disclaimer: Some Changes to the current spec have been
 [proposed](https://github.com/WebAssembly/exception-handling/issues/29), so this
 section may change in the future._
 
