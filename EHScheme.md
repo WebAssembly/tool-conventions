@@ -30,6 +30,10 @@ based exception handling.
 
 ### WebAssembly try and catch Blocks
 
+_Disclaimer: Changes to the current spec has been
+[proposed](https://github.com/WebAssembly/exception-handling/issues/29), so this
+section may change in the future._
+
 WebAssembly's `try` and `catch` instructions are structured as follows:
 ```
 try
