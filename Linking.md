@@ -175,7 +175,17 @@ where a `syminfo` is encoded as:
 
 The current set of valid flags for symbols are:
 
-- `1 / WASM_SYM_FLAG_WEAK` - Indicating that this is a weak symbol
+- `1 / WASM_SYM_BINDING_WEAK` - Indicating that this is a weak symbol.  When
+  linking multiple modules defining the same symbol, all weak definitions are
+  discarded if any strong definitions exist; then if multiple weak definitions
+  exist all but one (unspecified) are discarded; and finally it is an error if
+  more than one definition remains.
+- `2 / WASM_SYM_BINDING_LOCAL` - Indicating that this is a local symbol (this
+  is exclusive with `WASM_SYM_BINDING_WEAK`). Local symbols are not to be
+  exported, or linked to other modules/sections.
+- `4 / WASM_SYM_VISIBILITY_HIDDEN` - Indicating that this is a hidden symbol.
+  Hidden symbols are not to be exported when performing the final link, but
+  may be linked to other modules.
 
 For `WASM_DATA_SIZE` the following fields are present in the
 subsection:
