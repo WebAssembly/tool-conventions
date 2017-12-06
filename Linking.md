@@ -145,6 +145,9 @@ The current list of valid `type` codes are:
 
 - `2 / WASM_DATA_SIZE` - Specifies the total size of the static data used by the
   module, including both initialized and zero-initialized (bss) data.
+  Note that this is similar to the "minimum" field in the linear memory
+  description, however it's in units of bytes, so it's not limited to being
+  a multiple of the page size.
 
 - `3 / WASM_DATA_ALIGNMENT` - Specifies the alignment of the data section.  This
   tells the linking what constraints are placed on the location of the data
