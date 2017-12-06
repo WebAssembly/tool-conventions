@@ -137,9 +137,6 @@ out in the same way as the ["names"][names_sec] section:
 
 The current list of valid `type` codes are:
 
-- `0 / WASM_STACK_POINTER` - This specifies which global variable is to be
-  treated as the stack pointer.
-
 - `1 / WASM_SYMBOL_INFO` - Specifies extra information about the symbols present
   in the module.
 
@@ -152,13 +149,6 @@ The current list of valid `type` codes are:
 - `3 / WASM_DATA_ALIGNMENT` - Specifies the alignment of the data section.  This
   tells the linking what constraints are placed on the location of the data
   section in the final binary.
-
-For `WASM_STACK_POINTER` the following fields are present in the
-subsection:
-
-| Field  | Type        | Description                                    |
-| ------ | ------------| ---------------------------------------------- |
-| index  | `varuint32` | index of the global which is the stack pointer |
 
 For `WASM_SYMBOL_INFO` the following fields are present in the
 subsection:
