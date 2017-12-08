@@ -150,6 +150,9 @@ The current list of valid `type` codes are:
   tells the linking what constraints are placed on the location of the data
   section in the final binary.
 
+- `6 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
+  objects, which are linked only once and all together.
+
 For `WASM_SYMBOL_INFO` the following fields are present in the
 subsection:
 
@@ -193,6 +196,33 @@ subsection:
 | Field  | Type        | Description                                    |
 | ------ | ------------| ---------------------------------------------- |
 | align  | `varuint32` | alignment requirement of the data stored as a power of 2 (`log2(alignment)`) |
+
+For `WASM_COMDAT_INFO` the following fields are present in the
+subsection:
+
+| Field   | Type        | Description                                    |
+| ------- | ------------| ---------------------------------------------- |
+| count   | `varuint32` | Number of `Comdat` in `comdats`                |
+| comdats | `Comdat*`   | Sequence of `Comdat`
+
+where a `Comdat` is encoded as:
+
+| Field       | Type         | Description                               |
+| ----------- | ------------ | ----------------------------------------- |
+| name_len    | `varuint32`  | length of `name_str` in bytes             |
+| name_str    | `bytes`      | UTF-8 encoding of the name                |
+| count       | `varuint32`  | Number of `ComdatSym` in `comdat_syms`    |
+| comdat_syms | `ComdatSym*` | Sequence of `ComdatSym`                   |
+
+and where a `ComdatSym` is encoded as:
+
+| Field    | Type           | Description                                 |
+| -------- | -------------- | ------------------------------------------- |
+| kind     | `varuint32`    | Type of symbol, one of:                     |
+|          |                |   * `1 / WASM_COMDATA_DATA`, a data segment |
+|          |                |   * `2 / WASM_COMDATA_FUNCTION`             |
+|          |                |   * `3 / WASM_COMDATA_GLOBAL`               |
+| index    | `varuint32`    | Index of the symbol in the Wasm object      |
 
 
 Merging Global Section
