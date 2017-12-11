@@ -211,6 +211,7 @@ where a `Comdat` is encoded as:
 | ----------- | ------------ | ----------------------------------------- |
 | name_len    | `varuint32`  | length of `name_str` in bytes             |
 | name_str    | `bytes`      | UTF-8 encoding of the name                |
+| flags       | `varuint32`  | Must be zero, no flags currently defined  |
 | count       | `varuint32`  | Number of `ComdatSym` in `comdat_syms`    |
 | comdat_syms | `ComdatSym*` | Sequence of `ComdatSym`                   |
 
@@ -219,9 +220,8 @@ and where a `ComdatSym` is encoded as:
 | Field    | Type           | Description                                 |
 | -------- | -------------- | ------------------------------------------- |
 | kind     | `varuint32`    | Type of symbol, one of:                     |
-|          |                |   * `1 / WASM_COMDATA_DATA`, a data segment |
-|          |                |   * `2 / WASM_COMDATA_FUNCTION`             |
-|          |                |   * `3 / WASM_COMDATA_GLOBAL`               |
+|          |                |   * `0 / WASM_COMDATA_DATA`, a data segment |
+|          |                |   * `1 / WASM_COMDATA_FUNCTION`             |
 | index    | `varuint32`    | Index of the symbol in the Wasm object      |
 
 
