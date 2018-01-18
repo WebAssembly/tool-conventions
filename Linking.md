@@ -150,7 +150,7 @@ The current list of valid `type` codes are:
   tells the linking what constraints are placed on the location of the data
   section in the final binary.
 
-- `6 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
+- `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
 
 For `WASM_SYMBOL_INFO` the following fields are present in the
@@ -222,7 +222,10 @@ and where a `ComdatSym` is encoded as:
 | kind     | `varuint32`    | Type of symbol, one of:                     |
 |          |                |   * `0 / WASM_COMDATA_DATA`, a data segment |
 |          |                |   * `1 / WASM_COMDATA_FUNCTION`             |
-| index    | `varuint32`    | Index of the symbol in the Wasm object      |
+| index    | `varuint32`    | Index of the data segment or function in    |
+|          |                | the Wasm module (depending on kind).  The   |
+|          |                | function index is in the Wasm index space,  |
+|          |                | and must not reference an import.           |
 
 
 Merging Global Section
