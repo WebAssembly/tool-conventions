@@ -167,51 +167,32 @@ where a `syminfo` is encoded as:
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
 | kind         | `varuint32`    | The symbol type.  One of:                   |
-|              |                |   `0` - FUNCTION                            |
-|              |                |   `1` - DATA                                |
-|              |                |   `2` - GLOBAL                              |
+|              |                |   `0` - SYMTAB_FUNCTION                     |
+|              |                |   `1` - SYMTAB_DATA                         |
+|              |                |   `2` - SYMTAB_GLOBAL                       |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
-For functions, we may reference an existing import/export or include the same
-contents on the spot:
+For functions and globals, we reference an existing import/export which contains
+the name, whether the symbol is defined, its type, and so on:
 
-| wasm_index   | `varint32`     | If not equal to -1 then specifies an import or |
+| Field        | Type           | Description                                 |
+| -------------| -------------- | ------------------------------------------- |
+| wasm_index   | `varuint32`    | Specifies an import or                      |
 |              |                | export corresponding to the symbol          |
 |              |                | (function imports followed by function      |
-|              |                | exports)                                    |
-| name         | `string` ?     | Present if `wasm_index` is -1               |
-| exported     | `bool` ?       | Present if `wasm_index` is -1, specifies if |
-|              |                | the symbol is exported                      |
-| funcidx      | `varuint32` ?  | specifies function body, if exported is     |
-|              |                | present and true                            |
-| sigindex     | `varuint32` ?  | specifies sig index, if exported is         |
-|              |                | present and false                           |
+|              |                | exports for functions, etc)                 |
 
 For data:
 
-| name         | `string`       | The symbol name                             |
+| Field        | Type           | Description                                 |
+| -------------| -------------- | ------------------------------------------- |
+| name_len     | `varuint32`    | The symbol name length                      |
+| name_data    | `bytes`        | The symbol name data, UTF-8-encoded         |
 | segmentidx   | `varuint32`    | The index of a data segment                 |
 | offset       | `varuint32`    | The offset within the segment; must be <=   |
 |              |                | the segment's size                          |
 | size         | `varuint32`    | The size, which can be zero; offset + size  |
 |              |                | must be <= the segment's size               |
-
-For globals, we may reference an existing import/export or include the same
-contents on the spot:
-
-| wasm_index   | `varint32`     | If not equal to -1 then specifies an import or |
-|              |                | export corresponding to the symbol          |
-|              |                | (global imports followed by global          |
-|              |                | exports)                                    |
-| name         | `string` ?     | Present if `wasm_index` is -1               |
-| exported     | `bool` ?       | Present if `wasm_index` is -1, specifies if |
-|              |                | the symbol is exported                      |
-| globalidx    | `varuint32` ?  | specifies global, if exported is            |
-|              |                | present and true                            |
-| type         | `varuint32` ?  | specifies global type, if exported is       |
-|              |                | present and false                           |
-| mutable      | `varuint32` ?  | specifies global mutable, if exported is    |
-|              |                | present and false                           |
 
 The current set of valid flags for symbols are:
 
@@ -308,9 +289,8 @@ The same technique applies for all function calls whether the function is
 imported or defined locally.
 
 The Wasm object files shall have imports corresponding to all undefined
-strong symbols; undefined weak symbols do not have a corresponding import.
-All defined symbols (weak or strong) which have external linkage and
-do not have hidden visibility have an associated export.
+symbols, and all defined symbols have an associated export, including
+those with hidden visibility or internal (local) linkage.
 
 When taking the address of a non-existent function, a null index shall
 be written into the code/data section (for example, taking the address of
