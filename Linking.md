@@ -91,8 +91,7 @@ present:
 | Field  | Type             | Description                              |
 | ------ | ---------------- | ---------------------------------------- |
 | offset | `varuint32`      | offset of the value to rewrite           |
-| index  | `varuint32`      | the index of the function used, in the   |
-|        |                  | symbol table                             |
+| index  | `varuint32`      | the index into the symbol table (which must reference a function symbol) |
 
 For `R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB`,
 and `R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations the following fields are
@@ -101,7 +100,7 @@ present:
 | Field  | Type             | Description                         |
 | ------ | ---------------- | ----------------------------------- |
 | offset | `varuint32`      | offset of the value to rewrite      |
-| index  | `varuint32`      | the index of the data symbol used   |
+| index  | `varuint32`      | the index into the symbol table (which must reference a data symbol) |
 | addend | `varint32`       | addend to add to the address        |
 
 For `R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations the following fields are
@@ -118,8 +117,7 @@ are present:
 | Field  | Type             | Description                         |
 | ------ | ---------------- | ----------------------------------- |
 | offset | `varuint32`      | offset of the value to rewrite      |
-| index  | `varuint32`      | the index of the global used, in    |
-|        |                  | the symbol table                    |
+| index  | `varuint32`      | the index into the symbol table (which must reference a global symbol) |
 
 Linking Metadata Section
 ------------------------
@@ -138,9 +136,6 @@ out in the same way as the ["names"][names_sec] section:
 
 The current list of valid `type` codes are:
 
-- `8 ??? / WASM_SYMBOL_TABLE` - Specifies extra information about the symbols present
-  in the module.
-
 - `2 / WASM_DATA_SIZE` - Specifies the total size of the static data used by the
   module, including both initialized and zero-initialized (bss) data.
   Note that this is similar to the "minimum" field in the linear memory
@@ -153,6 +148,9 @@ The current list of valid `type` codes are:
 
 - `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
+
+- `8 / WASM_SYMBOL_TABLE` - Specifies extra information about the symbols present
+  in the module.
 
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
@@ -167,32 +165,34 @@ where a `syminfo` is encoded as:
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
 | kind         | `varuint32`    | The symbol type.  One of:                   |
-|              |                |   `0` - SYMTAB_FUNCTION                     |
-|              |                |   `1` - SYMTAB_DATA                         |
-|              |                |   `2` - SYMTAB_GLOBAL                       |
+|              |                |   `0 / SYMTAB_FUNCTION`                     |
+|              |                |   `1 / SYMTAB_DATA`                         |
+|              |                |   `2 / SYMTAB_GLOBAL`                       |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
-For functions and globals, we reference an existing import/export which contains
-the name, whether the symbol is defined, its type, and so on:
+For functions and globals, we reference an existing Wasm object, which is either
+an import or a defined function/global (recall that the operand of a Wasm
+`call` instruction uses an index space consisting of the function imports
+followed by the defined functions, and similarly `get_global` for global imports
+and definitions).  If a function or global symbol references an import, then the
+name is taken from the import; otherwise the `syminfo` specifies the symbol's
+name.
 
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
-| wasm_index   | `varuint32`    | Specifies an import or                      |
-|              |                | export corresponding to the symbol          |
-|              |                | (function imports followed by function      |
-|              |                | exports for functions, etc)                 |
+| index        | `varuint32`    | the index of the Wasm object corresponding to the symbol |
+| name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
+| name_data    | `bytes` ?      | UTF-8 encoding of the symbol name           |
 
-For data:
+For data symbols:
 
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
-| name_len     | `varuint32`    | The symbol name length                      |
-| name_data    | `bytes`        | The symbol name data, UTF-8-encoded         |
-| segmentidx   | `varuint32`    | The index of a data segment                 |
-| offset       | `varuint32`    | The offset within the segment; must be <=   |
-|              |                | the segment's size                          |
-| size         | `varuint32`    | The size, which can be zero; offset + size  |
-|              |                | must be <= the segment's size               |
+| name_len     | `varuint32`    | the length of `name_data` in bytes          |
+| name_data    | `bytes`        | UTF-8 encoding of the symbol name           |
+| index        | `varint32`     | the index of a data segment, or -1 if the symbol is undefined |
+| offset       | `varuint32` ?  | the offset within the segment; provided if `index != -1`; must be <= the segment's size |
+| size         | `varuint32` ?  | the size (which can be zero); provided if `index != -1`; `offset + size` must be <= the segment's size |
 
 The current set of valid flags for symbols are:
 
@@ -203,7 +203,9 @@ The current set of valid flags for symbols are:
   more than one definition remains.
 - `2 / WASM_SYM_BINDING_LOCAL` - Indicating that this is a local symbol (this
   is exclusive with `WASM_SYM_BINDING_WEAK`). Local symbols are not to be
-  exported, or linked to other modules/sections.
+  exported, or linked to other modules/sections. The names of all non-local
+  symbols must be unique, but the names of local symbols are not considered for
+  uniqueness. A local function or global symbol cannot reference an import.
 - `4 / WASM_SYM_VISIBILITY_HIDDEN` - Indicating that this is a hidden symbol.
   Hidden symbols are not to be exported when performing the final link, but
   may be linked to other modules.
@@ -253,22 +255,25 @@ and where a `ComdatSym` is encoded as:
 |          |                | and must not reference an import.           |
 
 
-Merging Wasm Globals
---------------------
+Merging Global Sections
+-----------------------
 
-Merging of the Wasm globals requires the re-numbering of globals.  This
-follows the normal rules for defining symbols: if two objects provide the
-same global symbol strongly, there is a link error, and so on.
+Merging of the global sections requires the re-numbering of globals.  This
+follows the normal rules for defining symbols: if two object files provide the
+same global symbol strongly, there is a link error; if two object files provide
+the symbol weakly, one is chosen.
 
-The only global currently used is the `__stack_pointer` global, provided
-weakly by all object files, and not exported.  The final link stage may or
-may not provide an export for it, depending on the user choice, or may
-discard the definition provided by the object files and turn it into an
-import.  The "mutable globals" proposal will determine what can be done...
+When creating non-relocatable output, the Wasm output shall have an import for
+each undefined strong symbol, and an export for each defined symbol with
+non-local linkage and non-hidden visibility.
+
+The linker may provide certain symbols itself, even if not defined by any
+object file.  For example, the `__stack_pointer` symbol may be provided at
+link-time.
 
 
-Merging Wasm Functions
-----------------------
+Merging Function Sections
+-------------------------
 
 Merging of the function sections requires the re-numbering of functions.  This
 requires modification to code sections at each location where a function
@@ -288,35 +293,71 @@ offset of the immediate within the code section.
 The same technique applies for all function calls whether the function is
 imported or defined locally.
 
-The Wasm object files shall have imports corresponding to all undefined
-symbols, and all defined symbols have an associated export, including
-those with hidden visibility or internal (local) linkage.
-
-When taking the address of a non-existent function, a null index shall
-be written into the code/data section (for example, taking the address of
-a weak symbol which is not available at link time).
-
-XXX what about calling a weak symbol that isn't available? What can you
-do to make the resulting Wasm file valid? Bother, do we have to do something
-silly like create a stub function with the right signature that just calls
-unreachable?
+When creating non-relocatable output, the Wasm output shall have an import for
+each undefined strong symbol, and an export for each defined symbol with
+non-local linkage and non-hidden visibility.
 
 
 Merging Data Sections
 ---------------------
 
-Data symbols (C/C+ globals) are represented in the object file as Wasm
-data segments with an associated DATA symbol.
+Merging of data sections is performed by creating a new data section from the
+data segments in the object files. Data symbols (C/C+ globals) are represented
+in the object file as Wasm data segments with an associated data symbol, so
+each linked data symbol pulls its associated data segment into the linked
+output.
 
-In the final linked binary all the segments are merged, and relocations are
-used to update the code to read/write to the correct addresses.
+Segments are merged according their type: segments with a common prefix such as
+`.data` or `.rodata` are merged into a single segment in the output data
+section.
 
 The output data section is formed, essentially, by concatenating the data
 sections of the input files.  Since the final location in linear memory of any
 given symbol (C global) is not known until link time, all references to global
 addresses with the code and data sections generate `R_WEBASSEMBLY_MEMORY_ADDR_*`
-relocation entries, which reference a DATA symbol, which identifies the segment
-and data within the segment.
+relocation entries, which reference a data symbol, which in turn identifies the
+segment and data within the segment.
+
+Segments are linked as a whole, and a segment is either entirely included or
+excluded from the link.
+
+
+Processing Relocations
+----------------------
+
+The final code and data sections are written out with relocations applied.
+
+`R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations cannot fail.  The output Wasm file
+shall contain a newly-synthesised type section which contains entries for all
+functions and type relocations in the output.
+
+`R_WEBASSEMBLY_TABLE_INDEX_SLEB` and `R_WEBASSEMBLY_TABLE_INDEX_I32` relocations
+cannot fail.  The output Wasm file shall contain a newly-synthesised table,
+which contains an entry for all defined or imported symbols referenced by table
+relocations.  The output table elements shall begin at a non-zero offset within
+the table, so that a `call_indirect 0` instruction is guaranteed to fail.
+Finally, when processing table relocations for symbols which have neither an
+import nor a definition (namely, weakly-undefined function symbols), the value
+`0` is written out as the value of the relocation.
+
+`R_WEBASSEMBLY_FUNCTION_INDEX_LEB` relocations may fail to be processed, in
+which case linking fails.  This occurs if there is a weakly-undefined function
+symbol, in which case there is no legal value that can be written as the target
+of any `call` instruction.  The frontend must generate calls to undefined weak
+symbols via a `call_indirect` instruction.
+
+`R_WEBASSEMBLY_GLOBAL_INDEX_LEB` relocations may fail to be processed, in which
+case linking fails.  This occurs if there is a weakly-undefined global symbol,
+in which case there is no legal value that can be written as the target of any
+`get_global` or `set_global` instruction.  The frontend must not weak globals
+which may not be defined; a definition or import must exist for all global
+symbols in the linked output.
+
+`R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB` and
+`R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations cannot fail.  The relocation's value
+is the offset within the linear memory of the symbol within the output segment,
+plus the symbol's addend.  If the symbol is undefined (whether weak or strong),
+the value of the relocation shall be `0`.
 
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
