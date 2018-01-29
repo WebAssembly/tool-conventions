@@ -249,10 +249,8 @@ and where a `ComdatSym` is encoded as:
 | kind     | `varuint32`    | Type of symbol, one of:                     |
 |          |                |   * `0 / WASM_COMDATA_DATA`, a data segment |
 |          |                |   * `1 / WASM_COMDATA_FUNCTION`             |
-| index    | `varuint32`    | Index of the data segment or function in    |
-|          |                | the Wasm module (depending on kind).  The   |
-|          |                | function index is in the Wasm index space,  |
-|          |                | and must not reference an import.           |
+|          |                |   * `2 / WASM_COMDATA_GLOBAL`               |
+| index    | `varuint32`    | Index of the data segment/function/global in the Wasm module (depending on kind).  The function/global must not be an import. |
 
 
 Merging Global Sections
