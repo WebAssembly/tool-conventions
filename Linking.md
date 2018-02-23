@@ -180,7 +180,7 @@ name.
 
 | Field        | Type           | Description                                 |
 | -------------| -------------- | ------------------------------------------- |
-| index        | `varuint32`    | the index of the Wasm object corresponding to the symbol |
+| index        | `varuint32`    | the index of the Wasm object corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
 | name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
 | name_data    | `bytes` ?      | UTF-8 encoding of the symbol name           |
 
@@ -190,9 +190,9 @@ For data symbols:
 | -------------| -------------- | ------------------------------------------- |
 | name_len     | `varuint32`    | the length of `name_data` in bytes          |
 | name_data    | `bytes`        | UTF-8 encoding of the symbol name           |
-| index        | `varint32`     | the index of a data segment, or -1 if the symbol is undefined |
-| offset       | `varuint32` ?  | the offset within the segment; provided if `index != -1`; must be <= the segment's size |
-| size         | `varuint32` ?  | the size (which can be zero); provided if `index != -1`; `offset + size` must be <= the segment's size |
+| index        | `varuint32` ?  | the index of the data segment; provided if the symbol is defined |
+| offset       | `varuint32` ?  | the offset within the segment; provided if the symbol is defined; must be <= the segment's size |
+| size         | `varuint32` ?  | the size (which can be zero); provided if the symbol is defined; `offset + size` must be <= the segment's size |
 
 The current set of valid flags for symbols are:
 
@@ -209,6 +209,9 @@ The current set of valid flags for symbols are:
 - `4 / WASM_SYM_VISIBILITY_HIDDEN` - Indicating that this is a hidden symbol.
   Hidden symbols are not to be exported when performing the final link, but
   may be linked to other modules.
+- `0x10 / WASM_SYM_UNDEFINED` - Indicating that this symbol is not defined.
+  For function/global symbols, must match whether the symbol is an import or
+  is defined; for data symbols, determines whether a segment is specified.
 
 For `WASM_DATA_SIZE` the following fields are present in the
 subsection:
