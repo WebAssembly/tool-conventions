@@ -136,11 +136,42 @@ out in the same way as the ["names"][names_sec] section:
 
 The current list of valid `type` codes are:
 
+- `5 / WASM_SEGMENT_INFO` - Extra metadata about the data segments.
+
+- `6 / WASM_INIT_FUNCS` - Specifies a list of constructor functions to be called
+  at startup time.
+
 - `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
 
 - `8 / WASM_SYMBOL_TABLE` - Specifies extra information about the symbols present
   in the module.
+
+For `WASM_SEGMENT_INFO` the following fields are present in the
+subsection:
+
+| Field       | Type         | Description                     |
+| ------------| -------------| --------------------------------|
+| count       | `varuint32`  | number of `segment` in segments |
+| segments    | `segment*`   | sequence of `segment`           |
+
+where a `segment` is encoded as:
+
+| Field        | Type         | Description                                  |
+| -------------| ------------ | -------------------------------------------- |
+| name_len     | `varuint32`  | length of `name_data` in bytes               |
+| name_data    | `bytes`      | UTF-8 encoding of the segment's name         |
+| alignment    | `varuint32`  | The alignment requirement (in bytes) of the  |
+|              |              | segment                                      |
+| flags        | `varuint32`  | a bitfield containing flags for this segment |
+
+For `WASM_INIT_FUNCS` the following fields are present in the
+subsection:
+
+| Field       | Type            | Description                           |
+| ------------| --------------- | --------------------------------------|
+| count       | `varuint32`     | number of init functions that follow  |
+| functions   | `symbol_index*` | sequence of symbol indices            |
 
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
