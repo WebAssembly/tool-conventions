@@ -44,7 +44,7 @@ section.
 Relocations contain the following fields:
 
 | Field      | Type                | Description                    |
-| -----------| ------------------- | ------------------------------ |
+| ---------- | ------------------- | ------------------------------ |
 | section_id | `varuint32`         | the section to which the relocations refer. |
 | name_len   | `varuint32` ?       | the length of name in bytes, present if `section_id == 0` |
 | name       | `bytes` ?           | the name of custom section, present if `section_id == 0` |
@@ -129,7 +129,7 @@ A linking metadata section contains a series of sub-sections layed
 out in the same way as the ["names"][names_sec] section:
 
 | Field        | Type        | Description                          |
-| -------------| ------------| ------------------------------------ |
+| ------------ | ----------- | ------------------------------------ |
 | type         | `varuint7`  | code identifying type of subsection  |
 | payload_len  | `varuint32` | size of this subsection in bytes     |
 | payload_data | `bytes`     | content of this subsection, of length `payload_len` |
@@ -151,7 +151,7 @@ For `WASM_SEGMENT_INFO` the following fields are present in the
 subsection:
 
 | Field       | Type         | Description                      |
-| ------------| -------------| -------------------------------- |
+| ----------- | ------------ | -------------------------------- |
 | count       | `varuint32`  | number of `segment` in segments  |
 | segments    | `segment*`   | sequence of `segment`            |
 
@@ -161,15 +161,14 @@ where a `segment` is encoded as:
 | ------------ | ------------ | --------------------------------------------- |
 | name_len     | `varuint32`  | length of `name_data` in bytes                |
 | name_data    | `bytes`      | UTF-8 encoding of the segment's name          |
-| alignment    | `varuint32`  | The alignment requirement (in bytes) of the \ |
-|              |              | segment                                       |
+| alignment    | `varuint32`  | The alignment requirement (in bytes) of the segment |
 | flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
 
 | Field       | Type         | Description                           |
-| ------------| -------------| --------------------------------------|
+| ----------- | ------------ | ------------------------------------- |
 | count       | `varuint32`  | number of init functions that follow  |
 | functions   | `varuint32*` | sequence of symbol indices            |
 
@@ -177,14 +176,14 @@ For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
 
 | Field  | Type            | Description                  |
-| -------| --------------- | -----------------------------|
+| ------ | --------------- | ---------------------------- |
 | count  | `varuint32`     | number of `syminfo` in infos |
 | infos  | `syminfo*`      | sequence of `syminfo`        |
 
 where a `syminfo` is encoded as:
 
 | Field        | Type           | Description                                 |
-| -------------| -------------- | ------------------------------------------- |
+| ------------ | -------------- | ------------------------------------------- |
 | kind         | `varuint32`    | The symbol type.  One of:                   |
 |              |                |   `0 / SYMTAB_FUNCTION`                     |
 |              |                |   `1 / SYMTAB_DATA`                         |
@@ -200,7 +199,7 @@ name is taken from the import; otherwise the `syminfo` specifies the symbol's
 name.
 
 | Field        | Type           | Description                                 |
-| -------------| -------------- | ------------------------------------------- |
+| ------------ | -------------- | ------------------------------------------- |
 | index        | `varuint32`    | the index of the Wasm object corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
 | name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
 | name_data    | `bytes` ?      | UTF-8 encoding of the symbol name           |
@@ -208,7 +207,7 @@ name.
 For data symbols:
 
 | Field        | Type           | Description                                 |
-| -------------| -------------- | ------------------------------------------- |
+| ------------ | -------------- | ------------------------------------------- |
 | name_len     | `varuint32`    | the length of `name_data` in bytes          |
 | name_data    | `bytes`        | UTF-8 encoding of the symbol name           |
 | index        | `varuint32` ?  | the index of the data segment; provided if the symbol is defined |
@@ -238,7 +237,7 @@ For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
 
 | Field   | Type        | Description                                    |
-| ------- | ------------| ---------------------------------------------- |
+| ------- | ----------- | ---------------------------------------------- |
 | count   | `varuint32` | Number of `Comdat` in `comdats`                |
 | comdats | `Comdat*`   | Sequence of `Comdat`
 
