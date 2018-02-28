@@ -160,12 +160,9 @@ where a `segment` is encoded as:
 | Field        | Type         | Description                                   |
 | ------------ | ------------ | --------------------------------------------- |
 | name_len     | `varuint32`  | length of `name_data` in bytes                |
-|              |              |                                               |
 | name_data    | `bytes`      | UTF-8 encoding of the segment's name          |
-|              |              |                                               |
-| alignment    | `varuint32`  | The alignment requirement (in bytes) of the   |
+| alignment    | `varuint32`  | The alignment requirement (in bytes) of the \ |
 |              |              | segment                                       |
-|              |              |                                               |
 | flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
 For `WASM_INIT_FUNCS` the following fields are present in the
