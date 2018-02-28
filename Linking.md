@@ -136,16 +136,6 @@ out in the same way as the ["names"][names_sec] section:
 
 The current list of valid `type` codes are:
 
-- `2 / WASM_DATA_SIZE` - Specifies the total size of the static data used by the
-  module, including both initialized and zero-initialized (bss) data.
-  Note that this is similar to the "minimum" field in the linear memory
-  description, however it's in units of bytes, so it's not limited to being
-  a multiple of the page size.
-
-- `3 / WASM_DATA_ALIGNMENT` - Specifies the alignment of the data section.  This
-  tells the linking what constraints are placed on the location of the data
-  section in the final binary.
-
 - `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
 
@@ -212,20 +202,6 @@ The current set of valid flags for symbols are:
 - `0x10 / WASM_SYM_UNDEFINED` - Indicating that this symbol is not defined.
   For function/global symbols, must match whether the symbol is an import or
   is defined; for data symbols, determines whether a segment is specified.
-
-For `WASM_DATA_SIZE` the following fields are present in the
-subsection:
-
-| Field  | Type        | Description                                    |
-| ------ | ------------| ---------------------------------------------- |
-| size   | `varuint32` | size of the module's static data in bytes      |
-
-For `WASM_DATA_ALIGNMENT` the following fields are present in the
-subsection:
-
-| Field  | Type        | Description                                    |
-| ------ | ------------| ---------------------------------------------- |
-| align  | `varuint32` | alignment requirement of the data stored as a power of 2 (`log2(alignment)`) |
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
