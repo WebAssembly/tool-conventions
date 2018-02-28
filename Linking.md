@@ -150,20 +150,23 @@ The current list of valid `type` codes are:
 For `WASM_SEGMENT_INFO` the following fields are present in the
 subsection:
 
-| Field       | Type         | Description                     |
-| ------------| -------------| --------------------------------|
-| count       | `varuint32`  | number of `segment` in segments |
-| segments    | `segment*`   | sequence of `segment`           |
+| Field       | Type         | Description                      |
+| ------------| -------------| -------------------------------- |
+| count       | `varuint32`  | number of `segment` in segments  |
+| segments    | `segment*`   | sequence of `segment`            |
 
 where a `segment` is encoded as:
 
-| Field        | Type         | Description                                  |
-| -------------| ------------ | -------------------------------------------- |
-| name_len     | `varuint32`  | length of `name_data` in bytes               |
-| name_data    | `bytes`      | UTF-8 encoding of the segment's name         |
-| alignment    | `varuint32`  | The alignment requirement (in bytes) of the  |
-|              |              | segment                                      |
-| flags        | `varuint32`  | a bitfield containing flags for this segment |
+| Field        | Type         | Description                                   |
+| ------------ | ------------ | --------------------------------------------- |
+| name_len     | `varuint32`  | length of `name_data` in bytes                |
+| ------------ | ------------ | --------------------------------------------- |
+| name_data    | `bytes`      | UTF-8 encoding of the segment's name          |
+| ------------ | ------------ | --------------------------------------------- |
+| alignment    | `varuint32`  | The alignment requirement (in bytes) of the   |
+|              |              | segment                                       |
+| -------------| ------------ | --------------------------------------------- |
+| flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
