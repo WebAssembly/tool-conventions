@@ -168,10 +168,10 @@ where a `segment` is encoded as:
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
 
-| Field       | Type            | Description                           |
-| ------------| --------------- | --------------------------------------|
-| count       | `varuint32`     | number of init functions that follow  |
-| functions   | `symbol_index*` | sequence of symbol indices            |
+| Field       | Type         | Description                           |
+| ------------| -------------| --------------------------------------|
+| count       | `varuint32`  | number of init functions that follow  |
+| functions   | `varuint32*` | sequence of symbol indices            |
 
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
