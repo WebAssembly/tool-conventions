@@ -55,7 +55,7 @@ A `relocation_entry` begins with:
 
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
-| type     | `varuint32`         | the relocation type            |
+| type     | `uint8`             | the relocation type            |
 
 A relocation type can be one of the following:
 
@@ -130,7 +130,7 @@ out in the same way as the ["names"][names_sec] section:
 
 | Field        | Type        | Description                          |
 | ------------ | ----------- | ------------------------------------ |
-| type         | `varuint7`  | code identifying type of subsection  |
+| type         | `uint8`     | code identifying type of subsection  |
 | payload_len  | `varuint32` | size of this subsection in bytes     |
 | payload_data | `bytes`     | content of this subsection, of length `payload_len` |
 
@@ -184,7 +184,7 @@ where a `syminfo` is encoded as:
 
 | Field        | Type           | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
-| kind         | `varuint32`    | The symbol type.  One of:                   |
+| kind         | `uint8`        | The symbol type.  One of:                   |
 |              |                |   `0 / SYMTAB_FUNCTION`                     |
 |              |                |   `1 / SYMTAB_DATA`                         |
 |              |                |   `2 / SYMTAB_GLOBAL`                       |
@@ -239,23 +239,23 @@ subsection:
 | Field   | Type        | Description                                    |
 | ------- | ----------- | ---------------------------------------------- |
 | count   | `varuint32` | Number of `Comdat` in `comdats`                |
-| comdats | `Comdat*`   | Sequence of `Comdat`
+| comdats | `comdat*`   | Sequence of `Comdat`
 
-where a `Comdat` is encoded as:
+where a `comdat` is encoded as:
 
-| Field       | Type         | Description                               |
-| ----------- | ------------ | ----------------------------------------- |
-| name_len    | `varuint32`  | length of `name_str` in bytes             |
-| name_str    | `bytes`      | UTF-8 encoding of the name                |
-| flags       | `varuint32`  | Must be zero, no flags currently defined  |
-| count       | `varuint32`  | Number of `ComdatSym` in `comdat_syms`    |
-| comdat_syms | `ComdatSym*` | Sequence of `ComdatSym`                   |
+| Field       | Type          | Description                               |
+| ----------- | ------------- | ----------------------------------------- |
+| name_len    | `varuint32`   | length of `name_str` in bytes             |
+| name_str    | `bytes`       | UTF-8 encoding of the name                |
+| flags       | `varuint32`   | Must be zero, no flags currently defined  |
+| count       | `varuint32`   | Number of `comdat_sym` in `comdat_syms`   |
+| comdat_syms | `comdat_sym*` | Sequence of `comdat_sym`                  |
 
-and where a `ComdatSym` is encoded as:
+and where a `comdat_sym` is encoded as:
 
 | Field    | Type           | Description                                 |
 | -------- | -------------- | ------------------------------------------- |
-| kind     | `varuint32`    | Type of symbol, one of:                     |
+| kind     | `uint8`        | Type of symbol, one of:                     |
 |          |                |   * `0 / WASM_COMDATA_DATA`, a data segment |
 |          |                |   * `1 / WASM_COMDATA_FUNCTION`             |
 |          |                |   * `2 / WASM_COMDATA_GLOBAL`               |
@@ -309,10 +309,10 @@ Merging Data Sections
 ---------------------
 
 Merging of data sections is performed by creating a new data section from the
-data segments in the object files. Data symbols (C/C+ globals) are represented
-in the object file as Wasm data segments with an associated data symbol, so
-each linked data symbol pulls its associated data segment into the linked
-output.
+data segments in the object files. Data symbols (e.g. C/C+ globals) are
+represented in the object file as Wasm data segments with an associated data
+symbol, so each linked data symbol pulls its associated data segment into the
+linked output.
 
 Segments are merged according their type: segments with a common prefix such as
 `.data` or `.rodata` are merged into a single segment in the output data
@@ -320,10 +320,9 @@ section.
 
 The output data section is formed, essentially, by concatenating the data
 sections of the input files.  Since the final location in linear memory of any
-given symbol (C global) is not known until link time, all references to global
-addresses with the code and data sections generate `R_WEBASSEMBLY_MEMORY_ADDR_*`
-relocation entries, which reference a data symbol, which in turn identifies the
-segment and data within the segment.
+given symbol is not known until link time, all references to data addresses
+with the code and data sections generate `R_WEBASSEMBLY_MEMORY_ADDR_*`
+relocation entries, which reference a data symbol.
 
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
