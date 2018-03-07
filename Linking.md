@@ -221,6 +221,9 @@ The current set of valid flags for symbols are:
   discarded if any strong definitions exist; then if multiple weak definitions
   exist all but one (unspecified) are discarded; and finally it is an error if
   more than one definition remains.
+  
+  It is an error to apply this flag to undefined global symbols; when linking,
+  all global symbols must have a definition provided so imports must be strong.
 - `2 / WASM_SYM_BINDING_LOCAL` - Indicating that this is a local symbol (this
   is exclusive with `WASM_SYM_BINDING_WEAK`). Local symbols are not to be
   exported, or linked to other modules/sections. The names of all non-local
@@ -346,18 +349,21 @@ Finally, when processing table relocations for symbols which have neither an
 import nor a definition (namely, weakly-undefined function symbols), the value
 `0` is written out as the value of the relocation.
 
-`R_WEBASSEMBLY_FUNCTION_INDEX_LEB` relocations may fail to be processed, in
-which case linking fails.  This occurs if there is a weakly-undefined function
-symbol, in which case there is no legal value that can be written as the target
-of any `call` instruction.  The frontend must generate calls to undefined weak
-symbols via a `call_indirect` instruction.
+`R_WEBASSEMBLY_FUNCTION_INDEX_LEB` relocations shall not fail to be processed.
+In case where the function symbol is weakly-undefined, there is no function
+provided to the linker which can be used as the value of the relocation, and,
+a `call` instruction must refer to a function for the module to validate.
+Therefore, the linker must synthesise a function which aborts at runtime, to
+use as the target of the relocation.  Note that this synthetic stub _must not_
+be placed in the table; a TABLE_INDEX relocation for the same function symbol
+must resolve to `0` (the null pointer) and not to a function table entry
+referencing the synthetic stub.
 
-`R_WEBASSEMBLY_GLOBAL_INDEX_LEB` relocations may fail to be processed, in which
-case linking fails.  This occurs if there is a weakly-undefined global symbol,
-in which case there is no legal value that can be written as the target of any
-`get_global` or `set_global` instruction.  The frontend must not weak globals
-which may not be defined; a definition or import must exist for all global
-symbols in the linked output.
+`R_WEBASSEMBLY_GLOBAL_INDEX_LEB` relocations cannot fail, since global symbols
+must either be defined (weakly or strongly), or if undefined must be strong.
+Hence, there is always a global in the final output to use as the target of
+the relocation. (If weak undefined globals were permitted, there would be no
+Wasm global in the final output for the relocation to target.)
 
 `R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB` and
 `R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations cannot fail.  The relocation's value
