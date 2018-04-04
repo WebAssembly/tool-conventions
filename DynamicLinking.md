@@ -13,12 +13,14 @@ A WebAssembly dynamic library is a WebAssembly binary with a special custom sect
 
 The "dylink" section is defined as:
 
-| Field      | Type        | Description                    |
-| ---------- | ----------- | ------------------------------ |
-| memorysize | `varuint32` | Size of the memory area the loader should reserve for the module, which will begin at `env.memoryBase` |
-| tablesize  | `varuint32` | Size of the table area the loader should reserve for the module, which will begin at `env.tableBase` |
+| Field           | Type        | Description                    |
+| ----------      | ----------- | ------------------------------ |
+| memorysize      | `varuint32` | Size of the memory area the loader should reserve for the module, which will begin at `env.memoryBase` |
+| memoryalignment | `varuint32` | The required alignment of the memory area, in bytes, encoded as an exponent of 2. |
+| tablesize       | `varuint32` | Size of the table area the loader should reserve for the module, which will begin at `env.tableBase` |
+| tablealignment  | `varuint32` | The required alignment of the table area, in bytes. encoded as an exponent of 2. |
 
-`env.memoryBase` and `env.tableBase` are `i32` imports that contain offsets into the linked memory and table, respectively. If the dynamic library has `memorysize > 0` then the loader will reserve room in memory of that size and initialize it to zero (note: can be larger than the memory segments in the module, if the dynamic library wants additional space) at offset `env.memoryBase`, and similarly for the table (where initialization is to `null`, i.e., a trap will occur if it is called). The library can then place memory and table segments at the proper locations using those imports.
+`env.memoryBase` and `env.tableBase` are `i32` imports that contain offsets into the linked memory and table, respectively. If the dynamic library has `memorysize > 0` then the loader will reserve room in memory of that size and initialize it to zero (note: can be larger than the memory segments in the module, if the dynamic library wants additional space) at offset `env.memoryBase`, and similarly for the table (where initialization is to `null`, i.e., a trap will occur if it is called). The allocated regions of the table and memory are guaranteed to be at least as aligned as the library requests in the `memory alignment, tablealignment` properties. The library can then place memory and table segments at the proper locations using those imports.
 
 The "dylink" section should be the very first section in the module; this allows detection of whether a binary is a dynamic library without having to scan the entire contents.
 
