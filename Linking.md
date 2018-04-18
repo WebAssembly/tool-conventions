@@ -43,13 +43,11 @@ section.
 
 Relocations contain the following fields:
 
-| Field      | Type                | Description                    |
-| ---------- | ------------------- | ------------------------------ |
-| section_id | `varuint32`         | the section to which the relocations refer. |
-| name_len   | `varuint32` ?       | the length of name in bytes, present if `section_id == 0` |
-| name       | `bytes` ?           | the name of custom section, present if `section_id == 0` |
-| count      | `varuint32`         | count of entries to follow     |
-| entries    | `relocation_entry*` | sequence of relocation entries |
+| Field     | Type                | Description                     |
+| ----------| ------------------- | ------------------------------- |
+| section   | `varuint32`         | the index of the target section |
+| count     | `varuint32`         | count of entries to follow      |
+| entries   | `relocation_entry*` | sequence of relocation entries  |
 
 A `relocation_entry` begins with:
 
