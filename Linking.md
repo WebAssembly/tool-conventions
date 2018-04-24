@@ -36,7 +36,7 @@ section itself.
 Relocation Sections
 -------------------
 
-A relocation section is a user-defined section with a name starting with
+A relocation section is a custom section with a name starting with
 "reloc." Relocation sections start with an identifier specifying which
 section they apply to, and must be sequenced in the module after that
 section.
@@ -104,11 +104,37 @@ body.
 Linking Metadata Section
 ------------------------
 
-A linking metadata section is a user-defined section with the name
-"linking".
+A linking metadata section is a custom section with the name "linking".
 
-A linking metadata section contains a series of sub-sections layed
-out in the same way as the ["names"][names_sec] section:
+A linking metadata section begins with a header which is then followed by a
+series of sub-sections laid out in the same way as the ["names"][names_sec]
+section.
+
+The header contains the following fields:
+
+| Field       | Type         | Description                        |
+| ----------- | ------------ | ---------------------------------- |
+| version     | `varuint32`  | Metadata version number            |
+| abi         | `varuint32`  | ABI                                |
+| abi_version | `varuint32`  | ABI version number                 |
+| abi_flags   | `varuint32`  | a bitfield of abi-specific flags   |
+
+The `version` field contains an integer version number which is updated each
+time the linking metadata described in this documented is changed in an
+incompatible way.  Linkers and other tools can issue warnings or reject
+incompatible inputs based on this version. The current metadata version is `1`
+and the goal is to avoid updating this.
+
+The `abi` specifies which ABI is used in by the code contained in the module.
+Currently there is only one possible value for this field:
+
+- `1 / WASM_ABI_CXX` - [WebAssembly C/C++ ABI][abi_cxx]
+
+The `abi_version` field specifies the version of the ABI in use.  This is used
+to distinguish between incompatible versions of the same ABI.  The current
+version of `WASM_ABI_CXX` is `1`.
+
+Each subsection contains the following fields:
 
 | Field        | Type        | Description                          |
 | ------------ | ----------- | ------------------------------------ |
@@ -349,3 +375,4 @@ the value of the relocation shall be `0`.
 
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
+[abi_cxx]: https://github.com/WebAssembly/tool-conventions/blob/master/BasicCABI.md
