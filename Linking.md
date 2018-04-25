@@ -107,8 +107,20 @@ Linking Metadata Section
 A linking metadata section is a user-defined section with the name
 "linking".
 
-A linking metadata section contains a series of sub-sections layed
-out in the same way as the ["names"][names_sec] section:
+A linking metadata section begins with a version number which is then followed
+by a series of sub-sections laid out in the same way as the ["names"][names_sec]
+section:
+
+| Field       | Type          | Description                          |
+| ----------- | ------------- | ------------------------------------ |
+| version     | `varuint32`   | the version of linking metadata contained in this
+section |
+| subsections | `subsection*` | sequence of `subsection`             |
+
+This `version` allows for breaking changes to be made to the format described
+here.  Tools can then choose to reject imputs contained unexpected versions.
+
+Each `subsection` is encoded as:
 
 | Field        | Type        | Description                          |
 | ------------ | ----------- | ------------------------------------ |
