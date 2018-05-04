@@ -79,13 +79,19 @@ A relocation type can be one of the following:
   5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WEBASSEMBLY_GLOBAL_INDEX_LEB` - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
+- `8 / R_WEBASSEMBLY_FUNCTION_OFFSET_I32` - a byte offset within code section
+  for the specic function encoded as a [uint32].
+  The offsets start at the actual function code excluding its size field.
+- `9 / R_WEBASSEMBLY_SECTION_OFFSET_I32` - an byte offset from start of the
+  specified section encoded as a [uint32].
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
 [uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
 
 For `R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB`,
-and `R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations the following field is
+`R_WEBASSEMBLY_MEMORY_ADDR_I32`, `R_WEBASSEMBLY_FUNCTION_OFFSET_I32`,
+and `R_WEBASSEMBLY_SECTION_OFFSET_I32` relocations the following field is
 additionally present:
 
 | Field  | Type             | Description                         |
@@ -181,6 +187,7 @@ where a `syminfo` is encoded as:
 |              |                |   `0 / SYMTAB_FUNCTION`                     |
 |              |                |   `1 / SYMTAB_DATA`                         |
 |              |                |   `2 / SYMTAB_GLOBAL`                       |
+|              |                |   `3 / SYMTAB_SECTION`                      |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
 For functions and globals, we reference an existing Wasm object, which is either
@@ -206,6 +213,12 @@ For data symbols:
 | index        | `varuint32` ?  | the index of the data segment; provided if the symbol is defined |
 | offset       | `varuint32` ?  | the offset within the segment; provided if the symbol is defined; must be <= the segment's size |
 | size         | `varuint32` ?  | the size (which can be zero); provided if the symbol is defined; `offset + size` must be <= the segment's size |
+
+For section symbols:
+
+| Field        | Type           | Description                                 |
+| ------------ | -------------- | ------------------------------------------- |
+| section      | `varuint32`    | the index of the target section             |
 
 The current set of valid flags for symbols are:
 
@@ -320,6 +333,14 @@ relocation entries, which reference a data symbol.
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
 
+Mergin Custom Sections
+----------------------
+
+Mergin of custom sections is performed by concatenating all payloads for the
+customs sections with the same name. The section symbol will refer the resulting
+section, this means that the relocation entries addend that refer
+the referred custom section fields shall be adjusted to take new offset
+into account.
 
 Processing Relocations
 ----------------------
@@ -358,5 +379,10 @@ is the offset within the linear memory of the symbol within the output segment,
 plus the symbol's addend.  If the symbol is undefined (whether weak or strong),
 the value of the relocation shall be `0`.
 
+`R_WEBASSEMBLY_FUNCTION_OFFSET_I32` relocations cannot fail. The values shall be
+adjusted to reflect new offsets in the code section.
+
+`R_WEBASSEMBLY_SECTION_OFFSET_I32` relocation cannot fail. The values shall be
+adjusted to reflect new offsets in the combined sections.
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
