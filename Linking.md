@@ -113,8 +113,7 @@ section:
 
 | Field       | Type          | Description                          |
 | ----------- | ------------- | ------------------------------------ |
-| version     | `varuint32`   | the version of linking metadata contained in this
-section |
+| version     | `varuint32`   | the version of linking metadata contained in this section |
 | subsections | `subsection*` | sequence of `subsection`             |
 
 This `version` allows for breaking changes to be made to the format described
