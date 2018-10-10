@@ -8,20 +8,21 @@ producers and consumers.
 
 The producers section is a
 [custom section](https://webassembly.github.io/spec/core/binary/modules.html#custom-section)
-and thus has no behavior effect and can be stripped at any time.
-However, the producers it is intended to be small and thus the intention is
-that tools include themselves in the toolchain section by default for the
-benefit of downstream analysis.
+and thus has no semantic effects and can be stripped at any time.
+Since the producers section is relatively small, tools are encouraged to emit
+the section or include themselves in an existing section by default, keeping
+the producers section even in release builds.
 
 An additional goal of the producers section is to provide a discrete, but
-easily-growable list of known values for each record field. This avoids
-the normal skew that happens with completely unstructured strings. WebAssembly
+easily-growable [list of known tools](#known-tools) for each record field. This
+avoids the skew that otherwise happens with unstructured strings. WebAssembly
 consumers are encouraged to emit diagnostics when given values that don't match
-the list which encourage producers to register new field values in this document.
+the known tools list to encourage producers to register new field values in this
+document.
 
 Since version information is useful but highly-variable, every field value is
-optionally suffixed with a parenthesized version string, which is not matched
-against any list and thus does not diagnostic validity checking.
+optionally suffixed with a parenthesized version string which is not validated
+against any list.
 
 # Known tools
 
