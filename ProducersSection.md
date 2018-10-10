@@ -56,7 +56,7 @@ validity constraints on the UTF-8-decoded code points of these strings.
 ## Tool name string
 
 A tool name is a sequence of code points containing anything *other* than
-parentheses and commas, allowing the simple scanning of compound patterns.
+parentheses and commas.
 
 JS Pattern: `/[^(),]+/`
 
@@ -92,7 +92,7 @@ Example tool-version strings:
 
 ## Tool-version set string
 
-A tool-version set string is possibly-empty, comma-deliminted list where each
+A tool-version set string a is possibly-empty, comma-delimited list where each
 contained tool name string is unique.
 
 Pattern (ignoring uniqueness requirement):
@@ -106,7 +106,7 @@ Example tool-version set strings:
 
 # Custom Section
 
-Custom section `name` field: `"producers"`
+Custom section `name` field: `producers`
 
 The producers section may appear only once, and only after the
 [Name section](https://webassembly.github.io/spec/core/appendix/custom.html#name-section).
