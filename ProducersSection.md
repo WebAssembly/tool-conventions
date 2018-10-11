@@ -53,10 +53,11 @@ The binary encoding of record fields uses the standard
 used elsewhere in wasm modules. However, the producers section imposes additional
 validity constraints on the UTF-8-decoded code points of these strings.
 
-## Tool name string
+## Atom
 
-A tool name is a sequence of code points containing anything *other* than
-parentheses and commas.
+An "atom" is a sequence of code points containing anything *other* than
+parentheses and commas (which are the only relevant separators in producer
+section strings).
 
 JS Pattern: `/[^(),]+/`
 
@@ -65,30 +66,19 @@ Example tool name strings:
 * c++
 * ☃
 
-## Version string
-
-A version string can be appended to any tool name and describes the version of
-that tool.
-
-JS Pattern: `/\((\d+\.)*\d*\)/`
-
-Example version strings:
-* (1)
-* (1.2)
-* (0.12.1.30)
-
 ## Tool-version string
 
-A tool-version string is a tool name string followed by an optional version string.
+A tool-version string is an atom identifying the tool name followed by
+an optional parenthesized atom identifying the version.
 
 Pattern:
-* Logical: `Tool name string` `Version string`?
-* JS: `/[^(),]+(\((\d+\.)*\d*\))?/`
+* Logical: [`Atom`](#atom) ( `(` [`Atom`](#atom) `)` )?
+* JS: `/[^(),]+(\([^(),]*\))?/`
 
 Example tool-version strings:
 * a
 * c++(11)
-* ☃(0.0.1)
+* ☃(1.0.☃)
 
 ## Tool-version set string
 
@@ -96,13 +86,13 @@ A tool-version set string a is possibly-empty, comma-delimited list where each
 contained tool name string is unique.
 
 Pattern (ignoring uniqueness requirement):
-* Logical: ( `Tool-version string` `,` )* `Tool-version string`
-* JS: `/([^(),]+(\((\d+\.)*\d*\))?,)*[^(),]+(\((\d+\.)*\d*\))?/`
+* Logical: ( [`Tool-version string`](#tool-version-string) `,` )* [`Tool-version string`](#tool-version-string)
+* JS: `/([^(),]+(\([^(),]*\))?,)*[^(),]+(\([^(),]*\))?/`
 
 Example tool-version set strings:
 * a
 * a(1.0)
-* llvm(20.3),binaryen,lld(1.3),webpack(4)
+* llvm(20.3-beta),binaryen,lld(1.3),webpack(4)
 
 # Custom Section
 
