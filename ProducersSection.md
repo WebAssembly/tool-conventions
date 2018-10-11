@@ -102,8 +102,8 @@ Custom section `name` field: `producers`
 The producers section may appear only once, and only after the
 [Name section](https://webassembly.github.io/spec/core/appendix/custom.html#name-section).
 
-The producers section contains a sequence of fields, where the end of the last
-field must coincide with the last byte of the producers section:
+The producers section contains a sequence of fields with unique names, where the
+end of the last field must coincide with the last byte of the producers section:
 
 | Field       | Type        | Description |
 | ----------- | ----------- | ----------- |
@@ -117,7 +117,7 @@ where a `field` is encoded as:
 | field_name  | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field, chosen from one of the set of valid field names below |
 | field_value | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | a string which match the specified pattern according to the table below |
 
-The valid field names and their associated patterns are:
+Each field_name in the list must be unique and found in the folowing table:
 
 | field_name     | field_value pattern  | Valid tool names |
 | -------------- | -------------------- | --------- |
