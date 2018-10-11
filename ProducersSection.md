@@ -27,7 +27,7 @@ against any known list.
 
 # Known tools
 
-The following lists contain all the valid tool names for the fields listed below.
+The following lists contain all the known tool names for the fields listed below.
 **If your tool is not on this list and you'd like it to be, please submit a PR.**
 
 ## Source Languages
