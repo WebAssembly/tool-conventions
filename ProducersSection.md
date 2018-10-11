@@ -82,7 +82,7 @@ Example tool-version strings:
 
 ## Tool-version set string
 
-A tool-version set string a is possibly-empty, comma-delimited list where each
+A tool-version set string is a possibly-empty, comma-delimited list where each
 contained tool name string is unique.
 
 Pattern (ignoring uniqueness requirement):
