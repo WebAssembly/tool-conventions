@@ -15,14 +15,15 @@ the producers section even in release builds.
 
 An additional goal of the producers section is to provide a discrete, but
 easily-growable [list of known tools](#known-tools) for each record field. This
-avoids the skew that otherwise happens with unstructured strings. WebAssembly
-consumers are encouraged to emit diagnostics when given values that don't match
-the known tools list to encourage producers to register new field values in this
-document.
+avoids the skew that otherwise happens with unstructured strings. Evergreen
+WebAssembly consumers (like browsers) are encourage to emit diagnostics
+encouraging producers to register new field values in this document. However, an
+unknown tool does not make the producers section invalid and all consumers
+should gracefully handle unknown tool names.
 
 Since version information is useful but highly-variable, every field value is
-optionally suffixed with a parenthesized version string which is not validated
-against any list.
+optionally suffixed with a parenthesized version string which is not checked
+against any known list.
 
 # Known tools
 
