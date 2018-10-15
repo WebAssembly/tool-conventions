@@ -14,7 +14,7 @@ the section or include themselves in an existing section by default, keeping
 the producers section even in release builds.
 
 An additional goal of the producers section is to provide a discrete, but
-easily-growable [list of known tools/languages/SDKs](#known-list) for each
+easily-growable [list of known tools/languages](#known-list) for each
 record field. This avoids the skew that otherwise happens with unstructured
 strings. Unknown names do not invalidate an otherwise-valid producers section.
 However, wasm consumers may provide less accurate telemetry results for unknown
@@ -45,7 +45,7 @@ where a `field` is encoded as:
 | ----------------- | ---- | ----------- |
 | field_name        | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field |
 | field_value_count | `varuint32` | number of value strings that follow |
-| field_values      | `versioned-name*` | sequence of `value_count` value strings |
+| field_values      | `versioned-name*` | sequence of `field_value_count` name-value pairs |
 
 where a `versioned-name` is encoded as:
 
@@ -56,10 +56,10 @@ where a `versioned-name` is encoded as:
 
 with the additional constraint that each field_name in the list must be unique
 and found in the first column of the following table, and each of a given field_name's
-field_values's `name` strings must be unique and found in the second column of
+field_values's name strings must be unique and found in the second column of
 the field_name's row.
 
-| field_name     | field_values strings |
+| field_name     | field_value name strings |
 | -------------- | -------------------- |
 | `language`     | [source language list](#source-languages) |
 | `processed-by` | [individual tool list](#individual-tools) |
