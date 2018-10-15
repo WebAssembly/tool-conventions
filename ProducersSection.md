@@ -37,7 +37,7 @@ end of the last field must coincide with the last byte of the producers section:
 | Field       | Type        | Description |
 | ----------- | ----------- | ----------- |
 | field_count | `varuint32` | number of fields that follow |
-| fields      | `field*`     | sequence of `field_count` `field` records |
+| fields      | `field*`     | sequence of field_count `field` records |
 
 where a `field` is encoded as:
 
@@ -45,7 +45,7 @@ where a `field` is encoded as:
 | ----------------- | ---- | ----------- |
 | field_name        | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field |
 | field_value_count | `varuint32` | number of value strings that follow |
-| field_values      | `versioned-name*` | sequence of `field_value_count` name-value pairs |
+| field_values      | `versioned-name*` | sequence of field_value_count name-value pairs |
 
 where a `versioned-name` is encoded as:
 
