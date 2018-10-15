@@ -39,7 +39,7 @@ The following lists contain all the known tool names for the fields listed below
 ## Individual Tools
 
 * `wabt`
-* `llvm`
+* `LLVM`
 * `lld`
 * `Binaryen`
 
