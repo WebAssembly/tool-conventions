@@ -14,85 +14,15 @@ the section or include themselves in an existing section by default, keeping
 the producers section even in release builds.
 
 An additional goal of the producers section is to provide a discrete, but
-easily-growable [list of known tools](#known-tools) for each record field. This
-avoids the skew that otherwise happens with unstructured strings. Unknown tools
-do not invalidate an otherwise-valid producers section. However, wasm consumers
-may provide less accurate telemetry results for unknown tools or even emit
-diagnostics encouraging the tool to be put on the list.
+easily-growable [list of known tools/languages/SDKs](#known-list) for each
+record field. This avoids the skew that otherwise happens with unstructured
+strings. Unknown names do not invalidate an otherwise-valid producers section.
+However, wasm consumers may provide less accurate telemetry results for unknown
+names or even emit diagnostics encouraging the name to be put on [the list](#known-list).
 
-Since version information is useful but highly-variable, every field value is
-optionally suffixed with a parenthesized version string which is not checked
-against any known list.
-
-# Known tools
-
-The following lists contain all the known tool names for the fields listed below.
-**If your tool is not on this list and you'd like it to be, please submit a PR.**
-
-## Source Languages
-
-* `wat`
-* `C`
-* `C++`
-
-## Individual Tools
-
-* `wabt`
-* `LLVM`
-* `lld`
-* `Binaryen`
-
-## SDKs
-
-* `Emscripten`
-
-# String formats
-
-The binary encoding of record fields uses the standard
-[name encoding](https://webassembly.github.io/spec/core/binary/values.html#names)
-used elsewhere in wasm modules. However, the producers section imposes additional
-validity constraints on the UTF-8-decoded code points of these strings.
-
-## Atom
-
-An "atom" is a sequence of code points containing anything *other* than
-parentheses and commas (which are the only relevant separators in producer
-section strings).
-
-JS Pattern: `/[^(),]+/`
-
-Example tool name strings:
-* wabt
-* c++
-* ☃
-
-## Tool-version string
-
-A tool-version string is an atom identifying the tool name followed by
-an optional parenthesized atom identifying the version.
-
-Pattern:
-* Logical: [`Atom`](#atom) ( `(` [`Atom`](#atom) `)` )?
-* JS: `/[^(),]+(\([^(),]*\))?/`
-
-Example tool-version strings:
-* a
-* c++(11)
-* ☃(1.0.☃)
-
-## Tool-version set string
-
-A tool-version set string is a possibly-empty, comma-delimited list where each
-contained tool name string is unique.
-
-Pattern (ignoring uniqueness requirement):
-* Logical: ( [`Tool-version string`](#tool-version-string) `,` )* [`Tool-version string`](#tool-version-string)
-* JS: `/([^(),]+(\([^(),]*\))?,)*[^(),]+(\([^(),]*\))?/`
-
-Example tool-version set strings:
-* a
-* a(1.0)
-* llvm(20.3-beta),binaryen,lld(1.3),webpack(4)
+Since version information is useful, but highly-variable, each field value
+is accompanied with a version string so that the name can remain stable
+over time without requiring frequent updates to the [known list](#known-list).
 
 # Custom Section
 
@@ -107,23 +37,67 @@ end of the last field must coincide with the last byte of the producers section:
 | Field       | Type        | Description |
 | ----------- | ----------- | ----------- |
 | field_count | `varuint32` | number of fields that follow |
-| fields      | `field*`     | sequence of `field` |
+| fields      | `field*`     | sequence of `field_count` `field` records |
 
 where a `field` is encoded as:
 
-| Field       | Type | Description |
-| ----------- | ---- | ----------- |
-| field_name  | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field, chosen from one of the set of valid field names below |
-| field_value | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | a string which match the specified pattern according to the table below |
+| Field             | Type | Description |
+| ----------------- | ---- | ----------- |
+| field_name        | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field |
+| field_value_count | `varuint32` | number of value strings that follow |
+| field_values      | `versioned-name*` | sequence of `value_count` value strings |
 
-Each field_name in the list must be unique and found in the folowing table:
+where a `versioned-name` is encoded as:
 
-| field_name     | field_value pattern  | Valid tool names |
-| -------------- | -------------------- | --------- |
-| `language`     | [Tool-version string](#tool-version-string) | [source language list](#source-languages) |
-| `processed-by` | [Tool-version set string](#tool-version-set-string) | [individual tool list](#individual-tools) |
-| `sdk`          | [Tool-version string](#tool-version-string) | [SDK list](#sdks) |
+| Field   | Type | Description |
+| ------- | ---- | ----------- |
+| name    | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of the language/tool |
+| version | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | version of the language/tool |
+
+with the additional constraint that each field_name in the list must be unique
+and found in the first column of the following table, and each of a given field_name's
+field_values's `name` strings must be unique and found in the second column of
+the field_name's row.
+
+| field_name     | field_values strings |
+| -------------- | -------------------- |
+| `language`     | [source language list](#source-languages) |
+| `processed-by` | [individual tool list](#individual-tools) |
+| `sdk`          | [SDK list](#sdks) |
 
 # Text format
 
 TODO
+
+# Known list
+
+The following lists contain all the known names for the fields listed above.
+**If your tool is not on this list and you'd like it to be, please submit a PR.**
+
+## Source Languages
+
+It is possible for multiple source languages to be present in a single module
+when the output of multiple compiled languages are statically linked together.
+
+* `wat`
+* `C`
+* `C++`
+
+## Individual Tools
+
+It is possible (and common) for multiple tools to be used in the overall
+pipeline that produces and optimizes a given wasm module.
+
+* `wabt`
+* `LLVM`
+* `lld`
+* `Binaryen`
+
+## SDKs
+
+While an SDK is technically just another tool, the `sdk` field designates the
+top-level "thing" that the developer installs and interacts with directly to
+produce the wasm module.
+
+* `Emscripten`
+
