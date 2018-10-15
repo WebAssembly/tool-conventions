@@ -18,11 +18,11 @@ easily-growable [list of known tools/languages/SDKs](#known-list) for each
 record field. This avoids the skew that otherwise happens with unstructured
 strings. Unknown names do not invalidate an otherwise-valid producers section.
 However, wasm consumers may provide less accurate telemetry results for unknown
-names or even emit diagnostics encouraging the name to be put on [the list](#known-list).
+names or even emit diagnostics encouraging the name to be put on the known list.
 
 Since version information is useful, but highly-variable, each field value
 is accompanied with a version string so that the name can remain stable
-over time without requiring frequent updates to the [known list](#known-list).
+over time without requiring frequent updates to the known list.
 
 # Custom Section
 
