@@ -13,6 +13,11 @@ Since the producers section is relatively small, tools are encouraged to emit
 the section or include themselves in an existing section by default, keeping
 the producers section even in release builds.
 
+WebAssembly consumers should avoid using the producers section to derive
+optimization hints. To ensure portable performance, hints should be
+standardized in a separate custom section, probably in the core spec's
+[Custom Sections appendix](https://webassembly.github.io/spec/core/appendix/custom.html).
+
 An additional goal of the producers section is to provide a discrete, but
 easily-growable [list of known tools/languages](#known-list) for each
 record field. This avoids the skew that otherwise happens with unstructured
