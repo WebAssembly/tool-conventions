@@ -266,10 +266,10 @@ and where a `comdat_sym` is encoded as:
 | Field    | Type           | Description                                 |
 | -------- | -------------- | ------------------------------------------- |
 | kind     | `uint8`        | Type of symbol, one of:                     |
-|          |                |   * `0 / WASM_COMDAT_DATA`, a data segment |
-|          |                |   * `1 / WASM_COMDAT_FUNCTION`             |
-|          |                |   * `2 / WASM_COMDAT_GLOBAL`               |
-|          |                |   * `3 / WASM_COMDAT_EVENT`                |
+|          |                |   * `0 / WASM_COMDAT_DATA`, a data segment  |
+|          |                |   * `1 / WASM_COMDAT_FUNCTION`              |
+|          |                |   * `2 / WASM_COMDAT_GLOBAL`                |
+|          |                |   * `3 / WASM_COMDAT_EVENT`                 |
 | index    | `varuint32`    | Index of the data segment/function/global/event in the Wasm module (depending on kind). The function/global/event must not be an import. |
 
 
