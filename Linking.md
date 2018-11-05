@@ -86,7 +86,8 @@ A relocation type can be one of the following:
 - `9 / R_WEBASSEMBLY_SECTION_OFFSET_I32` - an byte offset from start of the
   specified section encoded as a [uint32].
 - `10 / R_WEBASSEMBLY_EVENT_INDEX_LEB` - an event index encoded as a 5-byte
-  [varuint32]. Used for the immediate argument of a `throw` instruction.
+  [varuint32]. Used for the immediate argument of a `throw` and `if_except`
+  instruction.
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
@@ -387,9 +388,9 @@ symbols via a `call_indirect` instruction.
 `R_WEBASSEMBLY_GLOBAL_INDEX_LEB` relocations may fail to be processed, in which
 case linking fails.  This occurs if there is a weakly-undefined global symbol,
 in which case there is no legal value that can be written as the target of any
-`get_global` or `set_global` instruction. The frontend must not generate weak
-globals which may not be defined; a definition or import must exist for all
-global symbols in the linked output.
+`get_global` or `set_global` instruction. (This means the frontend must not
+generate weak globals which may not be defined; a definition or import must
+exist for all global symbols in the linked output.)
 
 `R_WEBASSEMBLY_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB` and
 `R_WEBASSEMBLY_MEMORY_ADDR_I32` relocations cannot fail.  The relocation's value
@@ -406,8 +407,8 @@ adjusted to reflect new offsets in the combined sections.
 `R_WEBASSEMBLY_EVENT_INDEX_LEB` relocations may fail to be processed, in which
 case linking fails. This occurs if there is a weakly-undefined event symbol, in
 which case there is no legal value that can be written as the target of any
-`throw` instruction. The frontend must not generate weak events which may not be
-defined; a definition or import must exist for all event symbols in the linked
-output.
+`throw` and `if_except` instruction. (This means the frontend must not generate
+weak events which may not be defined; a definition or import must exist for all
+event symbols in the linked output.)
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
