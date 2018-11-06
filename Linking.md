@@ -294,6 +294,13 @@ link-time.
 Merging Event Sections
 -----------------------
 
+Events are meant to represent various control-flow changing constructs of wasm.
+Currently we have a
+[proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
+for one kind of events: exceptions, but the event section can be used to support
+other kinds of events in future as well. The event section is a list of declared
+events associated with the module.
+
 Merging of the event sections requires the re-numbering of events. This follows
 the normal rules for defining symbols: if two object files provide the same
 event symbol strongly, there is a link error; if two object files provide the
