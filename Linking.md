@@ -386,3 +386,17 @@ adjusted to reflect new offsets in the code section.
 adjusted to reflect new offsets in the combined sections.
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
+
+Start Section
+-------------
+
+By default the static linker should not output a WebAssembly start section.
+
+Rational: We considered using the WebAssembly start function for running static
+constructors and/or the main entry point to the program.  However, in practice
+we found that allowing arbitrary code in the start section is problematic as the
+module exports not yet available to the embedder while running this code.  A
+common example is the module memory itself. If the code in the start function
+wants to transfer any data to the embedder (e.g. printf) this will not work as
+the embedded cannot yet access the modules memory.  This extends to embedder
+functions that call back into module-exported function.
