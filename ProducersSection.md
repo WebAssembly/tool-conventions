@@ -29,7 +29,7 @@ Since version information is useful, but highly-variable, each field value
 is accompanied with a version string so that the name can remain stable
 over time without requiring frequent updates to the known list.
 
-# Custom Section
+## Custom Section
 
 Custom section `name` field: `producers`
 
@@ -42,13 +42,13 @@ end of the last field must coincide with the last byte of the producers section:
 | Field       | Type        | Description |
 | ----------- | ----------- | ----------- |
 | field_count | `varuint32` | number of fields that follow |
-| fields      | `field*`     | sequence of field_count `field` records |
+| fields      | `field*`    | sequence of field_count `field` records |
 
 where a `field` is encoded as:
 
 | Field             | Type | Description |
 | ----------------- | ---- | ----------- |
-| field_name        | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of this field |
+| field_name        | [name][name-ref] | name of this field |
 | field_value_count | `varuint32` | number of value strings that follow |
 | field_values      | `versioned-name*` | sequence of field_value_count name-value pairs |
 
@@ -56,8 +56,8 @@ where a `versioned-name` is encoded as:
 
 | Field   | Type | Description |
 | ------- | ---- | ----------- |
-| name    | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | name of the language/tool |
-| version | [name](https://webassembly.github.io/spec/core/binary/values.html#names) | version of the language/tool |
+| name    | [name][name-ref] | name of the language/tool |
+| version | [name][name-ref] | version of the language/tool |
 
 with the additional constraint that each field_name in the list must be unique
 and found in the first column of the following table, and each of a given field_name's
@@ -68,18 +68,20 @@ the field_name's row.
 | -------------- | -------------------- |
 | `language`     | [source language list](#source-languages) |
 | `processed-by` | [individual tool list](#individual-tools) |
-| `sdk`          | [SDK list](#sdks) |
+| `sdk`          | [SDK list](#sdks)    |
 
-# Text format
+[name-ref]: https://webassembly.github.io/spec/core/binary/values.html#names
+
+## Text format
 
 TODO
 
-# Known list
+## Known list
 
 The following lists contain all the known names for the fields listed above.
 **If your tool is not on this list and you'd like it to be, please submit a PR.**
 
-## Source Languages
+### Source Languages
 
 It is possible for multiple source languages to be present in a single module
 when the output of multiple compiled languages are statically linked together.
@@ -88,7 +90,7 @@ when the output of multiple compiled languages are statically linked together.
 * `C`
 * `C++`
 
-## Individual Tools
+### Individual Tools
 
 It is possible (and common) for multiple tools to be used in the overall
 pipeline that produces and optimizes a given wasm module.
@@ -98,11 +100,10 @@ pipeline that produces and optimizes a given wasm module.
 * `lld`
 * `Binaryen`
 
-## SDKs
+### SDKs
 
 While an SDK is technically just another tool, the `sdk` field designates the
 top-level "thing" that the developer installs and interacts with directly to
 produce the wasm module.
 
 * `Emscripten`
-
