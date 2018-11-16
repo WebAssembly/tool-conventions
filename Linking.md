@@ -419,3 +419,21 @@ weak events which may not be defined; a definition or import must exist for all
 event symbols in the linked output.)
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
+
+Start Section
+-------------
+
+By default the static linker should not output a WebAssembly start section.
+
+Rationale: Use of the WebAssembly start function was considered for running
+static constructors and/or the main entry point to the program.  However,
+running arbitrary code in the start section is currently problematic due to the
+fact the module exports not available to the embedder at the time when the start
+function runs.  A common example is the module memory itself.  If the code in
+the start function wants to transfer any data to the embedder (e.g. `printf`)
+this will not work as the embedded cannot yet access the modules memory.  This
+extends to all embedder functions that might want to call back into the module.
+
+If some future version of the WebAssembly spec allows for module exports to be
+available during execution of the start function it will make sense to
+reconsider this.
