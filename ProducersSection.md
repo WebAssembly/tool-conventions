@@ -72,10 +72,6 @@ the field_name's row.
 
 [name-ref]: https://webassembly.github.io/spec/core/binary/values.html#names
 
-## Text format
-
-TODO
-
 ## Known list
 
 The following lists contain all the known names for the fields listed above.
@@ -107,3 +103,7 @@ top-level "thing" that the developer installs and interacts with directly to
 produce the wasm module.
 
 * `Emscripten`
+
+## Text format
+
+TODO
