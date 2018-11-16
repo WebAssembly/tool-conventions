@@ -16,12 +16,21 @@ information needed by the loader.
 
 The "dylink" section is defined as:
 
+| Field                  | Type            | Description                    |
+| ---------------------- | --------------- | ------------------------------ |
+| memorysize             | `varuint32`     | Size of the memory area the loader should reserve for the module, which will begin at `env.__memory_base` |
+| memoryalignment        | `varuint32`     | The required alignment of the memory area, in bytes, encoded as a power of 2. |
+| tablesize              | `varuint32`     | Size of the table area the loader should reserve for the module, which will begin at `env.__table_base` |
+| tablealignment         | `varuint32`     | The required alignment of the table area, in elements, encoded as a power of 2. |
+| needed_dynlibs_count   | `varuint32`     | Number of needed shared libraries |
+| needed_dynlibs_entries | `dynlib_entry*` | Repeated dynamic library entries as described below |
+
+The "dynlib_entry" type is defined as:
+
 | Field           | Type        | Description                    |
-| ----------      | ----------- | ------------------------------ |
-| memorysize      | `varuint32` | Size of the memory area the loader should reserve for the module, which will begin at `env.__memory_base` |
-| memoryalignment | `varuint32` | The required alignment of the memory area, in bytes, encoded as a power of 2. |
-| tablesize       | `varuint32` | Size of the table area the loader should reserve for the module, which will begin at `env.__table_base` |
-| tablealignment  | `varuint32` | The required alignment of the table area, in elements, encoded as a power of 2. |
+| --------------- | ----------- | ------------------------------ |
+| dynlib_name_len | `varuint32` | Length of `dynlib_name_str` in bytes |
+| dynlib_name_str | `bytes`     | Name of a needed dynamic library: valid UTF-8 byte sequence |
 
 `env.__memory_base` and `env.__table_base` are `i32` imports that contain
 offsets into the linked memory and table, respectively. If the dynamic library
@@ -34,6 +43,9 @@ table and memory are guaranteed to be at least as aligned as the library
 requests in the `memoryalignment, tablealignment` properties. The library can
 then place memory and table segments at the proper locations using those
 imports.
+
+If `needed_dynlibs_count > 0` then the loader, before loading the library, will
+first load needed libraries specified by `needed_dynlibs_entries`.
 
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
