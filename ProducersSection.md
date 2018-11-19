@@ -85,6 +85,7 @@ when the output of multiple compiled languages are statically linked together.
 * `wat`
 * `C`
 * `C++`
+* `Rust`
 
 ### Individual Tools
 
@@ -95,6 +96,9 @@ pipeline that produces and optimizes a given wasm module.
 * `LLVM`
 * `lld`
 * `Binaryen`
+* `rustc`
+* `wasm-bindgen`
+* `wasm-pack`
 
 ### SDKs
 
