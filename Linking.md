@@ -56,7 +56,7 @@ A `relocation_entry` begins with:
 | -------- | ------------------- | ------------------------------ |
 | type     | `uint8`             | the relocation type            |
 | offset   | `varuint32`         | offset of the value to rewrite |
-| index    | `varuint32`         | the index of the symbol used (or, for `R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations, the index of the type) |
+| index    | `varuint32`         | the index of the symbol used (or, for `R_WEBASSEMBLY_SIGNATURE_INDEX_LEB` relocations, the index of the type) |
 
 A relocation type can be one of the following:
 
@@ -76,7 +76,7 @@ A relocation type can be one of the following:
 - `5 / R_WEBASSEMBLY_MEMORY_ADDR_I32` - a linear memory index encoded as a
   [uint32], e.g. taking the address of a C++ global in a static data
   initializer.
-- `6 / R_WEBASSEMBLY_TYPE_INDEX_LEB` - a type table index encoded as a
+- `6 / R_WEBASSEMBLY_SIGNATURE_INDEX_LEB` - a type table index encoded as a
   5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WEBASSEMBLY_GLOBAL_INDEX_LEB` - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
@@ -373,9 +373,9 @@ Processing Relocations
 
 The final code and data sections are written out with relocations applied.
 
-`R_WEBASSEMBLY_TYPE_INDEX_LEB` relocations cannot fail.  The output Wasm file
-shall contain a newly-synthesised type section which contains entries for all
-functions and type relocations in the output.
+`R_WEBASSEMBLY_SIGNATURE_INDEX_LEB` relocations cannot fail. The output Wasm
+file shall contain a newly-synthesised type section which contains entries for
+all functions and type relocations in the output.
 
 `R_WEBASSEMBLY_TABLE_INDEX_SLEB` and `R_WEBASSEMBLY_TABLE_INDEX_I32` relocations
 cannot fail.  The output Wasm file shall contain a newly-synthesised table,
