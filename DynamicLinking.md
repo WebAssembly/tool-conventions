@@ -21,7 +21,7 @@ The "dylink" section is defined as:
 | memorysize      | `varuint32` | Size of the memory area the loader should reserve for the module, which will begin at `env.__memory_base` |
 | memoryalignment | `varuint32` | The required alignment of the memory area, in bytes, encoded as a power of 2. |
 | tablesize       | `varuint32` | Size of the table area the loader should reserve for the module, which will begin at `env.__table_base` |
-| tablealignment  | `varuint32` | The required alignment of the table area, in elements, encoded as a port of 2. |
+| tablealignment  | `varuint32` | The required alignment of the table area, in elements, encoded as a power of 2. |
 
 `env.__memory_base` and `env.__table_base` are `i32` imports that contain
 offsets into the linked memory and table, respectively. If the dynamic library
