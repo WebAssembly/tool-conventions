@@ -41,35 +41,66 @@ entire contents.
 
 ## Interface and usage
 
-A WebAssembly dynamic library has some conventions for how it should be loaded
-and used:
+A WebAssembly dynamic library must obey certain conventions.  In addition to
+the `dylink` section described above a module may import the following globals
+that will be provided by the dynamic loader:
 
  * The module can import `env.memory` for memory that is shared with the
-   outside. If it does so, it should import `env.__memory_base`, an `i32`, in
-   which the loader will provide the start of the region in memory which has
-   been reserved and zero-initialized for this module, as described earlier.
+   outside. If it does so, it should import `env.__memory_base`, an `i32`
+   WebAssembly global, in which the loader will provide the start of the region
+   in memory which has been reserved and zero-initialized for this module, as
+   described earlier.  The module can use this global in the intializer of its
+   data segments so that they loaded at the correct address.
  * The module can import `env.table` for a table that is shared with the
-   outside. If it does so, it should import `env.__table_base`, an `i32`, in
-   which the loader will provide the start of the region in the table which has
-   been reserved for this module, as described earlier.
- * The module can export a function called `__post_instantiate`. If it is so
-   exported, the loader will call it after the module is instantiated, at a time
-   when it is ready to be used. (Note: the WebAssembly `start` function is not
-   sufficient in all cases due to reentrancy issues, i.e., the `start` function
-   is called as the module is being instantiated, before it returns its exports,
-   so the outside cannot yet call into the module.)
- * While exported functions are straightforward, exported addresses (i.e.,
-   exported indexes of locations in memory or in the table) are exported
-   *before* the loaded module can apply any relocation, since the module cannot
-   add `__memory_base` before it exports them. Thus, the exported address is
-   before relocation; the loader, which knows `__memory_base`, can then
-   calculate the proper relocated and final address of those addresses.
+   outside. If it does so, it should import `env.__table_base`, an `i32`
+   WebAssembly global, in which the loader will provide the start of the region
+   in the table which has been reserved for this module, as described earlier.
+
+### Relocations
+
+WebAssembly dynamic libraies do not require relocations in the code section.
+This allows for streaming complication and better code sharing, and reduces the
+complexity of the dynamic linker.  This is acheived by referencing external
+symbols via WebAssembly imports.  However relocation with the data segments may
+still be required.  For example, if the address of an external symbol is stored
+in static data.  In this case the dynamic library must generate code to apply
+it own relocations on startup.
+
+The module can export a function called `__post_instantiate`. If it is so
+exported, the loader will call it after the module is instantiated, and before
+any other function is called.  The `__post_instantiate` function is used both to
+apply relocations and to run any static constructors.
+
+(Note: the WebAssembly `start` function is not sufficient in all cases due to
+reentrancy issues, i.e., the `start` function is called as the module is being
+instantiated, before it returns its exports, so the outside cannot yet call into
+the module.)
+
+### Imports
+
+Functions are directly imported from the `env` module (e.g.
+`env.enternal_func `).  Data addresses and function addresses are imported as
+functions that return the address.  This is because the final addresse of given
+symbol might not be known until all modules are initialized.  These functions
+are named with the `g$` prefix. For example `env.g$goo` can be imported and
+used to access the address of `foo`.  In the futre this scheme could be
+replaced with importing of mutable globals.
+
+### Exports
+
+Functions are directly exported as WebAssembly function exports.  Exported
+addresses (i.e., exported memory locations or exported table locations) are
+exported as i32 WebAssembly globals.  However since exports are static, modules
+connect export the final relocated addresses (i.e. they cannot add
+`__memory_base` before exporting). Thus, the exported address is before
+relocation; the loader, which knows `__memory_base`, can then calculate the
+final relocated address.
 
 ## Implementation Status
 
-Emscripten can load WebAssembly dynamic libraries using `dlopen` and access them
-using `dlsym`, etc. (See `test_dlfcn_*` in the test suite for examples;
-`test_dylink_*` are relevant as well.)
+Emscripten can load WebAssembly dynamic libraries either at startup (using
+`RUNTIME_LINKED_LIBS`) or dynamiclly (using `dlopen`/`dlsym`/etc).
+See `test_dylink_*` adnd `test_dlfcn_*` in the test suite for examples.
 
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
