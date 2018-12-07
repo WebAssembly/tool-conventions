@@ -58,9 +58,9 @@ that will be provided by the dynamic loader:
 
 ### Relocations
 
-WebAssembly dynamic libraies do not require relocations in the code section.
-This allows for streaming complication and better code sharing, and reduces the
-complexity of the dynamic linker.  This is acheived by referencing external
+WebAssembly dynamic libraries do not require relocations in the code section.
+This allows for streaming compilation and better code sharing, and reduces the
+complexity of the dynamic linker.  This is achieved by referencing external
 symbols via WebAssembly imports.  However relocation with the data segments may
 still be required.  For example, if the address of an external symbol is stored
 in static data.  In this case the dynamic library must generate code to apply
@@ -79,7 +79,7 @@ the module.)
 ### Imports
 
 Functions are directly imported from the `env` module (e.g.
-`env.enternal_func `).  Data addresses and function addresses are imported as
+`env.enternal_func`).  Data addresses and function addresses are imported as
 functions that return the address.  This is because the final addresse of given
 symbol might not be known until all modules are initialized.  These functions
 are named with the `g$` prefix. For example `env.g$goo` can be imported and
@@ -99,7 +99,7 @@ final relocated address.
 ## Implementation Status
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
-`RUNTIME_LINKED_LIBS`) or dynamiclly (using `dlopen`/`dlsym`/etc).
+`RUNTIME_LINKED_LIBS`) or dynamically (using `dlopen`/`dlsym`/etc).
 See `test_dylink_*` adnd `test_dlfcn_*` in the test suite for examples.
 
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
