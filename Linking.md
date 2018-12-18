@@ -42,7 +42,7 @@ A relocation section is a user-defined section with a name starting with
 section they apply to, and must be sequenced in the module after that
 section.
 
-The "reloc." custom sections should come after the
+The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
 
@@ -121,7 +121,7 @@ Linking Metadata Section
 A linking metadata section is a user-defined section with the name
 "linking".
 
-The "linking" custom section should be after the [data
+The "linking" custom section must be after the [data
 section](https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#data-section)
 in order to validate data symbols.
 
