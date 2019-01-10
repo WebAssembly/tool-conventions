@@ -19,7 +19,7 @@ correspondence to types used in the WebAssembly specification:
 General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
 -|-|-|-|-
  Integer | `_Bool`/`bool` | 1 | 1 | i32
- Integer | `char`, `signed char` | 1 | 1 | i | i32
+ Integer | `char`, `signed char` | 1 | 1 | i32
  Integer | `unsigned char` | 1 | 1 | i32
  Integer | `short` / `signed short` | 2 | 2 | i32
  Integer | `unsigned short` | 2 | 2 | i32
