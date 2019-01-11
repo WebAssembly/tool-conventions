@@ -34,8 +34,8 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  Floating point | `double` | 8 | 8 | f64
  Floating point | `long double` | 16 | 16 | (none)
  
- * `long double` values correspond to 128-bit quad-precision values, but they are represented
- as a pair of f64 values, and operations on these values are currently implemented as calls to
+ * `long double` values correspond to 128-bit IEEE-754 quad-precision binary128 values.
+ Operations on these values are currently implemented as calls to
  compiler-rt library functions.
  * A null pointer (for all types) has the value zero
  * The `size_t` type is defined as `unsigned long`.
