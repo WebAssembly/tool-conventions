@@ -40,3 +40,44 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  * A null pointer (for all types) has the value zero
  * The `size_t` type is defined as `unsigned long`.
  
+
+**Aggregates and Unions**
+
+Structures and unions assume the alignment of their most strictly aligned component.
+Each member is assigned to the lowest available offset with the appropriate
+alignment. The size of any object is always a multiple of the object‘s alignment.
+An array uses the same alignment as its elements, except that a local or global
+array variable of length at least 16 bytes or a C99 variable-length array variable
+always has alignment of at least 16 bytes.
+Structure and union objects can require padding to meet size and alignment
+constraints. The contents of any padding is undefined.
+
+**Bit-fields**
+
+C struct and union definitions may include bit-fields that define integral values of
+a specified size.
+The ABI does not permit bit-fields having the type __m64, __m128 or __m256.
+(Programs using bit-fields of these types are not portable.)
+Bit-fields that are neither signed nor unsigned always have non-negative values.
+Although they may have type char, short, int, or long (which can have negative values),
+these bit-fields have the same range as a bit-field of the same size
+with the corresponding unsigned type. Bit-fields obey the same size and alignment
+rules as other structure and union members.
+Also:
+
+* bit-fields are allocated from right to left
+* bit-fields must be contained in a storage unit appropriate for its declared
+type
+* bit-fields may share a storage unit with other struct / union members
+* Unnamed bit-fields’ types do not affect the alignment of a structure or union.
+
+Bitfield type | Witdh *w* | Range
+-|-|-
+`signed char` | 1 to 8 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`char`, `unsigned char` | 1 to 8 | 0 to 2<sup>w</sup>-1
+`signed short` | 1 to 16 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`short`, `unsigned short` | 1 to 16 | 0 to 2<sup>w</sup>-1
+`signed int` | 1 to 32 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`int`, `unsigned int` | 1 to 32 | 0 to 2<sup>w</sup>-1
+`signed long long` | 1 to 64 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`long long`, `unsigned long long` | 1 to 64 | 0 to 2<sup>w</sup>-1
