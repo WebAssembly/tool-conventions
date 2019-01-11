@@ -56,7 +56,7 @@ always has alignment of at least 16 bytes.
 Structure and union objects can require padding to meet size and alignment
 constraints. The contents of any padding is undefined.
 
-**Bitfields**
+**Bit-fields**
 
 C struct and union definitions may include bit-fields that define integral values of
 a specified size.
@@ -69,10 +69,10 @@ with the corresponding unsigned type. Bit-fields obey the same size and alignmen
 rules as other structure and union members.
 Also:
 
-• bit-fields are allocated from right to left
-• bit-fields must be contained in a storage unit appropriate for its declared
+* bit-fields are allocated from right to left
+* bit-fields must be contained in a storage unit appropriate for its declared
 type
-• bit-fields may share a storage unit with other struct / union members
+* bit-fields may share a storage unit with other struct / union members
 Unnamed bit-fields’ types do not affect the alignment of a structure or union.
 
 Bitfield type | Witdh *w* | Range
