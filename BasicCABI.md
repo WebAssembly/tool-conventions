@@ -3,7 +3,8 @@ This document describes the "Basic" C ABI for WebAssembly. As mentioned in
 clang/LLVM WebAssembly backend is currently using, and any other C or C++
 compiler wishing to be ABI-compatible with it.
 
-# Data Representation
+
+## Data Representation
 
 **Scalar Types**
 
