@@ -75,7 +75,7 @@ Bitfield type | Witdh *w* | Range
 -|-|-
 `signed char` | 1 to 8 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `char`, `unsigned char` | 1 to 8 | 0 to 2<sup>w</sup>-1
-`signed short`, | 1 to 16 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`signed short` | 1 to 16 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `short`, `unsigned short` | 1 to 16 | 0 to 2<sup>w</sup>-1
 `signed int` | 1 to 32 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `int`, `unsigned int` | 1 to 32 | 0 to 2<sup>w</sup>-1
