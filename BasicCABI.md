@@ -41,10 +41,6 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  * The `size_t` type is defined as `unsigned long`.
  
 
-
-
-*** 3 lines to avoid merge conflict with prevous PR, TODO remove ***
-
 **Aggregates and Unions**
 
 Structures and unions assume the alignment of their most strictly aligned component.
@@ -73,15 +69,15 @@ Also:
 * bit-fields must be contained in a storage unit appropriate for its declared
 type
 * bit-fields may share a storage unit with other struct / union members
-Unnamed bit-fields’ types do not affect the alignment of a structure or union.
+* Unnamed bit-fields’ types do not affect the alignment of a structure or union.
 
 Bitfield type | Witdh *w* | Range
 -|-|-
-`signed char`, | 1 to 8 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`signed char` | 1 to 8 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `char`, `unsigned char` | 1 to 8 | 0 to 2<sup>w</sup>-1
 `signed short`, | 1 to 16 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `short`, `unsigned short` | 1 to 16 | 0 to 2<sup>w</sup>-1
-`signed int`, | 1 to 32 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`signed int` | 1 to 32 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `int`, `unsigned int` | 1 to 32 | 0 to 2<sup>w</sup>-1
-`signed long long`, | 1 to 64 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
+`signed long long` | 1 to 64 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `long long`, `unsigned long long` | 1 to 64 | 0 to 2<sup>w</sup>-1
