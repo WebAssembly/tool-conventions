@@ -94,6 +94,7 @@ pipeline that produces and optimizes a given wasm module.
 
 * `wabt`
 * `LLVM`
+* `clang`
 * `lld`
 * `Binaryen`
 * `rustc`
