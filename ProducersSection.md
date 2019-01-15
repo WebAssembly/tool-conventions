@@ -61,8 +61,8 @@ where a `versioned-name` is encoded as:
 
 with the additional constraint that each field_name in the list must be unique
 and found in the first column of the following table, and each of a given field_name's
-field_values's name strings must be unique and found in the second column of
-the field_name's row.
+field_values's name strings must be found in the second column of
+the field_name's row. The name string, version pairs must be unique.
 
 | field_name     | field_value name strings |
 | -------------- | -------------------- |
