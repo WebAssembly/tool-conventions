@@ -87,7 +87,7 @@ Bitfield type | Witdh *w* | Range
 # Function Calling Sequence
 This section describes the standard function calling sequence, including stack frame
 layout, Wasm argument and local value usage, and so on. These requirements apply
-only to global functions. Local functions not reachable from other compilation units
+only to global functions (those reachable from other compilation units) . Local functions
 may use different conventions; however this may reduce the ability of external tools
 to understand them.
 
@@ -102,7 +102,8 @@ for a concept of callee- or caller-saved locals.
 
 
 ### The linear stack
-WebAssembly is a "Harvard" architcture; this means that code and data are not in the same
+WebAssembly is a [Harvard](https://en.wikipedia.org/wiki/Harvard_architecture) architecture; 
+this means that code and data are not in the same
 memory space. No code or code addresses are visible in the wasm linear memory space, the only "address"
 that a function has is its index in the wasm function index space. Additionally the wasm implementation's
 runtime call stack (including the return address and function arguments) is not visible in
@@ -116,7 +117,7 @@ acts as the stack pointer [TODO: describe how stack pointer is designated here, 
 [TODO: discuss mutable global requirement].
 
 Each function may have a frame on the linear stack. This stack grows downward
-[TODO: describe how start position is determined and why it's located below the heap].
+[TODO: describe how start position is determined].
 The stack pointer global (`SP`) points to the bottom of the stack frame and always has 16-byte alignment. 
 If there are dynamically-sized objects on the stack, a frame pointer (a local variable, `FP`) is used, 
 and it points to the bottom of the static-size objects (those whose sizes are known at compile time). 
@@ -136,3 +137,13 @@ Position | Contents | Frame
  `SP` + *d*<br>...<br>`SP` | dynamic-size objects | Current
  ...<br>`SP`-128| small static-size objects | Current (red zone)
 
+Note: in other ABIs the frame pointer typically points to a saved frame pointer (and return address) 
+at the top of the current frame. In this ABI the frame pointer points to the bottom of the current frame instead. 
+This is because the constant offset
+field of Wasm load and store instructions are unsigned; addresses of the form `FP` + *n* can be folded
+into a single insruction, e.g. `i32.load offset=n`. This is also why the stack grows downward (so `SP` + *n*
+can also be folded). One consequence of of the lack of return addresses and frame pointer chains is that there
+is no way to traverse the linear stack. There is also no currently-specified way to determine which wasm local
+is used as the frame pointer or base pointer. This functionality is not needed for backtracing or unwinding (since the
+wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
+or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
