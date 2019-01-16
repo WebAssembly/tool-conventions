@@ -131,7 +131,7 @@ section:
 
 | Field       | Type          | Description                          |
 | ----------- | ------------- | ------------------------------------ |
-| version     | `varuint32`   | the version of linking metadata contained in this section |
+| version     | `varuint32`   | the version of linking metadata contained in this section. Currently: 2 |
 | subsections | `subsection*` | sequence of `subsection`             |
 
 This `version` allows for breaking changes to be made to the format described
@@ -172,7 +172,7 @@ where a `segment` is encoded as:
 | ------------ | ------------ | --------------------------------------------- |
 | name_len     | `varuint32`  | length of `name_data` in bytes                |
 | name_data    | `bytes`      | UTF-8 encoding of the segment's name          |
-| alignment    | `varuint32`  | The alignment requirement (in bytes) of the segment |
+| alignment    | `varuint32`  | The required alignment of the segment, encoded as a power of 2 |
 | flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
 For `WASM_INIT_FUNCS` the following fields are present in the
