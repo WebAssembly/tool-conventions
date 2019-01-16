@@ -5,7 +5,7 @@ compiler wishing to be ABI-compatible with it.
 
 # Versioning and Machine interface
 
-The current version of this ABI is *1.0*.
+The current version of this ABI is *1*.
 
 This ABI is designed to work with Release 1.0 of the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any 
 [features](https://github.com/WebAssembly/proposals)
