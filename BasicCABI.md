@@ -3,6 +3,14 @@ This document describes the "Basic" C ABI for WebAssembly. As mentioned in
 clang/LLVM WebAssembly backend is currently using, and any other C or C++
 compiler wishing to be ABI-compatible with it.
 
+# Versioning and Machine interface
+
+The current version of this ABI is *1*.
+
+This ABI is designed to work with Release 1.0 of the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any 
+[features](https://github.com/WebAssembly/proposals)
+that have not yet been implemented and standardized. Future versions will depend on
+features such as threads and/or multi-value.
 
 ## Data Representation
 
