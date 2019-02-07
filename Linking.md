@@ -207,8 +207,10 @@ For functions, globals and events, we reference an existing Wasm object, which
 is either an import or a defined function/global/event (recall that the operand of a
 Wasm `call` instruction uses an index space consisting of the function imports
 followed by the defined functions, and similarly `get_global` for global imports
-and definitions and `throw` for event imports and definitions). If a function,
-global, or event symbol references an import, then the name is taken from the
+and definitions and `throw` for event imports and definitions).
+
+If a function, global, or event symbol references an import, and the
+`WASM_SYM_EXPLICIT_NAME` flag is not set, then the name is taken from the
 import; otherwise the `syminfo` specifies the symbol's name.
 
 | Field        | Type           | Description                                 |
@@ -254,6 +256,10 @@ The current set of valid flags for symbols are:
 - `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
   wasm module to the host environment. This differs from the visibility flags
   in that it effects the static linker.
+- `0x40 / WASM_SYM_EXPLICIT_NAME` - The symbol uses an explicit import name,
+  rather than reusing the name from a wasm import. This allows it to remap
+  imports from foreign WebAssembly modules into local symbols with different
+  names.
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
