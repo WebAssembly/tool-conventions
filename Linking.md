@@ -251,6 +251,9 @@ The current set of valid flags for symbols are:
 - `0x10 / WASM_SYM_UNDEFINED` - Indicating that this symbol is not defined.
   For function/global/event symbols, must match whether the symbol is an import
   or is defined; for data symbols, determines whether a segment is specified.
+- `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
+  wasm module to the host environment. This differs from the visibility flags
+  in that it effects the static linker.
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
