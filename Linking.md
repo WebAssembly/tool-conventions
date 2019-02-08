@@ -256,7 +256,7 @@ The current set of valid flags for symbols are:
 - `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
   wasm module to the host environment. This differs from the visibility flags
   in that it effects the static linker.
-- `0x40 / WASM_SYM_EXPLICIT_NAME` - The symbol uses an explicit import name,
+- `0x40 / WASM_SYM_EXPLICIT_NAME` - The symbol uses an explicit symbol name,
   rather than reusing the name from a wasm import. This allows it to remap
   imports from foreign WebAssembly modules into local symbols with different
   names.
