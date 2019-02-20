@@ -150,7 +150,8 @@ The current list of valid `type` codes are:
 - `5 / WASM_SEGMENT_INFO` - Extra metadata about the data segments.
 
 - `6 / WASM_INIT_FUNCS` - Specifies a list of constructor functions to be called
-  at startup time.
+  at startup. These constructors will be called in priority order after memory
+  has been initialized.
 
 - `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
@@ -359,7 +360,8 @@ linked output.
 
 Segments are merged according their type: segments with a common prefix such as
 `.data` or `.rodata` are merged into a single segment in the output data
-section.
+section. It is an error if this behavior would merge shared and unshared
+segments.
 
 The output data section is formed, essentially, by concatenating the data
 sections of the input files.  Since the final location in linear memory of any
@@ -370,10 +372,21 @@ which reference a data symbol.
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
 
-Mergin Custom Sections
+Merging Memory Sections
+-----------------------
+
+It is an error to link together object files with shared and unshared
+memories. Object files with unshared memories are produced by tools that are not
+aware of WebAssembly threads or are configured to produce code for a
+single-threaded environment. These objects may have been compiled from
+thread-aware source code but had their atomic operations stripped, so it would
+be dangerous to allow users to accidentally link these objects together with
+properly thread-aware objects.
+
+Merging Custom Sections
 ----------------------
 
-Mergin of custom sections is performed by concatenating all payloads for the
+Merging of custom sections is performed by concatenating all payloads for the
 customs sections with the same name. The section symbol will refer the resulting
 section, this means that the relocation entries addend that refer
 the referred custom section fields shall be adjusted to take new offset
