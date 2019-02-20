@@ -34,6 +34,14 @@ to: e.g. "reloc.CODE" for code section relocations.  However everything after
 the period is ignored and the specific target section is encoded in the reloc
 section itself.
 
+The linker additionally checks that linked object files were built targeting
+compatible feature sets. Unlike native targets, WebAssembly has no runtime
+feature detection, and the presence of unsupported features causes a binary to
+fail to validate. It is therefore almost always a user error to link together
+object files built for different feature sets, and the linker can be helpful by
+enforcing the invariant that the feature sets must be consistent by checking
+objects' target features sections.
+
 Relocation Sections
 -------------------
 
@@ -285,6 +293,32 @@ and where a `comdat_sym` is encoded as:
 |          |                |   * `3 / WASM_COMDAT_EVENT`                 |
 | index    | `varuint32`    | Index of the data segment/function/global/event in the Wasm module (depending on kind). The function/global/event must not be an import. |
 
+Target Features Section
+-----------------------
+
+The target features section is an optional custom section with the name
+"target_features". The target features section must come after the
+["producers"](#linking-metadata-section) section.
+
+The body of the target features section is a vector of unique strings, each
+representing a feature of the target. The generally accepted feature strings
+are:
+
+1. `atomics`
+2. `bulk-memory`
+3. `exception-handling`
+4. `nontrapping-fptoint`
+5. `sign-ext`
+6. `simd128`
+
+The "atomics" feature string is special: if it is present, the linker will
+produce a binary that uses a shared memory.
+
+It is an error if two object files in a single link contain different sets of
+strings in their target features sections. Objects with no features section may
+be linked with any other objects.
+
+The linker does not emit a features section in its output.
 
 Merging Global Sections
 -----------------------
@@ -371,17 +405,6 @@ which reference a data symbol.
 
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
-
-Merging Memory Sections
------------------------
-
-It is an error to link together object files with shared and unshared
-memories. Object files with unshared memories are produced by tools that are not
-aware of WebAssembly threads or are configured to produce code for a
-single-threaded environment. These objects may have been compiled from
-thread-aware source code but had their atomic operations stripped, so it would
-be dangerous to allow users to accidentally link these objects together with
-properly thread-aware objects.
 
 Merging Custom Sections
 ----------------------
