@@ -150,7 +150,8 @@ The current list of valid `type` codes are:
 - `5 / WASM_SEGMENT_INFO` - Extra metadata about the data segments.
 
 - `6 / WASM_INIT_FUNCS` - Specifies a list of constructor functions to be called
-  at startup by `__wasm_call_ctors` after it initializes memory.
+  at startup. These constructors will be called in priority order after memory
+  has been initialized.
 
 - `7 / WASM_COMDAT_INFO` - Specifies the COMDAT groups of associated linking
   objects, which are linked only once and all together.
@@ -357,9 +358,10 @@ represented in the object file as Wasm data segments with an associated data
 symbol, so each linked data symbol pulls its associated data segment into the
 linked output.
 
-Segments are merged according their name and type: segments with a common prefix
-such as `.data` or `.rodata` are merged in the output data section, but active
-and passive segments are kept separate.
+Segments are merged according their type: segments with a common prefix such as
+`.data` or `.rodata` are merged into a single segment in the output data
+section. It is an error if this behavior would merge shared and unshared
+segments.
 
 The output data section is formed, essentially, by concatenating the data
 sections of the input files.  Since the final location in linear memory of any
