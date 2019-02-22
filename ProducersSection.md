@@ -3,8 +3,10 @@
 The producers section provides an optional, structured way to record all of the
 distinct tools that were used to produce a given WebAssembly module. The
 producers section is a [custom section](https://webassembly.github.io/spec/core/binary/modules.html#custom-section)
-and thus has no semantic effects. Size-optimizing toolchains are likely to
-strip the producers section from release builds.
+and thus has no semantic effects. Standard tools like [wabt](https://github.com/webassembly/wabt)'s
+`wasm-strip` will remove the producers section, and toolchains which emit the
+producers section by default are recommended to have an option to remove it as
+well.
 
 ## Custom Section
 
