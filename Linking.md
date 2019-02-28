@@ -311,11 +311,12 @@ The body of the target features section is a vector of entries:
 The recognized prefix bytes and their meanings are below. When the user does not
 supply a set of allowed features explicitly, the set of allowed features is
 taken to be the set of used features. Any feature not mentioned in an object's
-target features section is not used by that object.
+target features section is not used by that object, but is not necessarily
+prohibited in the final binary.
 
 | Prefix     | Meaning |
 | ---------- | ------- |
-| 0x00       | This object uses this feature, and the link fails if this feature is not in the allowed set. |
+| 0x2b (`+`) | This object uses this feature, and the link fails if this feature is not in the allowed set. |
 | 0x2d (`-`) | This object does not use this feature, and the link fails if this feature is in the allowed set. |
 | 0x3d (`=`) | This object uses this feature, and the link fails if this feature is not in the allowed set or if any object does not use this feature. |
 
