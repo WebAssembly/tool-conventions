@@ -320,8 +320,7 @@ prohibited in the final binary.
 | 0x2d (`-`) | This object does not use this feature, and the link fails if this feature is in the allowed set. |
 | 0x3d (`=`) | This object uses this feature, and the link fails if this feature is not in the allowed set or if any object does not use this feature. |
 
-unique strings, each
-representing a feature of the target. The generally accepted features are:
+The generally accepted features are:
 
 1. `atomics`
 2. `bulk-memory`
