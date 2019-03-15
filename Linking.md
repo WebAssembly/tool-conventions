@@ -140,7 +140,7 @@ section:
 
 | Field       | Type          | Description                          |
 | ----------- | ------------- | ------------------------------------ |
-| version     | `varuint32`   | the version of linking metadata contained in this section. Currently: 2 |
+| version     | `varuint32`   | the version of linking metadata contained in this section. Currently: 3 |
 | subsections | `subsection*` | sequence of `subsection`             |
 
 This `version` allows for breaking changes to be made to the format described
@@ -213,29 +213,30 @@ where a `syminfo` is encoded as:
 |              |                |   `4 / SYMTAB_EVENT`                        |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
-For functions, globals and events, we reference an existing Wasm object, which
-is either an import or a defined function/global/event (recall that the operand of a
-Wasm `call` instruction uses an index space consisting of the function imports
-followed by the defined functions, and similarly `get_global` for global imports
-and definitions and `throw` for event imports and definitions). If a function,
-global, or event symbol references an import, then the name is taken from the
-import; otherwise the `syminfo` specifies the symbol's name.
+For functions, globals, events, and undefined data symbols the symbol references
+an existing Wasm object, which is either an imported or defined
+function/global/event (recall that the operand of a Wasm `call` instruction uses
+an index space consisting of the function imports followed by the defined
+functions, and similarly `get_global` for global imports and definitions and
+`throw` for event imports and definitions). If a symbol references an
+import, then the name is taken from the import; otherwise the `syminfo`
+specifies the symbol's name.
 
 | Field        | Type           | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
-| index        | `varuint32`    | the index of the Wasm object corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
+| index        | `varuint32`    | the index of the function/global/event corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
 | name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
 | name_data    | `bytes` ?      | UTF-8 encoding of the symbol name           |
 
-For data symbols:
+For defined data symbols:
 
-| Field        | Type           | Description                                 |
-| ------------ | -------------- | ------------------------------------------- |
-| name_len     | `varuint32`    | the length of `name_data` in bytes          |
-| name_data    | `bytes`        | UTF-8 encoding of the symbol name           |
-| index        | `varuint32` ?  | the index of the data segment; provided if the symbol is defined |
-| offset       | `varuint32` ?  | the offset within the segment; provided if the symbol is defined; must be <= the segment's size |
-| size         | `varuint32` ?  | the size (which can be zero); provided if the symbol is defined; `offset + size` must be <= the segment's size |
+| Field        | Type         | Description                                   |
+| ------------ | ------------ | --------------------------------------------- |
+| name_len     | `varuint32`  | the length of `name_data` in bytes            |
+| name_data    | `bytes`      | UTF-8 encoding of the symbol name             |
+| index        | `varuint32`  | the index of the data segment                 |
+| offset       | `varuint32`  | the offset within the segment; must be <= the segment's size |
+| size         | `varuint32`  | the size (which can be zero); `offset + size` must be <= the segment's size |
 
 For section symbols:
 
@@ -264,6 +265,9 @@ The current set of valid flags for symbols are:
 - `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
   wasm module to the host environment. This differs from the visibility flags
   in that it effects the static linker.
+- `0x40 / WASM_SYMBOL_EXPLICIT_NAME` - This means that symbol has an explicit
+  name that may differ from the name of the import.  This can be used to import
+  a given symbol by a different name.
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
