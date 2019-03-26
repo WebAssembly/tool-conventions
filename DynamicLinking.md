@@ -92,11 +92,11 @@ the module.)
 
 Functions are directly imported from the `env` module (e.g.
 `env.enternal_func`).  Data addresses and function addresses are imported as
-functions that return the address.  This is because the final addresse of given
+functions that return the address.  This is because the final addresses of given
 symbol might not be known until all modules are initialized.  These functions
 are named with the `g$` prefix. For example `env.g$goo` can be imported and
-used to access the address of `foo`.  In the futre this scheme could be
-replaced with importing of mutable globals.
+used to access the address of `foo`.  The plan is to replace these with imports
+of wasm globals (see Planned Changes below).
 
 ### Exports
 
@@ -118,7 +118,7 @@ wasm globals under the predefined module names `GOT.mem` and `GOT.func` for data
 borrowed from the ELF linking world and stands for "Global Offset Table".  In
 wasm the GOT is modeled as a set of imported wasm globals.
 
-For example, a dynamic library might import use an external data symbol as
+For example, a dynamic library might import and use an external data symbol as
 follows:
 
     (import "GOT.mem" "foo" (global $foo_addr (mut i32))
@@ -135,14 +135,17 @@ And an external function symbol as follows:
     get_global $bar_addr
     call_indirect
 
-Note that in the case of data symbols the imported global must be mutable as the
+Note: This change does not effect exports, or the import of functions for
+direct call.
+
+Note: In the case of data symbols the imported global must be mutable as the
 dynamic linker will need to modify the value after instantiation.   This is
-because the data symbol offsets are exported as wasm exports which are not
+because the data symbol offsets are specified as wasm exports which are not
 known until after a module is instantiated.
 
-For function symbols the imported global can be immutable since the linker
-can assign a table index to each imported function before it instatiates any
-of the modules.
+Imports of function addresses do not need to be mutable since the linker can
+assign a table index to each imported function before it instantiates any of the
+modules.
 
 ## Implementation Status
 
@@ -161,7 +164,7 @@ entries.
 
 In order to use the llvm output in emscripten (which still uses the old ABI
 described above) a binaryen pass is run as part of `wasm-emscripten-finalize`
-then conerts to the old ABI.  This pass will convert all `GOT.mem` and
+then coverts to the old ABI.  This pass will convert all `GOT.mem` and
 `GOT.func` entries into regular (non-imported) globals and sets there values by
 calling the `g$foo` functions during `__post_instantiate` before any other code
 is run.
