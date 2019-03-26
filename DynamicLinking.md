@@ -108,6 +108,42 @@ connect export the final relocated addresses (i.e. they cannot add
 relocation; the loader, which knows `__memory_base`, can then calculate the
 final relocated address.
 
+## Planned Changes
+
+There are plans to change the way symbol addresses (for both functions and data)
+are imported and used.  The goal is to decrease the runtime overhead associated
+with accessing external addresses.  In the new scheme addresses are imported as
+wasm globals under the predefined module names `GOT.mem` and `GOT.func` for data
+(memory) addresses and function addresses respectively.  The `GOT` prefix is
+borrowed from the ELF linking world and stands for "Global Offset Table".  In
+wasm the GOT is modeled as a set of imported wasm globals.
+
+For example, a dynamic library might import use an external data symbol as
+follows:
+
+    (import "GOT.mem" "foo" (global $foo_addr (mut i32))
+    ...
+    ...
+    get_global $foo_addr
+    i32.load
+
+And an external function symbol as follows:
+
+    (import "GOT.func" "bar" (global $bar_addr i32))
+    ...
+    ...
+    get_global $bar_addr
+    call_indirect
+
+Note that in the case of data symbols the imported global must be mutable as the
+dynamic linker will need to modify the value after instantiation.   This is
+because the data symbol offsets are exported as wasm exports which are not
+known until after a module is instantiated.
+
+For function symbols the imported global can be immutable since the linker
+can assign a table index to each imported function before it instatiates any
+of the modules.
+
 ## Implementation Status
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
@@ -117,3 +153,15 @@ See `test_dylink_*` adnd `test_dlfcn_*` in the test suite for examples.
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
 
+### LLVM Implementation
+
+When llvm is run with `--relocation-model=pic` (a.k.a `-fPIC`) it will generate
+code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
+entries.
+
+In order to use the llvm output in emscripten (which still uses the old ABI
+described above) a binaryen pass is run as part of `wasm-emscripten-finalize`
+then conerts to the old ABI.  This pass will convert all `GOT.mem` and
+`GOT.func` entries into regular (non-imported) globals and sets there values by
+calling the `g$foo` functions during `__post_instantiate` before any other code
+is run.
