@@ -323,14 +323,12 @@ prohibited in the final binary.
 The generally accepted features are:
 
 1. `atomics`
-2. `bulk-memory`
-3. `exception-handling`
-4. `nontrapping-fptoint`
-5. `sign-ext`
-6. `simd128`
-
-The "atomics" feature string is special: if it is present, the linker will
-produce a binary that uses a shared memory.
+1. `bulk-memory`
+1. `exception-handling`
+1. `mutable-globals`
+1. `nontrapping-fptoint`
+1. `sign-ext`
+1. `simd128`
 
 Merging Global Sections
 -----------------------
