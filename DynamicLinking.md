@@ -72,16 +72,30 @@ that will be provided by the dynamic loader:
 
 WebAssembly dynamic libraries do not require relocations in the code section.
 This allows for streaming compilation and better code sharing, and reduces the
-complexity of the dynamic linker.  This is achieved by referencing external
-symbols via WebAssembly imports.  However relocation with the data segments may
-still be required.  For example, if the address of an external symbol is stored
-in static data.  In this case the dynamic library must generate code to apply
-it own relocations on startup.
+complexity of the dynamic linker.  For external symbols this is achieved by
+referencing WebAssembly imports.  For internal symbols we introduce two new
+relocation types for accessing data and functions address relative to
+`__memory_base` and `__table_base` global:
 
-The module can export a function called `__post_instantiate`. If it is so
-exported, the loader will call it after the module is instantiated, and before
-any other function is called.  The `__post_instantiate` function is used both to
-apply relocations and to run any static constructors.
+- `11 / R_WASM_MEMORY_ADDR_REL_SLEB,` - a memory address relative to the
+  `__memory_base` wasm global.  Used in position indepenent code (`-fPIC`)
+  where absolute memory addresses are not known at link time.
+- `12 / R_WASM_TABLE_INDEX_REL_SLEB` - a function address (table index)
+  relative to the `__table_base` wasm global.  Used in position indepenent code
+  (`-fPIC`) where absolute function addresses are not known at link time.
+
+All code that gets linked into a WebAssembly dynamic library must be compiled
+as position independant.  The corresponding absolute reloction types
+(R_WASM_MEMORY_ADDR_SLEB and R_WASM_TABLE_INDEX_SLEB) are not permitted in
+position independant code and will be rejected at link time.
+
+For relocation within the data segments a runtime fixup may be required.  For
+example, if the address of an external symbol is stored in global data.  In this
+case the dynamic library must generate code to apply these relocations at
+startup.  The module can export a function called `__post_instantiate`. If it is
+so exported, the loader will call it after the module is instantiated, and
+before any other function is called.  The `__post_instantiate` function is used
+both to apply relocations and to run any static constructors.
 
 (Note: the WebAssembly `start` function is not sufficient in all cases due to
 reentrancy issues, i.e., the `start` function is called as the module is being
