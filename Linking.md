@@ -101,13 +101,18 @@ A relocation type can be one of the following:
 - `10 / R_WASM_EVENT_INDEX_LEB` - an event index encoded as a 5-byte
   [varuint32]. Used for the immediate argument of a `throw` and `if_except`
   instruction.
+- `11 / R_WASM_MEMORY_ADDR_REL_SLEB,` - a memory address relative to the
+  `__memory_base` wasm global.  Used in position indepenent code (`-fPIC`)
+  where absolute memory addresses are not known at link time.
+- `12 / R_WASM_TABLE_INDEX_REL_SLEB` - a function address (table index)
+  relative to the `__table_base` wasm global.  Used in position indepenent code
+  (`-fPIC`) where absolute function addresses are not known at link time.
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
 [uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
 
-For `R_WASM_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB`,
-`R_WASM_MEMORY_ADDR_I32`, `R_WEBASSEMBLY_FUNCTION_OFFSET_I32`, and
+For `R_WASM_MEMORY_ADDR_*`, `R_WEBASSEMBLY_FUNCTION_OFFSET_I32`, and
 `R_WASM_SECTION_OFFSET_I32` relocations the following field is additionally
 present:
 
@@ -381,9 +386,8 @@ stored in the code section:
 
 The immediate argument of all such instructions are stored as padded LEB128 such
 that they can be rewritten without altering the size of the code section.  For
-each such instruction a `R_WASM_FUNCTION_INDEX_LEB` or `R_WASM_TABLE_INDEX_SLEB`
-`reloc` entry is generated pointing to the offset of the immediate within the
-code section.
+each such instruction a `R_WASM_FUNCTION_INDEX_LEB` `reloc` entry is generated
+pointing to the offset of the immediate within the code section.
 
 The same technique applies for all function calls whether the function is
 imported or defined locally.
@@ -434,14 +438,14 @@ The final code and data sections are written out with relocations applied.
 shall contain a newly-synthesised type section which contains entries for all
 functions and type relocations in the output.
 
-`R_WASM_TABLE_INDEX_SLEB` and `R_WEBASSEMBLY_TABLE_INDEX_I32` relocations
-cannot fail.  The output Wasm file shall contain a newly-synthesised table,
-which contains an entry for all defined or imported symbols referenced by table
-relocations.  The output table elements shall begin at a non-zero offset within
-the table, so that a `call_indirect 0` instruction is guaranteed to fail.
-Finally, when processing table relocations for symbols which have neither an
-import nor a definition (namely, weakly-undefined function symbols), the value
-`0` is written out as the value of the relocation.
+`R_WASM_TABLE_INDEX_*` relocations cannot fail.  The output Wasm file shall
+contain a newly-synthesised table, which contains an entry for all defined or
+imported symbols referenced by table relocations.  The output table elements
+shall begin at a non-zero offset within the table, so that a `call_indirect 0`
+instruction is guaranteed to fail.  Finally, when processing table relocations
+for symbols which have neither an import nor a definition (namely,
+  weakly-undefined function symbols), the value `0` is written out as the value
+  of the relocation.
 
 `R_WASM_FUNCTION_INDEX_LEB` relocations may fail to be processed, in
 which case linking fails.  This occurs if there is a weakly-undefined function
@@ -456,11 +460,10 @@ in which case there is no legal value that can be written as the target of any
 generate weak globals which may not be defined; a definition or import must
 exist for all global symbols in the linked output.)
 
-`R_WASM_MEMORY_ADDR_LEB`, `R_WEBASSEMBLY_MEMORY_ADDR_SLEB` and
-`R_WASM_MEMORY_ADDR_I32` relocations cannot fail.  The relocation's value
-is the offset within the linear memory of the symbol within the output segment,
-plus the symbol's addend.  If the symbol is undefined (whether weak or strong),
-the value of the relocation shall be `0`.
+`R_WASM_MEMORY_*` relocations cannot fail.  The relocation's value is the offset
+within the linear memory of the symbol within the output segment, plus the
+symbol's addend.  If the symbol is undefined (whether weak or strong), the value
+of the relocation shall be `0`.
 
 `R_WASM_FUNCTION_OFFSET_I32` relocations cannot fail. The values shall be
 adjusted to reflect new offsets in the code section.
