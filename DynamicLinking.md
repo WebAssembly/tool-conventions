@@ -78,7 +78,7 @@ relocation types for accessing data and functions address relative to
 `__memory_base` and `__table_base` global:
 
 - `11 / R_WASM_MEMORY_ADDR_REL_SLEB,` - a memory address relative to the
-  `__memory_base` wasm global.  Used in position indepenent code (`-fPIC`)
+  `__memory_base` wasm global.  Used in position independent code (`-fPIC`)
   where absolute memory addresses are not known at link time.
 - `12 / R_WASM_TABLE_INDEX_REL_SLEB` - a function address (table index)
   relative to the `__table_base` wasm global.  Used in position indepenent code
