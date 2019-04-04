@@ -137,7 +137,7 @@ need not update the stack pointer in its prolog or epilog at all.
 The frame organization is illustrated as follows (with higher memory addresses at the top):
 
 Position                     | Contents                       | Frame
--|-|-
+---------------------------- | -------------------------------| -----------
 `BP`                         |  unspecified                   | Previous
  ...                         | unspecified (aligment padding) | Current
    `FP` + *s*<br>...<br>`FP` | static-size objects            | Current
