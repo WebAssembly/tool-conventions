@@ -102,20 +102,18 @@ to understand them.
 
 ## Locals and the stack frame
 WebAssembly does not have registers in the style of hardware architectures. Instead it has an
-unlimited number of function
-arguments and local variables, which have wasm value types. These local values are generally
-used as registers would be in a traditional architecture, but there are some important differences.
-Because arguments are modeled explicitly and locals are local to a function, there is no need
-for a concept of callee- or caller-saved locals.
+unlimited number of function arguments and local variables, which have wasm value types. These 
+local values are generally used as registers would be in a traditional architecture, but there
+are some important differences. Because arguments are modeled explicitly and locals are local
+to a function, there is no need for a concept of callee- or caller-saved locals.
 
 
 ### The linear stack
 WebAssembly is a [Harvard](https://en.wikipedia.org/wiki/Harvard_architecture) architecture; 
-this means that code and data are not in the same
-memory space. No code or code addresses are visible in the wasm linear memory space, the only "address"
-that a function has is its index in the wasm function index space. Additionally the wasm implementation's
-runtime call stack (including the return address and function arguments) is not visible in
-the linear memory either.
+this means that code and data are not in the same memory space. No code or code addresses are
+visible in the wasm linear memory space, the only "address" that a function has is its index
+in the wasm function index space. Additionally the wasm implementation's runtime call stack
+(including the return address and function arguments) is not visible in the linear memory either.
 This means that address-taken local C variables need to be on a separate stack in the linear memory
 (herafter called the "linear stack"). It also means that some functions may not need a frame in the 
 linear stack at all.
@@ -129,21 +127,22 @@ Each function may have a frame on the linear stack. This stack grows downward
 The stack pointer global (`SP`) points to the bottom of the stack frame and always has 16-byte alignment. 
 If there are dynamically-sized objects on the stack, a frame pointer (a local variable, `FP`) is used, 
 and it points to the bottom of the static-size objects (those whose sizes are known at compile time). 
-If objects in the current frame require alignment greater than 16, then a base pointer (another local, `BP`) is used, which points to the bottom of the previous frame.
+If objects in the current frame require alignment greater than 16, then a base pointer (another local, `BP`)
+is used, which points to the bottom of the previous frame.
 The stack also has a "red zone" which extends 128 bytes below the stack pointer. If a function
 does not need a frame or base pointer, it may write data into the red zone which is not needed
 across function calls. So a leaf function which needs less than 128 bytes of stack space
 need not update the stack pointer in its prolog or epilog at all.
 
-The frame organization is illustrated as follows:
+The frame organization is illustrated as follows (with higher memory addresses at the top):
 
-Position | Contents | Frame
--|-|-
-`BP` |  unspecified | Previous
- ... | unspecified (aligment padding) | Current
-   `FP` + *s*<br>...<br>`FP` | static-size objects | Current
- `SP` + *d*<br>...<br>`SP` | dynamic-size objects | Current
- ...<br>`SP`-128| small static-size objects | Current (red zone)
+Position                     | Contents                       | Frame
+---------------------------- | -------------------------------| -----------
+`BP`                         |  unspecified                   | Previous
+ ...                         | unspecified (aligment padding) | Current
+   `FP` + *s*<br>...<br>`FP` | static-size objects            | Current
+ `SP` + *d*<br>...<br>`SP`   | dynamic-size objects           | Current
+ ...<br>`SP`-128             | small static-size objects      | Current (red zone)
 
 Note: in other ABIs the frame pointer typically points to a saved frame pointer (and return address) 
 at the top of the current frame. In this ABI the frame pointer points to the bottom of the current frame instead. 
