@@ -1,22 +1,26 @@
 WebAssembly Object File Linking
 ===============================
 
-This document describes the early plans for how static linking of WebAssembly
-might work in the clang/LLVM WebAssembly backend and other tools.  As mentioned
-in [README](README.md), it is not the only possible way to link WebAssembly
-modules.  Note: the ABI described in the document is a work in progress and
-**should not be considered stable**.
+This document describes the WebAssembly object file format and the ABI used for
+statically linking them to produce an executable WebAssembly module.  This is
+currently implemented in the clang/LLVM WebAssembly backend (as of LLVM 8.0) and
+other tools such as binaryen and wabt.  As mentioned in [README](README.md),
+this is not part of the official WebAssembly specification and other runtimes
+may choose to follow a different set of linking conventions.
 
-Each compilation unit is compiled as a "relocatable" WebAssembly module.  These
-modules are not expected to be directly executable and have certain
-constraints on them, but are otherwise well-formed WebAssembly modules.  In
-order to distinguish relocatable modules the linker can check for the presence
-of the ["linking"](#linking-metadata-section) custom section which must exist in
-all relocatable modules.
+Overview
+--------
 
-The goal of the linker is to take one or more modules and merge them into
-single executable module.  In order to achieve this the following tasks need to
-be performed:
+Each translation unit is compiled into a WebAssembly object file.  These files
+are themselves valid WebAssembly module binaries but are not expected to be
+directly executable and have certain additional constraints.  In order to
+distinguish object files from executable WebAssembly modules the linker can
+check for the presence of the ["linking"](#linking-metadata-section) custom
+section which must exist in all object files.
+
+The goal of the linker is to take one or more WebAssembly object files and merge
+them into a single executable module.  In order to achieve this the following
+tasks need to be performed:
 
 - Merging of function sections (re-numbering functions)
 - Merging of globals sections (re-numbering globals)
