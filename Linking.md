@@ -426,6 +426,7 @@ which reference a data symbol.
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
 
+
 Merging Custom Sections
 ----------------------
 
@@ -434,6 +435,7 @@ customs sections with the same name. The section symbol will refer the resulting
 section, this means that the relocation entries addend that refer
 the referred custom section fields shall be adjusted to take new offset
 into account.
+
 
 Processing Relocations
 ----------------------
@@ -487,6 +489,7 @@ event symbols in the linked output.)
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
 
+
 Start Section
 -------------
 
@@ -504,3 +507,33 @@ extends to all embedder functions that might want to call back into the module.
 If some future version of the WebAssembly spec allows for module exports to be
 available during execution of the start function it will make sense to
 reconsider this.
+
+
+Shared Memory and Passive Segments
+----------------------------------
+
+When shared memory is enabled, all data segments will be emitted as [passive
+segments][passive_segments] to prevent each thread from re-initializing
+memory. The `memory.init` instructions that initialize these passive segments
+will be emitted into a synthetic function, `__wasm_init_memory` that is called
+from `__wasm_call_ctors` before any constructors run. To make these
+`memory.init` instructions valid, a [DataCount section][datacount_section] will
+also be emitted.
+
+Note that `memory.init` and the DataCount section are features of the
+bulk-memory proposal, not the atomics proposal. Despite this, they are emitted
+by the linker in the presence of shared memory (which requires the `atomics`
+feature) whether or not the `bulk-memory` feature is enabled. This is because
+they are necessary to avoid re-initializing memory on each thread. Any toolchain
+targeting a WebAssembly engine that supports `atomics` but not `bulk-memory`
+will need to post-process the binaries the linker emits to remove the passive
+segments, `__wasm_init_memory` function, and the DataCount section and to
+arrange for memory to be initialized by some mechanism external to the
+WebAssembly module.
+
+In the future, once there are no engines that support `atomics` but not
+`bulk-memory`, we will require `bulk-memory` to be enabled in order to use
+shared memory.
+
+[passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
+[datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
