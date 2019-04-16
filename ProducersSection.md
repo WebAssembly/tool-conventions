@@ -100,6 +100,7 @@ pipeline that produces and optimizes a given wasm module.
 * `rustc`
 * `wasm-bindgen`
 * `wasm-pack`
+* `webassemblyjs`
 
 ### SDKs
 
@@ -108,6 +109,7 @@ top-level "thing" that the developer installs and interacts with directly to
 produce the wasm module.
 
 * `Emscripten`
+* `Webpack`
 
 ## Text format
 
