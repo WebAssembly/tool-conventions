@@ -1,44 +1,31 @@
 ﻿**WebAssembly Single Instruction Multiple Data Intrinsic Instructions**
 
-[TOC]
+# Table of Contents
+1. [Introduction](#introduction)
+2. [Proposed Vector Types](proposed-vector-types)
+3. [Load and Store Definitions](load-and-store-definitions)
 
-##### **Introduction** {#introduction}
-
+## **Introduction** <a name=introduction></a>
 This document is a draft proposal for a list of WebAssembly Intrinsic Instructions for C/C++ Clang compiler and an explanation of some of the design decisions and current state of WebAssembly Intrinsics.
 
-
-##### **Proposed Vector Types** {#proposed-vector-types}
-
+##### **Proposed Vector Types** <a name=proposed-vector-types></a>
 The following is a proposed vector type.  In asking others I thought it could be defined like llvm does  i8x16  for i8x16 and u8x16 for u8x16 but there was a preference expressed for using the v notation so it was kept.
 
 typedef v128 i8x16 __attribute__((__vector_size__(16)));
-
 typedef int8_t i8x16 __attribute__((__vector_size__(16)));
-
 typedef uint8_t u8x16 __attribute__((__vector_size__(16)));
-
 typedef int16_t i16x8 __attribute__((__vector_size__(16)));
-
 typedef uint16_t u16x8 __attribute__((__vector_size__(16)));
-
 typedef int32_t i32x4 __attribute__((__vector_size__(16)));
-
 typedef uint32_t u32x4 __attribute__((__vector_size__(16)));
-
 typedef int64_t i64x2 __attribute__((__vector_size__(16)));
-
 typedef uint64_t u64x2 __attribute__((__vector_size__(16)));
-
 typedef float f32x4 __attribute__((__vector_size__(16)));
-
 typedef double f64x2 __attribute__((__vector_size__(16)));
 
+##### **Load and Store Definitions** <a name=load-and-store-definitions></a>
 
-##### **Load and Store Definitions** {#load-and-store-definitions}
-
-
-###### v128 wasm_v128_constant(...)   {#v128-wasm_v128_constant}
-
+###### [v128 wasm_v128_constant(...)](#v128-wasm_v128_constant)
 Loads v128 into a 128 bit vector
 
 
