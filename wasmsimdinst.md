@@ -2,8 +2,10 @@
 
 # Table of Contents
 1. [Introduction](#introduction)
-2. [Proposed Vector Types](proposed-vector-types)
-3. [Load and Store Definitions](load-and-store-definitions)
+2. [Proposed Vector Types](#proposed-vector-types)
+3. [Load and Store Definitions](#load-and-store-definitions)
+4. [v128 wasm_v128_constant](#v128-wasm_v128_constant)
+5. [
 
 ## **Introduction** <a name=introduction></a>
 This document is a draft proposal for a list of WebAssembly Intrinsic Instructions for C/C++ Clang compiler and an explanation of some of the design decisions and current state of WebAssembly Intrinsics.
@@ -25,25 +27,18 @@ typedef double f64x2 __attribute__((__vector_size__(16)));
 
 ##### **Load and Store Definitions** <a name=load-and-store-definitions></a>
 
-###### [v128 wasm_v128_constant(...)](#v128-wasm_v128_constant)
+###### v128 wasm_v128_constant(...) <a name=v128-wasm_v128_constant></a>
 Loads v128 into a 128 bit vector
 
-
-###### v128 wasm_v128_load(v128* mem)  {#v128-wasm_v128_load-v128*-mem}
-
+###### v128 wasm_v128_load(v128* mem)  <a name=v128-wasm_v128_load-v128></a>
 Loads v128 into a 128 bit vector
 
-
-###### wasm_v128_store(v128 *mem, v128 a) {#wasm_v128_store-v128-*mem-v128-a}
-
+###### wasm_v128_store(v128 *mem, v128 a) <a name=wasm_v128_store-v128></a>
 Stores 128 bit vector into the memory location pointed to at mem
 
-
-##### **Broadcast, Extract and Replace Definitions** {#broadcast-extract-and-replace-definitions}
-
+##### **Broadcast, Extract and Replace Definitions** <a name=broadcast-extract-and-replace-definitions></a>
 
 ###### i8x16 wasm_i8x16_splat(int8_t a) {#i8x16-wasm_i8x16_splat-int8_t-a}
-
 Duplicates the value int8_t a into the i8x16 vector
 
 
