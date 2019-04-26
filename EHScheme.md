@@ -17,7 +17,7 @@ and is currently being implemented in V8.
 Here we propose a new exception handling scheme for WebAssembly for the
 toolchain side to generate compatible wasm binary files to support the
 aforementioned [WebAssembly exception handling
-proposal](https://github.com/WebAssembly/excption-handling/blob/master/proposals/Exceptions.md).
+proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md).
 
 This spec is tentative and may change in future. The prototype implementation
 work is in progress, and is currently only targeting C++ based on Itanium C++
