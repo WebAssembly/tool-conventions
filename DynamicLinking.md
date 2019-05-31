@@ -1,10 +1,10 @@
 WebAssembly Dynamic Linking
 ===========================
 
-This document describes the early plans for how dynamic linking of WebAssembly
-modules might work.
+This document describes a proposed ABI for dynamic linking of WebAssembly
+modules along with the current implementation status.
 
-Note: there is no stable ABI here yet.
+Note: This ABI is still a work in progress.  There is no stable ABI yet.
 
 # Dynamic Libraries
 
@@ -97,20 +97,44 @@ so exported, the loader will call it after the module is instantiated, and
 before any other function is called.  The `__post_instantiate` function is used
 both to apply relocations and to run any static constructors.
 
-(Note: the WebAssembly `start` function is not sufficient in all cases due to
-reentrancy issues, i.e., the `start` function is called as the module is being
-instantiated, before it returns its exports, so the outside cannot yet call into
-the module.)
-
 ### Imports
 
 Functions are directly imported from the `env` module (e.g.
 `env.enternal_func`).  Data addresses and function addresses are imported as
-functions that return the address.  This is because the final addresses of given
-symbol might not be known until all modules are initialized.  These functions
-are named with the `g$` prefix. For example `env.g$goo` can be imported and
-used to access the address of `foo`.  The plan is to replace these with imports
-of wasm globals (see Planned Changes below).
+WebAssembly globals that store the memory offset or table offset of the symbol.
+Such address are imported from `GOT.mem` and `GOT.func` respectively.  The `GOT`
+prefix is borrowed from the ELF linking world and stands for "Global Offset
+Table".  In WebAssembly the GOT is modeled as a set of imported wasm globals.
+
+For example, a dynamic library might import and use an external data symbol as
+follows:
+
+```wasm
+(import "GOT.mem" "foo" (global $foo_addr (mut i32))
+...
+...
+get_global $foo_addr
+i32.load
+```
+
+And an external function symbol as follows:
+
+```wasm
+(import "GOT.func" "bar" (global $bar_addr i32))
+...
+...
+get_global $bar_addr
+call_indirect
+```
+
+Note: This has no effect on exports, or the import of functions for direct call.
+
+In the case of data symbols the imported global must be mutable as the dynamic
+linker will need to modify the value after instantiation.   This is because the
+data symbol offsets might be specified as wasm exports from other modules which
+have not yet been instantiated.  However, imports of function addresses do not
+need to be mutable since the linker can assign a table index to each imported
+function before it instantiates any of the modules.
 
 ### Exports
 
@@ -122,46 +146,16 @@ connect export the final relocated addresses (i.e. they cannot add
 relocation; the loader, which knows `__memory_base`, can then calculate the
 final relocated address.
 
-## Planned Changes
-
-There are plans to change the way symbol addresses (for both functions and data)
-are imported and used.  The goal is to decrease the runtime overhead associated
-with accessing external addresses.  In the new scheme addresses are imported as
-wasm globals under the predefined module names `GOT.mem` and `GOT.func` for data
-(memory) addresses and function addresses respectively.  The `GOT` prefix is
-borrowed from the ELF linking world and stands for "Global Offset Table".  In
-wasm the GOT is modeled as a set of imported wasm globals.
-
-For example, a dynamic library might import and use an external data symbol as
-follows:
-
-    (import "GOT.mem" "foo" (global $foo_addr (mut i32))
-    ...
-    ...
-    get_global $foo_addr
-    i32.load
-
-And an external function symbol as follows:
-
-    (import "GOT.func" "bar" (global $bar_addr i32))
-    ...
-    ...
-    get_global $bar_addr
-    call_indirect
-
-Note: This change does not effect exports, or the import of functions for
-direct call.
-
-Note: In the case of data symbols the imported global must be mutable as the
-dynamic linker will need to modify the value after instantiation.   This is
-because the data symbol offsets are specified as wasm exports which are not
-known until after a module is instantiated.
-
-Imports of function addresses do not need to be mutable since the linker can
-assign a table index to each imported function before it instantiates any of the
-modules.
-
 ## Implementation Status
+
+### LLVM Implementation
+
+When llvm is run with `--relocation-model=pic` (a.k.a `-fPIC`) it will generate
+code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
+entries.  Such code must then be linked with either `-shared` to produce a
+shared library or `-pie` to produced a dynamically linked executable.
+
+### Emscripten
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
 `RUNTIME_LINKED_LIBS`) or dynamically (using `dlopen`/`dlsym`/etc).
@@ -170,15 +164,10 @@ See `test_dylink_*` adnd `test_dlfcn_*` in the test suite for examples.
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
 
-### LLVM Implementation
-
-When llvm is run with `--relocation-model=pic` (a.k.a `-fPIC`) it will generate
-code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
-entries.
-
 In order to use the llvm output in emscripten (which still uses the old ABI
 described above) a binaryen pass is run as part of `wasm-emscripten-finalize`
-then coverts to the old ABI.  This pass will convert all `GOT.mem` and
-`GOT.func` entries into regular (non-imported) globals and sets there values by
-calling the `g$foo` functions during `__post_instantiate` before any other code
-is run.
+then coverts from the ABI descirbed in this document to the ABI used by the
+emscripten dynamic linker is somewhat different.  The emscripten ABI uses
+specially named functions (e.g. `g$foo` and `fp$foo`) for the accessing the
+addresses of the dynamically linked symbols rather than using WebAssembly
+globals.
