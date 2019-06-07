@@ -1,8 +1,8 @@
 WebAssembly Dynamic Linking
 ===========================
 
-This document describes a proposed ABI for dynamic linking of WebAssembly
-modules along with the current implementation status.
+This document describes the current WebAssembly dynamic linking ABI used by
+emscripten and by the llvm backend when targeting emscripten.
 
 Note: This ABI is still a work in progress.  There is no stable ABI yet.
 
