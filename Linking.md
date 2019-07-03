@@ -513,27 +513,18 @@ Shared Memory and Passive Segments
 ----------------------------------
 
 When shared memory is enabled, all data segments will be emitted as [passive
-segments][passive_segments] to prevent each thread from re-initializing
-memory. The `memory.init` instructions that initialize these passive segments
-will be emitted into a synthetic function, `__wasm_init_memory` that is called
-from `__wasm_call_ctors` before any constructors run. To make these
-`memory.init` instructions valid, a [DataCount section][datacount_section] will
-also be emitted.
+segments][passive_segments] to prevent each thread from reinitializing
+memory. In a web context, using active segments would cause memory to be
+reinitialized every time the module is instantiated on a new WebWorker as part
+of spawning a new thread. The `memory.init` instructions that initialize these
+passive segments will be emitted into a synthetic function, `__wasm_init_memory`
+that is called from `__wasm_call_ctors` before any constructors run. To make
+these `memory.init` instructions valid, a [DataCount section][datacount_section]
+will also be emitted.
 
 Note that `memory.init` and the DataCount section are features of the
-bulk-memory proposal, not the atomics proposal. Despite this, they are emitted
-by the linker in the presence of shared memory (which requires the `atomics`
-feature) whether or not the `bulk-memory` feature is enabled. This is because
-they are necessary to avoid re-initializing memory on each thread. Any toolchain
-targeting a WebAssembly engine that supports `atomics` but not `bulk-memory`
-will need to post-process the binaries the linker emits to remove the passive
-segments, `__wasm_init_memory` function, and the DataCount section and to
-arrange for memory to be initialized by some mechanism external to the
-WebAssembly module.
-
-In the future, once there are no engines that support `atomics` but not
-`bulk-memory`, we will require `bulk-memory` to be enabled in order to use
-shared memory.
+bulk-memory proposal, not the atomics proposal, so any engine that supports
+threads needs to support both of these proposals.
 
 [passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
 [datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
