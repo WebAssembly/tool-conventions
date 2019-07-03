@@ -101,6 +101,7 @@ pipeline that produces and optimizes a given wasm module.
 * `wasm-bindgen`
 * `wasm-pack`
 * `webassemblyjs`
+* `wasm-snip`
 
 ### SDKs
 
