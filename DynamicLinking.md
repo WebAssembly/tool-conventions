@@ -63,7 +63,7 @@ that will be provided by the dynamic loader:
    up the program.
  * `env.__stack_pointer` - A mutable `i32` global representing the explicit
    stack pointer as an offset into the above memory.
- * `env.__memory_base` - An immutable `i32` global representing the offset at in
+ * `env.__memory_base` - An immutable `i32` global representing the offset in
    the above memory which has been reserved and zero-initialized for this
    module, as described earlier.  The module can use this global in the
    intializer of its data segments so that they loaded at the correct address.
