@@ -40,8 +40,8 @@ module, if the dynamic library wants additional space) at offset
 `env.__memory_base`, and similarly for the table (where initialization is to
 `null`, i.e., a trap will occur if it is called). The allocated regions of the
 table and memory are guaranteed to be at least as aligned as the library
-requests in the `memoryalignment, tablealignment` properties. The library can
-then place memory and table segments at the proper locations using those
+requests in the `memoryalignment` and `tablealignment` properties. The library
+can then place memory and table segments at the proper locations using those
 imports.
 
 If `needed_dynlibs_count > 0` then the loader, before loading the library, will
@@ -57,16 +57,20 @@ A WebAssembly dynamic library must obey certain conventions.  In addition to
 the `dylink` section described above a module may import the following globals
 that will be provided by the dynamic loader:
 
- * The module can import `env.memory` for memory that is shared with the
-   outside. If it does so, it should import `env.__memory_base`, an `i32`
-   WebAssembly global, in which the loader will provide the start of the region
-   in memory which has been reserved and zero-initialized for this module, as
-   described earlier.  The module can use this global in the intializer of its
-   data segments so that they loaded at the correct address.
- * The module can import `env.table` for a table that is shared with the
-   outside. If it does so, it should import `env.__table_base`, an `i32`
-   WebAssembly global, in which the loader will provide the start of the region
-   in the table which has been reserved for this module, as described earlier.
+ * `env.memory` - A wasm memory that is shared between all wasm modules that
+   make up the program.
+ * `env.table` - A wasm table that is shared between all wasm modules that make
+   up the program.
+ * `env.__stack_pointer` - A mutable `i32` global representing the explicit
+   stack pointer as an offset into the above memory.
+ * `env.__memory_base` - An immutable `i32` global representing the offset in
+   the above memory which has been reserved and zero-initialized for this
+   module, as described earlier.  The module can use this global in the
+   intializer of its data segments so that they loaded at the correct address.
+ * `env.__table_base` - An immutable `i32` global representing the offset in the
+   above table which has been reserved for this module, as described earlier.
+   The module can use this global in the intializer of its table element
+   segments so that they loaded at the correct offset.
 
 ### Relocations
 
