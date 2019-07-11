@@ -67,10 +67,10 @@ that will be provided by the dynamic loader:
    the above memory which has been reserved and zero-initialized for this
    module, as described earlier.  The module can use this global in the
    intializer of its data segments so that they loaded at the correct address.
- * `env.table` - An immutable `i32` global representing the offset in the above
-   table which has been reserved for this module, as described earlier.  The
-   module can use this global in the intializer of its table element segments so
-   that they loaded at the correct offset.
+ * `env.__table_base` - An immutable `i32` global representing the offset in the
+   above table which has been reserved for this module, as described earlier.
+   The module can use this global in the intializer of its table element
+   segments so that they loaded at the correct offset.
 
 ### Relocations
 
