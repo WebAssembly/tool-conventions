@@ -528,3 +528,43 @@ threads needs to support both of these proposals.
 
 [passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
 [datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
+
+Thread Local Storage
+--------------------
+
+Currently, only the `local-exec` model of thread local storage is defined.
+
+To use thread local storage, the `bulk-memory` proposal must be enabled.
+
+All thread local variables will be merged into one passive segment called
+`.tdata`. This section contains the starting values for all TLS variables.
+The thread local block of every thread will be initialized with this segment.
+
+In a threaded build, the module will contain:
+
+* an immutable global variable of type `i32` called `__tls_size`.
+  Its value is the total size of the thread local block for the module,
+  i.e. the sum of the sizes of all thread local variables plus padding.
+  This value will be `0` if there are no thread-local variables.
+* a mutable global `i32` called `__tls_base`. This will be initialized to
+  `0` by default. When a thread is created (including the main thread), memory
+  will be allocated and this global will be initialized with the help of the
+  function `__wasm_init_tls`.
+* a linker-synthesized global function called `__wasm_init_tls`. This function
+  takes a pointer argument containing the memory address to use as the thread
+  local storage block of the current thread. If there are no thread-local
+  variables, this function will do nothing. Otherwise, the memory block will be
+  initialized with the passive segment `.tdata` via the `memory.init` instruction.
+  Additionally, `__tls_base` will be set to the value of the pointer argument.
+
+To use thread-local storage properly, a thread should do the equivalent of the
+following pseudo-code upon startup:
+
+```
+global.get __tls_size
+if
+  global.get __tls_size
+  call malloc
+  call __wasm_init_tls
+end
+```
