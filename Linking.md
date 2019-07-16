@@ -561,10 +561,6 @@ To use thread-local storage properly, a thread should do the equivalent of the
 following pseudo-code upon startup:
 
 ```
-global.get __tls_size
-if
-  global.get __tls_size
-  call malloc
-  call __wasm_init_tls
-end
+(if (global.get __tls_size) (then
+  (call __wasm_init_tls (call malloc (global.get __tls_size)))))
 ```
