@@ -532,9 +532,12 @@ threads needs to support both of these proposals.
 Thread Local Storage
 --------------------
 
-Currently, only the `local-exec` model of thread local storage is defined.
+Currently, thread-local storage is only supported in the main WASM module
+and cannot be accessed outside of it. This corresponds to the ELF local
+executable TLS model.
 
-To use thread local storage, the `bulk-memory` proposal must be enabled.
+Additionally, thread local storage depends on bulk memory instructions, and
+therefore support depends on the bulk memory proposal.
 
 All thread local variables will be merged into one passive segment called
 `.tdata`. This section contains the starting values for all TLS variables.
