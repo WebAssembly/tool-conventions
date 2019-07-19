@@ -528,3 +528,49 @@ threads needs to support both of these proposals.
 
 [passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
 [datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
+
+Thread Local Storage
+--------------------
+
+Currently, thread-local storage is only supported in the main WASM module
+and cannot be accessed outside of it. This corresponds to the ELF local
+exec TLS model.
+
+Additionally, thread local storage depends on bulk memory instructions, and
+therefore support depends on the bulk memory proposal.
+
+All thread local variables will be merged into one passive segment called
+`.tdata`. This section contains the starting values for all TLS variables.
+The thread local block of every thread will be initialized with this segment.
+
+In a threaded build, the linker will create:
+
+* an immutable global variable of type `i32` called `__tls_size`.
+  Its value is the total size of the thread local block for the module,
+  i.e. the sum of the sizes of all thread local variables plus padding.
+  This value will be `0` if there are no thread-local variables.
+* a mutable global `i32` called `__tls_base`, with a `i32.const 0` initializer.
+* a global function called `__wasm_init_tls` with signature `(i32) -> ()`.
+
+To initialize thread-local storage, a thread should do the equivalent of the
+following pseudo-code upon startup:
+
+    (if (global.get __tls_size) (then
+      (call __wasm_init_tls (call malloc (global.get __tls_size)))))
+
+`__wasm_init_tls` takes a pointer argument containing the memory block to use
+as the thread local storage block of the current thread. It should do nothing if
+there are no thread-local variables. Otherwise, the memory block will be
+initialized with the passive segment `.tdata` via the `memory.init` instruction.
+It will then set `__tls_base` to the address of the memory block passed to
+`__wasm_init_tls`.
+
+The relocations for thread local variables shall resolve into offsets relative to
+the start of the TLS block. As such, adding the value of `__tls_base` yields the
+actual address of the variable. For example, a variable called `tls_var` would
+have its address computed as follows:
+
+    (i32.add (global.get __tls_base) (i32.const tls_var))
+
+The variable can then be used as normal. Upon thread exit, the runtime should free
+the memory allocated for the TLS block.
