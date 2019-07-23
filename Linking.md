@@ -549,6 +549,9 @@ In a threaded build, the linker will create:
   Its value is the total size of the thread local block for the module,
   i.e. the sum of the sizes of all thread local variables plus padding.
   This value will be `0` if there are no thread-local variables.
+* an immutable global variable of type `i32` called `__tls_align`.
+  Its value is the alignment requirement of the thread local block, in bytes.
+  The value will be `0` if there are no thread-local variables.
 * a mutable global `i32` called `__tls_base`, with a `i32.const 0` initializer.
 * a global function called `__wasm_init_tls` with signature `(i32) -> ()`.
 
@@ -556,7 +559,12 @@ To initialize thread-local storage, a thread should do the equivalent of the
 following pseudo-code upon startup:
 
     (if (global.get __tls_size) (then
-      (call __wasm_init_tls (call malloc (global.get __tls_size)))))
+      (call __wasm_init_tls
+        (call aligned_alloc
+          (global.get __tls_align)
+          (call roundUpToMultipleOf
+            (global.get __tls_align)
+            (global.get __tls_size))))))
 
 `__wasm_init_tls` takes a pointer argument containing the memory block to use
 as the thread local storage block of the current thread. It should do nothing if
@@ -564,6 +572,9 @@ there are no thread-local variables. Otherwise, the memory block will be
 initialized with the passive segment `.tdata` via the `memory.init` instruction.
 It will then set `__tls_base` to the address of the memory block passed to
 `__wasm_init_tls`.
+
+Note that `__tls_size` is not necessarily a multiple of `__tls_align`. In order to
+use `aligned_alloc`, we must round the size up to be a multiple of `__tls_align`.
 
 The relocations for thread local variables shall resolve into offsets relative to
 the start of the TLS block. As such, adding the value of `__tls_base` yields the
