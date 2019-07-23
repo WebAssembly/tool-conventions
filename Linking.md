@@ -550,8 +550,9 @@ In a threaded build, the linker will create:
   i.e. the sum of the sizes of all thread local variables plus padding.
   This value will be `0` if there are no thread-local variables.
 * an immutable global variable of type `i32` called `__tls_align`.
-  Its value is the alignment requirement of the thread local block, in bytes.
-  The value will be `0` if there are no thread-local variables.
+  Its value is the alignment requirement of the thread local block, in bytes,
+  and will be a power of 2. The value will be `0` if there are no thread-local
+  variables.
 * a mutable global `i32` called `__tls_base`, with a `i32.const 0` initializer.
 * a global function called `__wasm_init_tls` with signature `(i32) -> ()`.
 
