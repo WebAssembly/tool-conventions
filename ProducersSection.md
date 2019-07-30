@@ -86,6 +86,7 @@ when the output of multiple compiled languages are statically linked together.
 * `C`
 * `C++`
 * `Rust`
+* `Go`
 
 ### Individual Tools
 
@@ -102,6 +103,7 @@ pipeline that produces and optimizes a given wasm module.
 * `wasm-pack`
 * `webassemblyjs`
 * `wasm-snip`
+* `gc` (Go)
 
 ### SDKs
 
