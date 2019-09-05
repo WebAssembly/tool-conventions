@@ -25,6 +25,7 @@ tasks need to be performed:
 - Merging of function sections (re-numbering functions)
 - Merging of globals sections (re-numbering globals)
 - Merging of event sections (re-numbering events)
+- Merging of table sections (re-numbering tables)
 - Merging of data segments (re-positioning data)
 - Resolving undefined external references
 
@@ -105,6 +106,10 @@ A relocation type can be one of the following:
 - `10 / R_WASM_EVENT_INDEX_LEB` - an event index encoded as a 5-byte
   [varuint32]. Used for the immediate argument of a `throw` and `if_except`
   instruction.
+- `13 / R_WASM_TABLE_NUMBER_LEB` - a table number encoded as a 5-byte
+  [varuint32]. Used for the table immediate argument in the table.*
+  instructions.
+
 
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
@@ -215,15 +220,16 @@ where a `syminfo` is encoded as:
 |              |                |   `2 / SYMTAB_GLOBAL`                       |
 |              |                |   `3 / SYMTAB_SECTION`                      |
 |              |                |   `4 / SYMTAB_EVENT`                        |
+|              |                |   `5 / SYMTAB_TABLE`                        |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
-For functions, globals and events, we reference an existing Wasm object, which
-is either an import or a defined function/global/event (recall that the operand of a
+For functions, globals, events and tables, we reference an existing Wasm object, which
+is either an import or a defined function/global/event/table (recall that the operand of a
 Wasm `call` instruction uses an index space consisting of the function imports
 followed by the defined functions, and similarly `get_global` for global imports
 and definitions and `throw` for event imports and definitions).
 
-If a function, global, or event symbol references an import, and the
+If a symbols refers to an import, and the
 `WASM_SYM_EXPLICIT_NAME` flag is not set, then the name is taken from the
 import; otherwise the `syminfo` specifies the symbol's name.
 
@@ -265,7 +271,7 @@ The current set of valid flags for symbols are:
   Hidden symbols are not to be exported when performing the final link, but
   may be linked to other modules.
 - `0x10 / WASM_SYM_UNDEFINED` - Indicating that this symbol is not defined.
-  For function/global/event symbols, must match whether the symbol is an import
+  For non-data symbols, this must match whether the symbol is an import
   or is defined; for data symbols, determines whether a segment is specified.
 - `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
   wasm module to the host environment. This differs from the visibility flags
@@ -302,7 +308,8 @@ and where a `comdat_sym` is encoded as:
 |          |                |   * `1 / WASM_COMDAT_FUNCTION`              |
 |          |                |   * `2 / WASM_COMDAT_GLOBAL`                |
 |          |                |   * `3 / WASM_COMDAT_EVENT`                 |
-| index    | `varuint32`    | Index of the data segment/function/global/event in the Wasm module (depending on kind). The function/global/event must not be an import. |
+|          |                |   * `4 / WASM_COMDAT_TABLE`                 |
+| index    | `varuint32`    | Index of the data segment/function/global/event/table in the Wasm module (depending on kind). The function/global/event/table must not be an import. |
 
 Target Features Section
 -----------------------
