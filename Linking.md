@@ -531,8 +531,9 @@ instantiation. `__wasm_init_memory` shall perform any synchronization necessary
 to ensure that no thread returns from instantiation until memory has been fully
 initialized, even if a module is instantiated on multiple threads
 simultaneously. This synchronization may involve waiting, so in a web context
-the runtime must ensure that the main thread does not race with worker threads
-to initialize memory. To make the `memory.init` and `data.drop` instructions
+the runtime must ensure that the module is instantiated either first on the
+browser's main thread without racing with worker threads or not at all on the
+browser's main thread. To make the `memory.init` and `data.drop` instructions
 valid, a [DataCount section][datacount_section] will also be emitted.
 
 Note that `memory.init` and the DataCount section are features of the
