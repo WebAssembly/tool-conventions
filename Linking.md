@@ -526,9 +526,9 @@ reinitialized every time the module is instantiated on a new WebWorker as part
 of spawning a new thread. The `memory.init` instructions that initialize these
 passive segments and the `data.drop` instructions that mark them collectible
 will be emitted into a synthetic function, `__wasm_init_memory` that is made the
-WebAssembly start function and called automatically on
-instantiation. `__wasm_init_memory` shall perform any synchronization necessary
-to ensure that no thread returns from instantiation until memory has been fully
+WebAssembly start function and called automatically on instantiation but is not
+exported. `__wasm_init_memory` shall perform any synchronization necessary to
+ensure that no thread returns from instantiation until memory has been fully
 initialized, even if a module is instantiated on multiple threads
 simultaneously. This synchronization may involve waiting, so in a web context
 the runtime must ensure that the module is instantiated either first on the
