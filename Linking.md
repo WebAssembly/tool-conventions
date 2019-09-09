@@ -524,10 +524,17 @@ segments][passive_segments] to prevent each thread from reinitializing
 memory. In a web context, using active segments would cause memory to be
 reinitialized every time the module is instantiated on a new WebWorker as part
 of spawning a new thread. The `memory.init` instructions that initialize these
-passive segments will be emitted into a synthetic function, `__wasm_init_memory`
-that is called from `__wasm_call_ctors` before any constructors run. To make
-these `memory.init` instructions valid, a [DataCount section][datacount_section]
-will also be emitted.
+passive segments and the `data.drop` instructions that mark them collectible
+will be emitted into a synthetic function `__wasm_init_memory` that is made the
+WebAssembly start function and called automatically on instantiation but is not
+exported. `__wasm_init_memory` shall perform any synchronization necessary to
+ensure that no thread returns from instantiation until memory has been fully
+initialized, even if a module is instantiated on multiple threads
+simultaneously. This synchronization may involve waiting, so in a web context
+the runtime must ensure that the module is instantiated either first on the
+browser's main thread without racing with worker threads or not at all on the
+browser's main thread. To make the `memory.init` and `data.drop` instructions
+valid, a [DataCount section][datacount_section] will also be emitted.
 
 Note that `memory.init` and the DataCount section are features of the
 bulk-memory proposal, not the atomics proposal, so any engine that supports
