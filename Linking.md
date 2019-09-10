@@ -327,9 +327,9 @@ The body of the target features section is a vector of entries:
 
 The recognized prefix bytes and their meanings are below. When the user does not
 supply a set of allowed features explicitly, the set of allowed features is
-taken to be the set of used features. Any feature not mentioned in an object's
-target features section is not used by that object, but is not necessarily
-prohibited in the final binary.
+taken to be the set of used or required features. Any feature not mentioned in
+an object's target features section is not used by that object, but is not
+necessarily prohibited in the final binary.
 
 | Prefix     | Meaning |
 | ---------- | ------- |
@@ -342,10 +342,35 @@ The generally accepted features are:
 1. `atomics`
 1. `bulk-memory`
 1. `exception-handling`
+1. `multivalue`
 1. `mutable-globals`
 1. `nontrapping-fptoint`
 1. `sign-ext`
 1. `simd128`
+1. `tail-call`
+
+Lowering Atomics and TLS to MVP WebAssembly
+-------------------------------------------
+MVP WebAssembly does not include support for atomic operations or the bulk
+memory operations necessary to implement thread-local storage. As a result, any
+atomics or TLS present at the source level must be lowered to non-atomic
+operations and normal storage when targeting MVP WebAssembly. This is safe as
+long as the resulting MVP object files are not used in a multi-threaded context.
+
+To enforce this safety guarantee, the linker will error out if a shared memory
+is requested but the `atomics` target feature is disallowed in the target
+features section of any input objects. The compiler is responsible for marking
+`atomics` disallowed and thereby preventing thread-unsafe linking if either
+atomic operations or TLS are stripped during compilation. If the compiler
+removes either one of atomic operations or TLS, the resulting object may only be
+used with a single thread with an unshared memory, so the other one should be
+removed as well.
+
+If `atomics` or `bulk-memory` is not available during compilation but the source
+does not contain atomic operations or TLS, then the result is a
+"thread-agnostic" object that neither uses nor disallows the `atomics` feature.
+Thread-agnostic objects can be safely linked with objects that do or do not use
+`atomics`, although not both at the same time.
 
 Merging Global Sections
 -----------------------
@@ -514,6 +539,9 @@ extends to all embedder functions that might want to call back into the module.
 If some future version of the WebAssembly spec allows for module exports to be
 available during execution of the start function it will make sense to
 reconsider this.
+
+When shared memory is requested, a start function will be emitted to initialize
+memory as described below.
 
 
 Shared Memory and Passive Segments
