@@ -327,7 +327,7 @@ The body of the target features section is a vector of entries:
 
 The recognized prefix bytes and their meanings are below. When the user does not
 supply a set of allowed features explicitly, the set of allowed features is
-taken to be the set of used or required features. Any feature not mentioned in
+taken to be the set of features used or required. Any feature not mentioned in
 an object's target features section is not used by that object, but is not
 necessarily prohibited in the final binary.
 
