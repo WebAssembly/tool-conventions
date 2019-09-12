@@ -280,6 +280,8 @@ The current set of valid flags for symbols are:
   rather than reusing the name from a wasm import. This allows it to remap
   imports from foreign WebAssembly modules into local symbols with different
   names.
+- `0x80 / WASM_SYM_NO_STRIP` - The symbol is intended to be included in the
+  linker output, regardless of whether it is used by the program.
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
