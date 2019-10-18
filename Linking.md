@@ -530,8 +530,8 @@ Start Section
 
 By default the static linker should not output a WebAssembly start
 section. Constructors are instead called from a synthetic function
-`__wasm_call_ctors` that should be exported from the module and called after
-instantiation by the WebAssembly runtime.
+`__wasm_call_ctors` that the runtime and embedder should arrange to have called
+after instantiation.
 
 Rationale: Use of the WebAssembly start function was considered for running
 static constructors and/or the main entry point to the program.  However,
