@@ -28,6 +28,7 @@ tasks need to be performed:
 - Merging of table sections (re-numbering tables)
 - Merging of data segments (re-positioning data)
 - Resolving undefined external references
+- Synthesizing functions to call constructors and perform other initialization
 
 The linking technique described here is designed to be fast, and avoids having
 to disassemble the code section.  The extra metadata required by the linker
@@ -527,7 +528,10 @@ event symbols in the linked output.)
 Start Section
 -------------
 
-By default the static linker should not output a WebAssembly start section.
+By default the static linker should not output a WebAssembly start
+section. Constructors are instead called from a synthetic function
+`__wasm_call_ctors` that should be exported from the module and called after
+instantiation by the WebAssembly runtime.
 
 Rationale: Use of the WebAssembly start function was considered for running
 static constructors and/or the main entry point to the program.  However,
