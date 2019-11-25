@@ -154,3 +154,26 @@ is no way to traverse the linear stack. There is also no currently-specified way
 is used as the frame pointer or base pointer. This functionality is not needed for backtracing or unwinding (since the
 wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
 or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
+
+## Program startup
+
+### User entrypoint
+
+In the wasm C ABI, `main` is used for a user entrypoint which takes no
+arguments, eg.  `main(void)` or `main()` in C or C++. On other platforms,
+it's common to also pass `main` the `argc` and `argv` arguments, but on
+wasm this trick is complicated by the fact that wasm requires callers and
+callees to have matching signatures. So, in wasm, `__main_argc_argv` is
+used for a user entrypoint which takes `argc` and `argv` parameters, eg.
+`main(int argc, char *argv[])`.
+
+In the wasm C ABI, there is no `envp` parameter to the user entrypoint. Since
+wasm's signature rule makes this awkward to support, and since it's not required
+by C, POSIX, or any other relavant standard, and since it's generally considered
+obsolete in favor of `getenv` anyway, it's not supported in the wasm C ABI.
+
+### Program entrypoint
+
+The program entrypoint (traditionally named `_start` on other platforms)
+isn't considered part of the C ABI per se, and may differ depending on
+what environment the program will be run in.
