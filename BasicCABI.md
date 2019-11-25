@@ -169,7 +169,7 @@ used for a user entrypoint which takes `argc` and `argv` parameters, eg.
 
 In the wasm C ABI, there is no `envp` parameter to the user entrypoint. Since
 wasm's signature rule makes this awkward to support, and since it's not required
-by C, POSIX, or any other relavant standard, and since it's generally considered
+by C, POSIX, or any other relevant standard, and since it's generally considered
 obsolete in favor of `getenv` anyway, it's not supported in the wasm C ABI.
 
 ### Program entrypoint
