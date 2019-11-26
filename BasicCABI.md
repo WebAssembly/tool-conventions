@@ -159,21 +159,41 @@ or in-field crash reporting. Future ABIs may designate a convention for determin
 
 ### User entrypoint
 
-In the wasm C ABI, `main` is used for a user entrypoint which takes no
-arguments, eg.  `main(void)` or `main()` in C or C++. On other platforms,
-it's common to also pass `main` the `argc` and `argv` arguments, but on
-wasm this trick is complicated by the fact that wasm requires callers and
-callees to have matching signatures. So, in wasm, `__main_argc_argv` is
-used for a user entrypoint which takes `argc` and `argv` parameters, eg.
-`main(int argc, char *argv[])`.
+The *user entrypoint* is the function which runs the bulk of the program.
+It is called `main` in C, C++, and other languages. Note that this may
+not be the first function in the program to be called, as programs may
+also have global constructors which run before it.
 
-In the wasm C ABI, there is no `envp` parameter to the user entrypoint. Since
-wasm's signature rule makes this awkward to support, and since it's not required
-by C, POSIX, or any other relevant standard, and since it's generally considered
-obsolete in favor of `getenv` anyway, it's not supported in the wasm C ABI.
+At the wasm C ABI level, the following symbol names are used:
+
+C ABI Symbol name            | C and C++ signature                |
+---------------------------- | -----------------------------------|
+`main`                       | `int main(void)` or `int main()`   |
+`__main_argc_argv`           | `int main(int argc, char *argv[])` |
+
+These symbol names only apply at the ABI level; C and C++ source should
+continue to use the standard `main` name, and compilers will handle the
+details of conforming to the ABI.
+
+Also note that C symbol names are distinct from WebAssembly export
+names, which are outside the scope of the C ABI. Toolchains which export
+the user entrypoint may chose to export it as the name `main`, even when
+the C ABI symbol name is `__main_argc_argv`.
+
+A symbol name other than `main` is needed because the usual trick of
+having implementations pass arguments to `main` even when they aren't
+needed doesn't work in wasm, which requires caller and callee signatures
+to exactly match.
+
+For the same reason, the wasm C ABI doesn't support an `envp` parameter.
+Fortunately, `envp` is not required by C, POSIX, or any other relevant
+standards, and is generally considered obsolete in favor of `getenv`.
 
 ### Program entrypoint
 
-The program entrypoint (traditionally named `_start` on other platforms)
-isn't considered part of the C ABI per se, and may differ depending on
-what environment the program will be run in.
+The *program entrypoint* is the first function in the program to be called.
+It is commonly called `_start` on other platforms, though this is a
+low-level detail that most code doesn't interact with.
+
+The program entrypoint is out of scope for the wasm C ABI. It may depend
+on what environment the program will be run in.
