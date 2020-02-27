@@ -154,3 +154,46 @@ is no way to traverse the linear stack. There is also no currently-specified way
 is used as the frame pointer or base pointer. This functionality is not needed for backtracing or unwinding (since the
 wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
 or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
+
+## Program startup
+
+### User entrypoint
+
+The *user entrypoint* is the function which runs the bulk of the program.
+It is called `main` in C, C++, and other languages. Note that this may
+not be the first function in the program to be called, as programs may
+also have global constructors which run before it.
+
+At the wasm C ABI level, the following symbol names are used:
+
+C ABI Symbol name            | C and C++ signature                |
+---------------------------- | -----------------------------------|
+`main`                       | `int main(void)` or `int main()`   |
+`__main_argc_argv`           | `int main(int argc, char *argv[])` |
+
+These symbol names only apply at the ABI level; C and C++ source should
+continue to use the standard `main` name, and compilers will handle the
+details of conforming to the ABI.
+
+Also note that C symbol names are distinct from WebAssembly export
+names, which are outside the scope of the C ABI. Toolchains which export
+the user entrypoint may chose to export it as the name `main`, even when
+the C ABI symbol name is `__main_argc_argv`.
+
+A symbol name other than `main` is needed because the usual trick of
+having implementations pass arguments to `main` even when they aren't
+needed doesn't work in wasm, which requires caller and callee signatures
+to exactly match.
+
+For the same reason, the wasm C ABI doesn't support an `envp` parameter.
+Fortunately, `envp` is not required by C, POSIX, or any other relevant
+standards, and is generally considered obsolete in favor of `getenv`.
+
+### Program entrypoint
+
+The *program entrypoint* is the first function in the program to be called.
+It is commonly called `_start` on other platforms, though this is a
+low-level detail that most code doesn't interact with.
+
+The program entrypoint is out of scope for the wasm C ABI. It may depend
+on what environment the program will be run in.
