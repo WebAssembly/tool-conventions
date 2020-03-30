@@ -17,4 +17,4 @@ So at WebAssembly level, all swiftcc functions end up extra arguments and all fu
 
 For example, Swift global function `func foo(_ value: Int)` is lowered as `func (param i32 i32 i32)` at WebAssembly level.
 
-If you export swiftcc function and call it, you maybe need to pass additional parameters to fill them. It's OK to fill the placeholder with any pointer size value.
+If you export swiftcc function and call it, you need the tail parameters. It's OK to fill the placeholder with any pointer size value. But if the embedding environment is JS, then missing params will be added as JS undefined and coerced to i32 as 0, so you don't need to fill them. This JS convention rule is documented at https://webassembly.github.io/spec/js-api/index.html
