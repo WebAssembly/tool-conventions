@@ -170,7 +170,7 @@ option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-St
 
 In order to use the llvm output in emscripten (which still uses the old ABI
 described above) a binaryen pass is run as part of `wasm-emscripten-finalize`
-then coverts from the ABI descirbed in this document to the ABI used by the
+then coverts from the ABI described in this document to the ABI used by the
 emscripten dynamic linker is somewhat different.  The emscripten ABI uses
 specially named functions (e.g. `g$foo` and `fp$foo`) for accessing the
 addresses of the dynamically linked symbols rather than using WebAssembly
