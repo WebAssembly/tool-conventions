@@ -100,7 +100,7 @@ A relocation type can be one of the following:
 - `7 / R_WASM_GLOBAL_INDEX_LEB` - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
 - `8 / R_WASM_FUNCTION_OFFSET_I32` - a byte offset within code section
-  for the specic function encoded as a [uint32].
+  for the specific function encoded as a [uint32].
   The offsets start at the actual function code excluding its size field.
 - `9 / R_WASM_SECTION_OFFSET_I32` - an byte offset from start of the
   specified section encoded as a [uint32].
