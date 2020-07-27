@@ -77,7 +77,6 @@ A `relocation_entry` begins with:
 | offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body) |
 | index    | `varuint32`         | the index of the symbol used (or, for `R_WASM_TYPE_INDEX_LEB` relocations, the index of the type) |
 
-
 A relocation type can be one of the following:
 
 - `0 / R_WASM_FUNCTION_INDEX_LEB` - a function index encoded as a 5-byte
