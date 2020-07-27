@@ -238,7 +238,7 @@ import; otherwise the `syminfo` specifies the symbol's name.
 | ------------ | -------------- | ------------------------------------------- |
 | index        | `varuint32`    | the index of the Wasm object corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
 | name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
-| name_data    | `bytes` ?      | UTF-8 encoding of the symbol name           |
+| name_data    | `bytes` ?      | UTF-8 encoding of the symbol name, omitted if `index` references an import |
 
 For data symbols:
 
