@@ -74,7 +74,7 @@ A `relocation_entry` begins with:
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
 | type     | `uint8`             | the relocation type            |
-| offset   | `varuint32`         | offset of the value to rewrite |
+| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body) |
 | index    | `varuint32`         | the index of the symbol used (or, for `R_WASM_TYPE_INDEX_LEB` relocations, the index of the type) |
 
 A relocation type can be one of the following:
@@ -111,7 +111,6 @@ A relocation type can be one of the following:
   [varuint32]. Used for the table immediate argument in the table.*
   instructions.
 
-
 [varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
 [varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
 [uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
@@ -127,9 +126,10 @@ present:
 
 Note that for all relocation types, the bytes being relocated (from `offset`
 to `offset + 5` for LEB/SLEB relocations or `offset + 4` for I32) must lie
-within the section to which the relocation applies.  The bytes being relocated
-may not overlap the boundary between the section's chunks, where such a
-distinction exists (it may not for custom sections).  For example, for
+within the section to which the relocation applies (as offsets are relative
+to the section's body, this means that they cannot be too large). In addition,
+the bytes being relocated may not overlap the boundary between the section's chunks,
+where such a distinction exists (it may not for custom sections).  For example, for
 relocations applied to the CODE section, a  relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
