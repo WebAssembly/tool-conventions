@@ -2,11 +2,11 @@ WebAssembly Object File Linking
 ===============================
 
 This document describes the WebAssembly object file format and the ABI used for
-statically linking them to produce an executable WebAssembly module.  This is
-currently implemented in the clang/LLVM WebAssembly backend (as of LLVM 8.0) and
-other tools such as binaryen and wabt.  As mentioned in [README](README.md),
-this is not part of the official WebAssembly specification and other runtimes
-may choose to follow a different set of linking conventions.
+statically linking them to produce an executable WebAssembly module. This is
+currently implemented in the clang/LLVM WebAssembly 
+backend and other tools such as binaryen and wabt.  As mentioned in 
+[README](README.md), this is not part of the official WebAssembly specification 
+and other runtimes may choose to follow a different set of linking conventions.
 
 Overview
 --------
@@ -35,10 +35,10 @@ to disassemble the code section.  The extra metadata required by the linker
 is stored in a custom ["linking"](#linking-metadata-section) section and zero or
 more relocation sections whose names begin with "reloc.".  For each section that
 requires relocation a "reloc" section will be present in the wasm file.  By
-convention the reloc section names end with the name of the section that they refer
-to: e.g. "reloc.CODE" for code section relocations.  However everything after
-the period is ignored and the specific target section is encoded in the reloc
-section itself.
+convention the reloc section names end with the name of the section that they 
+refer to: e.g. "reloc.CODE" for code section relocations.  However, everything 
+after the period is ignored and the specific target section is encoded in the 
+reloc section itself.
 
 The linker additionally checks that linked object files were built targeting
 compatible feature sets. Unlike native targets, WebAssembly has no runtime
@@ -79,58 +79,91 @@ A `relocation_entry` begins with:
 
 A relocation type can be one of the following:
 
-- `0 / R_WASM_FUNCTION_INDEX_LEB` - a function index encoded as a 5-byte
-  [varuint32]. Used for the immediate argument of a `call` instruction.
-- `1 / R_WASM_TABLE_INDEX_SLEB` - a function table index encoded as a
-  5-byte [varint32]. Used to refer to the immediate argument of a `i32.const`
-  instruction, e.g. taking the address of a function.
-- `2 / R_WASM_TABLE_INDEX_I32` - a function table index encoded as a
-  [uint32], e.g. taking the address of a function in a static data initializer.
-- `3 / R_WASM_MEMORY_ADDR_LEB` - a linear memory index encoded as a 5-byte
-  [varuint32]. Used for the immediate argument of a `load` or `store`
-  instruction, e.g. directly loading from or storing to a C++ global.
-- `4 / R_WASM_MEMORY_ADDR_SLEB` - a linear memory index encoded as a 5-byte
-  [varint32]. Used for the immediate argument of a `i32.const` instruction,
-  e.g. taking the address of a C++ global.
-- `5 / R_WASM_MEMORY_ADDR_I32` - a linear memory index encoded as a
-  [uint32], e.g. taking the address of a C++ global in a static data
-  initializer.
-- `6 / R_WASM_TYPE_INDEX_LEB` - a type table index encoded as a
-  5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
-- `7 / R_WASM_GLOBAL_INDEX_LEB` - a global index encoded as a
+- `0 / R_WASM_FUNCTION_INDEX_LEB` (since LLVM 10.0) - a function index encoded
+as a 5-byte [varuint32]. Used for the immediate argument of a `call`
+instruction.
+- `1 / R_WASM_TABLE_INDEX_SLEB` (since LLVM 10.0) - a function table index
+encoded as a 5-byte [varint32]. Used to refer to the immediate argument of a
+`i32.const`  instruction, e.g. taking the address of a function.
+- `2 / R_WASM_TABLE_INDEX_I32` (since LLVM 10.0) - a function table index
+encoded as a [uint32], e.g. taking the address of a function in a static data
+initializer.
+- `3 / R_WASM_MEMORY_ADDR_LEB` (since LLVM 10.0) - a linear memory index
+encoded as a 5-byte [varuint32]. Used for the immediate argument of a `load` or
+`store` instruction, e.g. directly loading from or storing to a C++ global.
+- `4 / R_WASM_MEMORY_ADDR_SLEB` (since LLVM 10.0) - a linear memory index
+encoded as a 5-byte [varint32]. Used for the immediate argument of a `i32.const`
+instruction, e.g. taking the address of a C++ global.
+- `5 / R_WASM_MEMORY_ADDR_I32` (since LLVM 10.0) - a linear memory index
+encoded  as a [uint32], e.g. taking the address of a C++ global in a static data
+initializer.
+- `6 / R_WASM_TYPE_INDEX_LEB` (since LLVM 10.0) - a type table index encoded as
+a 5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
+- `7 / R_WASM_GLOBAL_INDEX_LEB` (since LLVM 10.0) - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
-- `8 / R_WASM_FUNCTION_OFFSET_I32` - a byte offset within code section
-  for the specific function encoded as a [uint32].
-  The offsets start at the actual function code excluding its size field.
-- `9 / R_WASM_SECTION_OFFSET_I32` - an byte offset from start of the
-  specified section encoded as a [uint32].
-- `10 / R_WASM_EVENT_INDEX_LEB` - an event index encoded as a 5-byte
-  [varuint32]. Used for the immediate argument of a `throw` and `if_except`
+- `8 / R_WASM_FUNCTION_OFFSET_I32` (since LLVM 10.0) - a byte offset within
+code section for the specific function encoded as a [uint32]. The offsets start
+at the actual function code excluding its size field.
+- `9 / R_WASM_SECTION_OFFSET_I32` (since LLVM 10.0) - an byte offset from start
+of the specified section encoded as a [uint32].
+- `10 / R_WASM_EVENT_INDEX_LEB` (since LLVM 10.0) - an event index encoded as a
+5-byte [varuint32]. Used for the immediate argument of a `throw` and `if_except`
   instruction.
-- `13 / R_WASM_TABLE_NUMBER_LEB` - a table number encoded as a 5-byte
-  [varuint32]. Used for the table immediate argument in the table.*
+- `13 / R_WASM_GLOBAL_INDEX_I32` (since LLVM 11.0) - a global index encoded as
+[uint32].
+- `14 / R_WASM_MEMORY_ADDR_LEB64` (since LLVM 11.0) - the 64-bit counterpart of
+`R_WASM_MEMORY_ADDR_LEB`. A 64-bit linear memory index encoded as a 10-byte
+[varuint64], Used for the immediate argument of a `load` or `store` instruction
+on a 64-bit linear memory array.
+- `15 / R_WASM_MEMORY_ADDR_SLEB64` (since LLVM 11.0) - the 64-bit counterpart
+of `R_WASM_MEMORY_ADDR_SLEB`. A 64-bit linear memory index encoded as a 10-byte
+[varint64]. Used for the immediate argument of a `i64.const` instruction.
+- `16 / R_WASM_MEMORY_ADDR_I64` (since LLVM 11.0) - the 64-bit counterpart of
+`R_WASM_MEMORY_ADDR`. A 64-bit linear memory index encoded as a [uint64], e.g.
+taking the 64-bit address of a C++ global in a static data initializer.
+- `17 / R_WASM_MEMORY_ADDR_REL_SLEB64` (since LLVM 11.0) - the 64-bit
+counterpart of `R_WASM_MEMORY_ADDR_REL_SLEB`.
+- `18 / R_WASM_TABLE_INDEX_SLEB64` (in LLVM `master`) - the 64-bit counterpart
+of  `R_WASM_TABLE_INDEX_SLEB`. A function table index encoded as a 10-byte
+[varint64]. Used to refer to the immediate argument of a `i64.const`
+instruction, e.g. taking the address of a function in Wasm64.
+- `19 / R_WASM_TABLE_INDEX_I64` (in LLVM `master`) - the 64-bit counterpart of
+`R_WASM_TABLE_INDEX_I32`. A function table index encoded as a [uint64], e.g.
+taking the address of a function in a static data initializer.
+- `20 / R_WASM_TABLE_NUMBER_LEB` (in LLVM `master`) - a table number encoded as
+a 5-byte [varuint32]. Used for the table immediate argument in the table.*
   instructions.
 
-[varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
-[varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
-[uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
+**Note**: Please note that the 64bit relocations are not yet stable and 
+therefore, subject to change.
 
-For `R_WASM_MEMORY_ADDR_LEB`, `R_WASM_MEMORY_ADDR_SLEB`,
+[varuint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
+[varuint64]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varuintn
+[varint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
+[varint64]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#varintn
+[uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
+[uint64]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
+
+For `R_WASM_MEMORY_ADDR_LEB`, `R_WASM_MEMORY_ADDR_SLEB`, 
 `R_WASM_MEMORY_ADDR_I32`, `R_WASM_FUNCTION_OFFSET_I32`, and
-`R_WASM_SECTION_OFFSET_I32` relocations the following field is additionally
-present:
+`R_WASM_SECTION_OFFSET_I32` relocations (and their 64-bit counterparts) the 
+following field is additionally present:
 
 | Field  | Type             | Description                         |
 | ------ | ---------------- | ----------------------------------- |
 | addend | `varint32`       | addend to add to the address        |
 
-Note that for all relocation types, the bytes being relocated (from `offset`
-to `offset + 5` for LEB/SLEB relocations or `offset + 4` for I32) must lie
-within the section to which the relocation applies (as offsets are relative
+Note that for all relocation types, the bytes being relocated:
+* from `offset` to `offset + 5` for LEB/SLEB relocations;
+* from `offset` to `offset + 10` for LEB64/SLEB64 relocations;
+* from `offset` to `offset + 4` for I32 relocations;
+* or from `offset` to `offset + 8` for I64;
+
+must lie within the section to which the relocation applies (as offsets are relative
 to the section's body, this means that they cannot be too large). In addition,
 the bytes being relocated may not overlap the boundary between the section's chunks,
 where such a distinction exists (it may not for custom sections).  For example, for
-relocations applied to the CODE section, a  relocation cannot straddle two
+relocations applied to the CODE section, a relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
 
@@ -396,7 +429,7 @@ Merging Event Sections
 -----------------------
 
 Events are meant to represent various control-flow changing constructs of wasm.
-Currently we have a
+Currently, we have a
 [proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
 for one kind of events: exceptions, but the event section can be used to support
 other kinds of events in future as well. The event section is a list of declared
@@ -481,7 +514,7 @@ The final code and data sections are written out with relocations applied.
 shall contain a newly-synthesised type section which contains entries for all
 functions and type relocations in the output.
 
-`R_WASM_TABLE_INDEX_SLEB` and `R_WASM_TABLE_INDEX_I32` relocations
+`R_WASM_TABLE_INDEX_SLEB`, `R_WASM_TABLE_INDEX_I32` relocations and their 64-bit counterparts (`R_WASM_TABLE_INDEX_SLEB64` and `R_WASM_TABLE_INDEX_I64`) 
 cannot fail.  The output Wasm file shall contain a newly-synthesised table,
 which contains an entry for all defined or imported symbols referenced by table
 relocations.  The output table elements shall begin at a non-zero offset within
@@ -504,7 +537,7 @@ generate weak globals which may not be defined; a definition or import must
 exist for all global symbols in the linked output.)
 
 `R_WASM_MEMORY_ADDR_LEB`, `R_WASM_MEMORY_ADDR_SLEB` and
-`R_WASM_MEMORY_ADDR_I32` relocations cannot fail.  The relocation's value
+`R_WASM_MEMORY_ADDR_I32` relocations (and their 64-bit counterpairs `R_WASM_MEMORY_ADDR_LEB64`, `R_WASM_MEMORY_ADDR_SLEB64`, and `R_WASM_MEMORY_ADDR_I64`) cannot fail.  The relocation's value
 is the offset within the linear memory of the symbol within the output segment,
 plus the symbol's addend.  If the symbol is undefined (whether weak or strong),
 the value of the relocation shall be `0`.
@@ -523,7 +556,6 @@ weak events which may not be defined; a definition or import must exist for all
 event symbols in the linked output.)
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
-
 
 Start Section
 -------------
