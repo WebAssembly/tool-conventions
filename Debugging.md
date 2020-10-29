@@ -37,4 +37,4 @@ On the WebAssembly side, the URL of this Source Map file is stored in a custom s
 | Field        | Type        | Description                       |
 | ------------ | ----------- | --------------------------------- |
 | url_name_len | `varuint32` | Length of `url_name_str` in bytes |
-| url_name_str | `bytes`     | Path to the Source Map file       |
+| url_name_str | `bytes`     | URL to the Source Map file        |
