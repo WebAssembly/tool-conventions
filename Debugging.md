@@ -34,7 +34,7 @@ stored in an external file in a format as defined by the [Source Map spec](https
 On the WebAssembly side, the URL of this Source Map file is stored in a custom section with the name
 `sourceMappingURL`. That section contains:
 
-| Field         | Type       | Description                       |
-| ------------- | ---------- | --------------------------------- |
+| Field        | Type        | Description                       |
+| ------------ | ----------- | --------------------------------- |
 | url_name_len | `varuint32` | Length of `url_name_str` in bytes |
 | url_name_str | `bytes`     | Path to the Source Map file       |
