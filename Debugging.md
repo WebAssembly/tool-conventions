@@ -23,3 +23,18 @@ contains:
 may also contain the full wasm file as well, which can be simpler to handle
 (and tends to have little downside, as DWARF size tends to be much bigger than
 wasm size anyhow).
+
+# Source maps
+
+Adoption of DWARF is a fairly recent addition to WebAssembly, and many toolchains still
+support an earlier [Source Map based debugging proposal](https://github.com/WebAssembly/design/pull/1051).
+This proposal uses a mapping between locations in source files and an offset in the WebAssembly binary
+stored in an external file in a format as defined by the [Source Map spec](https://sourcemaps.info/spec.html).
+
+On the WebAssembly side, the URL of this Source Map file is stored in a custom section with the name
+`sourceMappingURL`. That section contains:
+
+| Field         | Type       | Description                       |
+| ------------- | ---------- | --------------------------------- |
+| url_name_len | `varuint32` | Length of `url_name_str` in bytes |
+| url_name_str | `bytes`     | Path to the Source Map file       |
