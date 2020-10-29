@@ -14,12 +14,13 @@ When doing so, the main wasm file does not need to contain any debug info, and
 instead has a custom section with the name `external_debug_info`. That section
 contains:
 
-| Field         | Type        | Description                        |
-| ------------- | ----------- | ---------------------------------- |
-| path_name_len | `varuint32` | Length of `path_name_str` in bytes |
-| path_name_str | `bytes`     | Path to debug info file            |
+| Field        | Type        | Description                       |
+| ------------ | ----------- | --------------------------------- |
+| url_name_len | `varuint32` | Length of `url_name_str` in bytes |
+| url_name_str | `bytes`     | Url to debug info file            |
 
-`path_name` is the location of a file containing DWARF debug info. Note that it
-may also contain the full wasm file as well, which can be simpler to handle
-(and tends to have little downside, as DWARF size tends to be much bigger than
-wasm size anyhow).
+`url_name` is the location of a file containing DWARF debug info. That file is
+a wasm container, which includes DWARF as wasm sections, normally. Note that it
+may also contain other sections, such as the code and data sections in the
+original wasm file (that can be simpler to handle, and tends to have little
+downside, as DWARF size tends to be much bigger than wasm size anyhow).
