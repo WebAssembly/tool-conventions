@@ -20,7 +20,8 @@ contains:
 | url_name_str | `bytes`     | Url to debug info file            |
 
 `url_name` is the location of a file containing DWARF debug info. That file is
-a wasm container, which includes DWARF as wasm sections, normally. Note that it
-may also contain other sections, such as the code and data sections in the
-original wasm file (that can be simpler to handle, and tends to have little
-downside, as DWARF size tends to be much bigger than wasm size anyhow).
+a wasm container, which includes DWARF in wasm custom sections, in the same
+format as they would appear normally in a wasm file. Note that the container may
+also contain other sections, such as the code and data sections in the original
+wasm file (that can be simpler to handle, and tends to have little downside,
+as DWARF size tends to be much bigger than wasm size anyhow).
