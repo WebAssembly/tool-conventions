@@ -27,7 +27,7 @@ wasm size anyhow).
 # Source maps
 
 Adoption of DWARF is a fairly recent addition to WebAssembly, and many toolchains still
-support a [Source Map](https://sourcemaps.info/spec.html) based debugging instead.
+support [Source Map](https://sourcemaps.info/spec.html) based debugging as well (or instead).
 
 Source map is an external JSON file that specifies how to map a (zero-based) line and column
 position in generated code to a file, line, and column location in the source. For
