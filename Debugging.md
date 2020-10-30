@@ -27,11 +27,15 @@ wasm size anyhow).
 # Source maps
 
 Adoption of DWARF is a fairly recent addition to WebAssembly, and many toolchains still
-support an earlier [Source Map based debugging proposal](https://github.com/WebAssembly/design/pull/1051).
-This proposal uses a mapping between locations in source files and an offset in the WebAssembly binary
-stored in an external file in a format as defined by the [Source Map spec](https://sourcemaps.info/spec.html).
+support a [Source Map](https://sourcemaps.info/spec.html) based debugging instead.
 
-On the WebAssembly side, the URL of this Source Map file is stored in a custom section with the name
+Source map is an external JSON file that specifies how to map a (zero-based) line and column
+position in generated code to a file, line, and column location in the source. For
+WebAssembly binary locations, the line number is always 1, and the column number
+is interpreted as a byte offset into the WebAssembly binary content.
+Source locations are interpreted as in the source map spec.
+
+On the WebAssembly side, the URL of such Source Map file is stored in a custom section with the name
 `sourceMappingURL`. That section contains:
 
 | Field        | Type        | Description                       |
