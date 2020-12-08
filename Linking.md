@@ -345,6 +345,7 @@ and where a `comdat_sym` is encoded as:
 |          |                |   * `2 / WASM_COMDAT_GLOBAL`                |
 |          |                |   * `3 / WASM_COMDAT_EVENT`                 |
 |          |                |   * `4 / WASM_COMDAT_TABLE`                 |
+|          |                |   * `5 / WASM_COMDAT_SECTION`               |
 | index    | `varuint32`    | Index of the data segment/function/global/event/table in the Wasm module (depending on kind). The function/global/event/table must not be an import. |
 
 Target Features Section
@@ -503,6 +504,13 @@ customs sections with the same name. The section symbol will refer the resulting
 section, this means that the relocation entries addend that refer
 the referred custom section fields shall be adjusted to take new offset
 into account.
+
+COMDATs
+-------
+
+A COMDAT group may contain one or more functions, data segments, and/or custom sections.
+The linker will include only one of each of these elements with a given group name.
+
 
 
 Processing Relocations
