@@ -509,7 +509,8 @@ COMDATs
 -------
 
 A COMDAT group may contain one or more functions, data segments, and/or custom sections.
-The linker will include only one of each of these elements with a given group name.
+The linker will include only one of each of these elements with a given group name,
+and all of the elements will come from the same object file.
 
 
 
