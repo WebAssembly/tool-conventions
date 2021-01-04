@@ -18,7 +18,8 @@ features such as threads and/or multi-value.
 
 The ABI for the currently-specifed version of WebAssembly (also known as "wasm32") uses an "ILP32" data model, 
 where `int`, `long`, and pointer types are 32 bits. It is expected that the proposed extension to allow memories
-larger than 4GB ("wasm64") will use an "LP64" data model, where `int` and `long` are 64 bits.
+larger than 4GB ("wasm64") will use an "LP64" data model, where `int` is 32 bits while `pointer` and `long` are
+64 bits.
 
 The following table shows the memory sizes and alignments of C and C++ scalar types, and their
 correspondence to types used in the WebAssembly specification:
