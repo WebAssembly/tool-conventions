@@ -158,12 +158,22 @@ or in-field crash reporting. Future ABIs may designate a convention for determin
 
 ### Function signatures
 
-Scalar types passed as arguments are passed via WebAssembly function parameters and returned via WebAssembly function
-results of their corresponding Wasm value types. `long double`, which has no corresponding Wasm value type, is passed
-as a pair of `i64` parameters and returned indirectly via a pointer to memory prepended to the function parameters.
-Empty structs and unions are ignored in both arguments and return positions. Structs and unions with a single element
-are passed and returned the same way their element would be. Other structs and unions are passed indirectly via a
-pointer to memory and returned indirectly via a pointer to memory prepended to the function parameters.
+Types can be passed directly via WebAssembly function parameters or indirectly
+via a pointer parameter that points to the value in memory. Similarly, types can
+either be returned directly from WebAssembly functions or returned indirectly
+via a pointer parameter prepended to the parameter list.
+
+Type                         | Parameter     | Result   |
+-----------------------------|---------------|----------|
+scalar[1]                    | direct        | direct   |
+empty struct or union        | ignored       | ignored  |
+singleton struct or union[2] | direct        | direct   |
+other struct or union        | indirect      | indirect |
+
+[1] `long long double` is passed directly as two `i64` values.
+
+[2] Any struct or union that recursively contains just a single scalar value and
+is not specified to have greater than natural alignment.
 
 ## Program startup
 
