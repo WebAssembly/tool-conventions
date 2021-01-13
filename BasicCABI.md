@@ -156,6 +156,15 @@ is used as the frame pointer or base pointer. This functionality is not needed f
 wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
 or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
 
+### Function signatures
+
+Scalar types passed as arguments are passed via WebAssembly function parameters and returned via WebAssembly function
+results of their corresponding Wasm value types. `long double`, which has no corresponding Wasm value type, is passed
+as a pair of `i64` parameters and returned indirectly via a pointer to memory prepended to the function parameters.
+Empty structs and unions are ignored in both arguments and return positions. Structs and unions with a single element
+are passed and returned the same way their element would be. Other structs and unions are passed indirectly via a
+pointer to memory and returned indirectly via a pointer to memory prepended to the function parameters.
+
 ## Program startup
 
 ### User entrypoint
