@@ -187,7 +187,9 @@ multivalue may be introduced in the future.
 Varargs are placed in a buffer by the caller and the last parameter to the
 function is a pointer to that buffer. The callee is allowed to modify the
 contents of the buffer, so the caller is responsible for making a copy of any
-varargs data that the callee should not modify.
+varargs data that the callee should not modify. Arguments are arranged in order
+in the buffer, with each argument placed at the lowest appropriately aligned
+address after the previous argument.
 
 ## Program startup
 
