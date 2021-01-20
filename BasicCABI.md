@@ -156,6 +156,41 @@ is used as the frame pointer or base pointer. This functionality is not needed f
 wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
 or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
 
+### Function signatures
+
+Types can be passed directly via WebAssembly function parameters or indirectly
+via a pointer parameter that points to the value in memory. The callee is
+allowed to modify the contents of that memory, so the caller is responsible for
+making a copy of any indirectly passed data that the callee should not modify.
+Similarly, types can either be returned directly from WebAssembly functions or
+returned indirectly via a pointer parameter prepended to the parameter list.
+
+Type                         | Parameter     | Result   |
+-----------------------------|---------------|----------|
+scalar[1]                    | direct        | direct   |
+empty struct or union        | ignored       | ignored  |
+singleton struct or union[2] | direct        | direct   |
+other struct or union[3]     | indirect      | indirect |
+array                        | indirect      | N/A      |
+
+[1] `long long double` and `__int128` are passed directly as two `i64` values.
+
+[2] Any struct or union that recursively (including through nested structs,
+unions, and arrays) contains just a single scalar value and is not specified to
+have greater than natural alignment.
+
+[3] This calling convention was defined before
+[multivalue](https://github.com/WebAssembly/multi-value) was standardized. A new
+default calling convention that changes this behavior and takes advantage of
+multivalue may be introduced in the future.
+
+Varargs are placed in a buffer by the caller and the last parameter to the
+function is a pointer to that buffer. The callee is allowed to modify the
+contents of the buffer, so the caller is responsible for making a copy of any
+varargs data that the callee should not modify. Arguments are arranged in order
+in the buffer, with each argument placed at the lowest appropriately aligned
+address after the previous argument.
+
 ## Program startup
 
 ### User entrypoint
