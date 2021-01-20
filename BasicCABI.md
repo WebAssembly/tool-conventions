@@ -173,7 +173,7 @@ singleton struct or union[2] | direct        | direct   |
 other struct or union[3]     | indirect      | indirect |
 array                        | indirect      | N/A      |
 
-[1] `long long double` is passed directly as two `i64` values.
+[1] `long long double` and `__int128` are passed directly as two `i64` values.
 
 [2] Any struct or union that recursively (including through nested structs,
 unions, and arrays) contains just a single scalar value and is not specified to
