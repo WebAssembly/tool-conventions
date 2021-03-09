@@ -133,6 +133,14 @@ taking the address of a function in a static data initializer.
 - `20 / R_WASM_TABLE_NUMBER_LEB` (in LLVM `master`) - a table number encoded as
 a 5-byte [varuint32]. Used for the table immediate argument in the table.*
   instructions.
+- `21 / R_WASM_MEMORY_ADDR_TLS_SLEB` (in LLVM `master`) - an offset from the
+`__tls_base` symbol encoded as a 5-byte [varint32]. Used for PIC case to reject
+absolute relocation.
+- `22 / R_WASM_FUNCTION_OFFSET_I64` (in LLVM `master`) -  the 64-bit counterpart
+of `R_WASM_FUNCTION_OFFSET_I32`. a byte offset within code section for the
+specific function encoded as a [uint64].
+- `23 / R_WASM_MEMORY_ADDR_LOCREL_I32` (in LLVM `master`) - an offset between
+its relocating address and the symbol address encoded as a [uint32]. Used for pointer-relative addressing.
 
 **Note**: Please note that the 64bit relocations are not yet stable and 
 therefore, subject to change.
