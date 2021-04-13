@@ -59,7 +59,7 @@ section.
 
 Relocation sections can only target code, data and custom sections.
 All other sections are synthetic sections: that is, rather than being
-`memcpy`'d into place as the code code and data sections are, they
+`memcpy`'d into place as the code and data sections are, they
 are created from scratch by the linker.
 
 The "reloc." custom sections must come after the
