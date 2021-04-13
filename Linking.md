@@ -196,7 +196,7 @@ section:
 | subsections | `subsection*` | sequence of `subsection`             |
 
 This `version` allows for breaking changes to be made to the format described
-here.  Tools can then choose to reject imputs contained unexpected versions.
+here.  Tools can then choose to reject inputs containing unexpected versions.
 
 Each `subsection` is encoded as:
 
