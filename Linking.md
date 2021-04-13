@@ -236,6 +236,8 @@ subsection:
 | count       | `varuint32`  | number of init functions that follow  |
 | functions   | `varuint32*` | sequence of symbol indices            |
 
+The `WASM_INIT_FUNC` subsection must come after the `WASM_SYMBOL_TABLE` subsection.
+
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
 
