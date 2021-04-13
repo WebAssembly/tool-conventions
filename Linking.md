@@ -66,6 +66,10 @@ The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
 
+Any LEB128-encoded values should be maximally padded so that they can be rewritten
+without affecting the position of any other bytes. For instance, the function index
+3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
+
 Relocations contain the following fields:
 
 | Field     | Type                | Description                     |
