@@ -106,7 +106,7 @@ instruction, e.g. taking the address of a C++ global.
 - `5 / R_WASM_MEMORY_ADDR_I32` (since LLVM 10.0) - a linear memory index
 encoded  as a [uint32], e.g. taking the address of a C++ global in a static data
 initializer.
-- `6 / R_WASM_TYPE_INDEX_LEB` (since LLVM 10.0) - a type table index encoded as
+- `6 / R_WASM_TYPE_INDEX_LEB` (since LLVM 10.0) - a type index encoded as
 a 5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WASM_GLOBAL_INDEX_LEB` (since LLVM 10.0) - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
