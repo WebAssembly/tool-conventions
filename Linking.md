@@ -113,7 +113,7 @@ a 5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `8 / R_WASM_FUNCTION_OFFSET_I32` (since LLVM 10.0) - a byte offset within
 code section for the specific function encoded as a [uint32]. The offsets start
 at the actual function code excluding its size field.
-- `9 / R_WASM_SECTION_OFFSET_I32` (since LLVM 10.0) - an byte offset from start
+- `9 / R_WASM_SECTION_OFFSET_I32` (since LLVM 10.0) - a byte offset from start
 of the specified section encoded as a [uint32].
 - `10 / R_WASM_EVENT_INDEX_LEB` (since LLVM 10.0) - an event index encoded as a
 5-byte [varuint32]. Used for the immediate argument of a `throw` and `if_except`
