@@ -83,7 +83,7 @@ A `relocation_entry` begins with:
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
 | type     | `uint8`             | the relocation type            |
-| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body: offset zero is immediately after the id and size of the section) |
+| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's contents: offset zero is immediately after the id and size of the section) |
 | index    | `varuint32`         | the index of the symbol used (or, for `R_WASM_TYPE_INDEX_LEB` relocations, the index of the type) |
 
 A relocation type can be one of the following:
@@ -169,7 +169,7 @@ Note that for all relocation types, the bytes being relocated:
 * or from `offset` to `offset + 8` for I64;
 
 must lie within the section to which the relocation applies (as offsets are relative
-to the section's body, this means that they cannot be too large). In addition,
+to the section's contents, this means that they cannot be too large). In addition,
 the bytes being relocated may not overlap the boundary between the section's chunks,
 where such a distinction exists (it may not for custom sections).  For example, for
 relocations applied to the CODE section, a relocation cannot straddle two
@@ -373,7 +373,7 @@ The target features section is an optional custom section with the name
 "target_features". The target features section must come after the
 ["producers"](#linking-metadata-section) section.
 
-The body of the target features section is a vector of entries:
+The contents of the target features section is a vector of entries:
 
 | Field   | Type    | Description                              |
 | ------- | ------- | ---------------------------------------- |
