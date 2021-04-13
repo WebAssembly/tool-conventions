@@ -83,7 +83,7 @@ A `relocation_entry` begins with:
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
 | type     | `uint8`             | the relocation type            |
-| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body) |
+| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body: offset zero is immediately after the id and size of the section) |
 | index    | `varuint32`         | the index of the symbol used (or, for `R_WASM_TYPE_INDEX_LEB` relocations, the index of the type) |
 
 A relocation type can be one of the following:
