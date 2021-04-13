@@ -239,7 +239,14 @@ subsection:
 | Field       | Type         | Description                           |
 | ----------- | ------------ | ------------------------------------- |
 | count       | `varuint32`  | number of init functions that follow  |
-| functions   | `varuint32*` | sequence of symbol indices            |
+| functions   | `init_func*` | sequence of `init_func`               |
+
+where an `init_func` is encoded as:
+
+| Field        | Type        | Description                                                  |
+| ------------ | ----------- | ------------------------------------------------------------ |
+| priority     | `varuint32` | priority of the init function                                |
+| symbol_index | `varuint32` | the symbol index of init function (*not* the function index) |
 
 The `WASM_INIT_FUNC` subsection must come after the `WASM_SYMBOL_TABLE` subsection.
 
