@@ -57,6 +57,11 @@ A relocation section is a user-defined section with a name starting with
 section they apply to, and must be sequenced in the module after that
 section.
 
+Relocation sections can only target code, data and custom sections.
+All other sections are synthetic sections: that is, rather than being
+`memcpy`'d into place as the code code and data sections are, they
+are created from scratch by the linker.
+
 The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
