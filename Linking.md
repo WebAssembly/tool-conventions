@@ -3,9 +3,9 @@ WebAssembly Object File Linking
 
 This document describes the WebAssembly object file format and the ABI used for
 statically linking them to produce an executable WebAssembly module. This is
-currently implemented in the clang/LLVM WebAssembly 
-backend and other tools such as binaryen and wabt.  As mentioned in 
-[README](README.md), this is not part of the official WebAssembly specification 
+currently implemented in the clang/LLVM WebAssembly
+backend and other tools such as binaryen and wabt.  As mentioned in
+[README](README.md), this is not part of the official WebAssembly specification
 and other runtimes may choose to follow a different set of linking conventions.
 
 Overview
@@ -57,18 +57,18 @@ A relocation section is a user-defined section with a name starting with
 section they apply to, and must be sequenced in the module after that
 section.
 
-Relocation sections can only target code, data and custom sections.
-All other sections are synthetic sections: that is, rather than being
-`memcpy`'d into place as the code and data sections are, they
-are created from scratch by the linker.
+Relocation sections can only target code, data and custom sections. All other
+sections are synthetic sections: that is, rather than being `memcpy`'d into
+place as the code and data sections are, they are created from scratch by the
+linker.
 
 The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
 
-Any LEB128-encoded values should be maximally padded so that they can be rewritten
-without affecting the position of any other bytes. For instance, the function index
-3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
+Any LEB128-encoded values should be maximally padded so that they can be
+rewritten without affecting the position of any other bytes. For instance, the
+function index 3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
 
 Relocations contain the following fields:
 
