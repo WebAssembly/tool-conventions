@@ -3,9 +3,9 @@ WebAssembly Object File Linking
 
 This document describes the WebAssembly object file format and the ABI used for
 statically linking them to produce an executable WebAssembly module. This is
-currently implemented in the clang/LLVM WebAssembly 
-backend and other tools such as binaryen and wabt.  As mentioned in 
-[README](README.md), this is not part of the official WebAssembly specification 
+currently implemented in the clang/LLVM WebAssembly
+backend and other tools such as binaryen and wabt.  As mentioned in
+[README](README.md), this is not part of the official WebAssembly specification
 and other runtimes may choose to follow a different set of linking conventions.
 
 Overview
@@ -57,9 +57,18 @@ A relocation section is a user-defined section with a name starting with
 section they apply to, and must be sequenced in the module after that
 section.
 
+Relocation sections can only target code, data and custom sections. All other
+sections are synthetic sections: that is, rather than being `memcpy`'d into
+place as the code and data sections are, they are created from scratch by the
+linker.
+
 The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
+
+Any LEB128-encoded values should be maximally padded so that they can be
+rewritten without affecting the position of any other bytes. For instance, the
+function index 3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
 
 Relocations contain the following fields:
 
@@ -74,7 +83,7 @@ A `relocation_entry` begins with:
 | Field    | Type                | Description                    |
 | -------- | ------------------- | ------------------------------ |
 | type     | `uint8`             | the relocation type            |
-| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's body) |
+| offset   | `varuint32`         | offset of the value to rewrite (relative to the relevant section's contents: offset zero is immediately after the id and size of the section) |
 | index    | `varuint32`         | the index of the symbol used (or, for `R_WASM_TYPE_INDEX_LEB` relocations, the index of the type) |
 
 A relocation type can be one of the following:
@@ -97,14 +106,14 @@ instruction, e.g. taking the address of a C++ global.
 - `5 / R_WASM_MEMORY_ADDR_I32` (since LLVM 10.0) - a linear memory index
 encoded  as a [uint32], e.g. taking the address of a C++ global in a static data
 initializer.
-- `6 / R_WASM_TYPE_INDEX_LEB` (since LLVM 10.0) - a type table index encoded as
+- `6 / R_WASM_TYPE_INDEX_LEB` (since LLVM 10.0) - a type index encoded as
 a 5-byte [varuint32], e.g. the type immediate in a `call_indirect`.
 - `7 / R_WASM_GLOBAL_INDEX_LEB` (since LLVM 10.0) - a global index encoded as a
   5-byte [varuint32], e.g. the index immediate in a `get_global`.
 - `8 / R_WASM_FUNCTION_OFFSET_I32` (since LLVM 10.0) - a byte offset within
 code section for the specific function encoded as a [uint32]. The offsets start
 at the actual function code excluding its size field.
-- `9 / R_WASM_SECTION_OFFSET_I32` (since LLVM 10.0) - an byte offset from start
+- `9 / R_WASM_SECTION_OFFSET_I32` (since LLVM 10.0) - a byte offset from start
 of the specified section encoded as a [uint32].
 - `10 / R_WASM_EVENT_INDEX_LEB` (since LLVM 10.0) - an event index encoded as a
 5-byte [varuint32]. Used for the immediate argument of a `throw` and `if_except`
@@ -160,7 +169,7 @@ Note that for all relocation types, the bytes being relocated:
 * or from `offset` to `offset + 8` for I64;
 
 must lie within the section to which the relocation applies (as offsets are relative
-to the section's body, this means that they cannot be too large). In addition,
+to the section's contents, this means that they cannot be too large). In addition,
 the bytes being relocated may not overlap the boundary between the section's chunks,
 where such a distinction exists (it may not for custom sections).  For example, for
 relocations applied to the CODE section, a relocation cannot straddle two
@@ -187,7 +196,7 @@ section:
 | subsections | `subsection*` | sequence of `subsection`             |
 
 This `version` allows for breaking changes to be made to the format described
-here.  Tools can then choose to reject imputs contained unexpected versions.
+here.  Tools can then choose to reject inputs containing unexpected versions.
 
 Each `subsection` is encoded as:
 
@@ -234,7 +243,16 @@ subsection:
 | Field       | Type         | Description                           |
 | ----------- | ------------ | ------------------------------------- |
 | count       | `varuint32`  | number of init functions that follow  |
-| functions   | `varuint32*` | sequence of symbol indices            |
+| functions   | `init_func*` | sequence of `init_func`               |
+
+where an `init_func` is encoded as:
+
+| Field        | Type        | Description                                                  |
+| ------------ | ----------- | ------------------------------------------------------------ |
+| priority     | `varuint32` | priority of the init function                                |
+| symbol_index | `varuint32` | the symbol index of init function (*not* the function index) |
+
+The `WASM_INIT_FUNC` subsection must come after the `WASM_SYMBOL_TABLE` subsection.
 
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
@@ -355,7 +373,7 @@ The target features section is an optional custom section with the name
 "target_features". The target features section must come after the
 ["producers"](#linking-metadata-section) section.
 
-The body of the target features section is a vector of entries:
+The contents of the target features section is a vector of entries:
 
 | Field   | Type    | Description                              |
 | ------- | ------- | ---------------------------------------- |
