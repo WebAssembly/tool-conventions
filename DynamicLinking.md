@@ -163,7 +163,7 @@ shared library or `-pie` to produced a dynamically linked executable.
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
 `RUNTIME_LINKED_LIBS`) or dynamically (using `dlopen`/`dlsym`/etc).
-See `test_dylink_*` adnd `test_dlfcn_*` in the test suite for examples.
+See `test_dylink_*` and `test_dlfcn_*` in the test suite for examples.
 
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
