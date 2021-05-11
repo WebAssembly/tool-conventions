@@ -87,6 +87,9 @@ relocation types for accessing data and functions address relative to
 - `12 / R_WASM_TABLE_INDEX_REL_SLEB` - a function address (table index)
   relative to the `__table_base` wasm global.  Used in position indepenent code
   (`-fPIC`) where absolute function addresses are not known at link time.
+- `21 / R_WASM_MEMORY_ADDR_TLS_SLEB` (in LLVM `master`) - an offset from the
+`__tls_base` symbol encoded as a 5-byte [varint32]. Used for PIC case to reject
+absolute relocation.
 
 All code that gets linked into a WebAssembly dynamic library must be compiled
 as position independant.  The corresponding absolute reloction types
