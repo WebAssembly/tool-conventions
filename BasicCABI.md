@@ -91,7 +91,10 @@ Bitfield type | Witdh *w* | Range
 `signed long long` | 1 to 64 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `long long`, `unsigned long long` | 1 to 64 | 0 to 2<sup>w</sup>-1
 
+**SIMD Vector types**
 
+The ABI for vector types is not stable and may change as new optimization opportunities are
+found.
 
 # Function Calling Sequence
 This section describes the standard function calling sequence, including stack frame
