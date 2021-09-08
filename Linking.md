@@ -1,5 +1,4 @@
-WebAssembly Object File Linking
-===============================
+# WebAssembly Object File Linking
 
 This document describes the WebAssembly object file format and the ABI used for
 statically linking them to produce an executable WebAssembly module. This is
@@ -8,8 +7,7 @@ backend and other tools such as binaryen and wabt.  As mentioned in
 [README](README.md), this is not part of the official WebAssembly specification
 and other runtimes may choose to follow a different set of linking conventions.
 
-Overview
---------
+## Overview
 
 Each translation unit is compiled into a WebAssembly object file.  These files
 are themselves valid WebAssembly module binaries but are not expected to be
@@ -49,8 +47,7 @@ provide helpful errors when instructed to link incompatible or disallowed
 features. This feature information is stored in a custom ["target feature
 section"](#target-features-section).
 
-Relocation Sections
--------------------
+## Relocation Sections
 
 A relocation section is a user-defined section with a name starting with
 "reloc." Relocation sections start with an identifier specifying which
@@ -176,8 +173,7 @@ relocations applied to the CODE section, a relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
 
-Linking Metadata Section
-------------------------
+## Linking Metadata Section
 
 A linking metadata section is a user-defined section with the name
 "linking".
@@ -366,8 +362,7 @@ and where a `comdat_sym` is encoded as:
 |          |                |   * `5 / WASM_COMDAT_SECTION`               |
 | index    | `varuint32`    | Index of the data segment/function/global/event/table in the Wasm module (depending on kind). The function/global/event/table must not be an import. |
 
-Target Features Section
------------------------
+## Target Features Section
 
 The target features section is an optional custom section with the name
 "target_features". The target features section must come after the
@@ -404,8 +399,8 @@ The generally accepted features are:
 1. `simd128`
 1. `tail-call`
 
-Lowering Atomics and TLS to MVP WebAssembly
--------------------------------------------
+## Lowering Atomics and TLS to MVP WebAssembly
+
 MVP WebAssembly does not include support for atomic operations or the bulk
 memory operations necessary to implement thread-local storage. As a result, any
 atomics or TLS present at the source level must be lowered to non-atomic
@@ -427,8 +422,7 @@ does not contain atomic operations or TLS, then the result is a
 Thread-agnostic objects can be safely linked with objects that do or do not use
 `atomics`, although not both at the same time.
 
-Merging Global Sections
------------------------
+## Merging Global Sections
 
 Merging of the global sections requires the re-numbering of globals.  This
 follows the normal rules for defining symbols: if two object files provide the
@@ -443,9 +437,7 @@ The linker may provide certain symbols itself, even if not defined by any
 object file.  For example, the `__stack_pointer` symbol may be provided at
 link-time.
 
-
-Merging Event Sections
------------------------
+## Merging Event Sections
 
 Events are meant to represent various control-flow changing constructs of wasm.
 Currently, we have a
@@ -463,9 +455,7 @@ When creating non-relocatable output, the Wasm output shall have an import for
 each undefined strong symbol, and an export for each defined symbol with
 non-local linkage and non-hidden visibility.
 
-
-Merging Function Sections
--------------------------
+## Merging Function Sections
 
 Merging of the function sections requires the re-numbering of functions.  This
 requires modification to code sections at each location where a function
@@ -489,9 +479,7 @@ When creating non-relocatable output, the Wasm output shall have an import for
 each undefined strong symbol, and an export for each defined symbol with
 non-local linkage and non-hidden visibility.
 
-
-Merging Data Sections
----------------------
+## Merging Data Sections
 
 Merging of data sections is performed by creating a new data section from the
 data segments in the object files. Data symbols (e.g. C/C+ globals) are
@@ -513,9 +501,7 @@ which reference a data symbol.
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
 
-
-Merging Custom Sections
-----------------------
+## Merging Custom Sections
 
 Merging of custom sections is performed by concatenating all payloads for the
 customs sections with the same name. The section symbol will refer the resulting
@@ -523,17 +509,13 @@ section, this means that the relocation entries addend that refer
 the referred custom section fields shall be adjusted to take new offset
 into account.
 
-COMDATs
--------
+## COMDATs
 
 A COMDAT group may contain one or more functions, data segments, and/or custom sections.
 The linker will include all of these elements with a given group name from one object file,
 and will exclude any element with this group name from all other object files.
 
-
-
-Processing Relocations
-----------------------
+## Processing Relocations
 
 The final code and data sections are written out with relocations applied.
 
@@ -584,8 +566,7 @@ event symbols in the linked output.)
 
 [names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
 
-Start Section
--------------
+## Start Section
 
 By default the static linker should not output a WebAssembly start
 section. Constructors are instead called from a synthetic function
@@ -610,9 +591,14 @@ reconsider this.
 When shared memory is requested, a start function will be emitted to initialize
 memory as described below.
 
+## Experimental Threading Support
 
-Shared Memory and Passive Segments
-----------------------------------
+By default all atomics and TLS are currently lowered to WebAssembly MVP (see
+above) and threads are not supported.  However, when enabled, llvm does support
+an exprimental multithrading ABI based on the WebAssembly threads proposal.
+These features are used to support threading in Emscripten.
+
+### Shared Memory and Passive Segments
 
 When shared memory is enabled, all data segments will be emitted as [passive
 segments][passive_segments] to prevent each thread from reinitializing
@@ -638,8 +624,7 @@ threads needs to support both of these proposals.
 [passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
 [datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
 
-Thread Local Storage
---------------------
+### Thread Local Storage
 
 Currently, thread-local storage is only supported in the main WASM module
 and cannot be accessed outside of it. This corresponds to the ELF local
