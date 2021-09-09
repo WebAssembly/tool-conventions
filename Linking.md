@@ -127,8 +127,6 @@ of `R_WASM_MEMORY_ADDR_SLEB`. A 64-bit linear memory index encoded as a 10-byte
 - `16 / R_WASM_MEMORY_ADDR_I64` (since LLVM 11.0) - the 64-bit counterpart of
 `R_WASM_MEMORY_ADDR`. A 64-bit linear memory index encoded as a [uint64], e.g.
 taking the 64-bit address of a C++ global in a static data initializer.
-- `17 / R_WASM_MEMORY_ADDR_REL_SLEB64` (since LLVM 11.0) - the 64-bit
-counterpart of `R_WASM_MEMORY_ADDR_REL_SLEB`.
 - `18 / R_WASM_TABLE_INDEX_SLEB64` (in LLVM `master`) - the 64-bit counterpart
 of  `R_WASM_TABLE_INDEX_SLEB`. A function table index encoded as a 10-byte
 [varint64]. Used to refer to the immediate argument of a `i64.const`
@@ -150,8 +148,7 @@ therefore, subject to change.
 [uint32]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
 [uint64]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#uintn
 
-For `R_WASM_MEMORY_ADDR_LEB`, `R_WASM_MEMORY_ADDR_SLEB`, 
-`R_WASM_MEMORY_ADDR_I32`, `R_WASM_FUNCTION_OFFSET_I32`, and
+For `R_WASM_MEMORY_ADDR_*`, `R_WASM_FUNCTION_OFFSET_I32`, and
 `R_WASM_SECTION_OFFSET_I32` relocations (and their 64-bit counterparts) the 
 following field is additionally present:
 
@@ -522,15 +519,14 @@ The final code and data sections are written out with relocations applied.
 `R_WASM_TYPE_INDEX_LEB` relocations cannot fail.  The output Wasm file
 shall contain a newly-synthesised type section which contains entries for all
 functions and type relocations in the output.
-
-`R_WASM_TABLE_INDEX_SLEB`, `R_WASM_TABLE_INDEX_I32` relocations and their 64-bit counterparts (`R_WASM_TABLE_INDEX_SLEB64` and `R_WASM_TABLE_INDEX_I64`) 
-cannot fail.  The output Wasm file shall contain a newly-synthesised table,
-which contains an entry for all defined or imported symbols referenced by table
-relocations.  The output table elements shall begin at a non-zero offset within
-the table, so that a `call_indirect 0` instruction is guaranteed to fail.
-Finally, when processing table relocations for symbols which have neither an
-import nor a definition (namely, weakly-undefined function symbols), the value
-`0` is written out as the value of the relocation.
+`R_WASM_TABLE_INDEX_*` relocations cannot fail.  The output Wasm file shall
+contain a newly-synthesised table, which contains an entry for all defined or
+imported symbols referenced by table relocations.  The output table elements
+shall begin at a non-zero offset within the table, so that a `call_indirect 0`
+instruction is guaranteed to fail.  Finally, when processing table relocations
+for symbols which have neither an import nor a definition (namely,
+weakly-undefined function symbols), the value `0` is written out as the value
+of the relocation.
 
 `R_WASM_FUNCTION_INDEX_LEB` relocations may fail to be processed, in
 which case linking fails.  This occurs if there is a weakly-undefined function
@@ -545,11 +541,10 @@ in which case there is no legal value that can be written as the target of any
 generate weak globals which may not be defined; a definition or import must
 exist for all global symbols in the linked output.)
 
-`R_WASM_MEMORY_ADDR_LEB`, `R_WASM_MEMORY_ADDR_SLEB` and
-`R_WASM_MEMORY_ADDR_I32` relocations (and their 64-bit counterpairs `R_WASM_MEMORY_ADDR_LEB64`, `R_WASM_MEMORY_ADDR_SLEB64`, and `R_WASM_MEMORY_ADDR_I64`) cannot fail.  The relocation's value
-is the offset within the linear memory of the symbol within the output segment,
-plus the symbol's addend.  If the symbol is undefined (whether weak or strong),
-the value of the relocation shall be `0`.
+`R_WASM_MEMORY_*` relocations cannot fail.  The relocation's value is the offset
+within the linear memory of the symbol within the output segment, plus the
+symbol's addend.  If the symbol is undefined (whether weak or strong), the value
+of the relocation shall be `0`.
 
 `R_WASM_FUNCTION_OFFSET_I32` relocations cannot fail. The values shall be
 adjusted to reflect new offsets in the code section.
