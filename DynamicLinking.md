@@ -12,9 +12,35 @@ A WebAssembly dynamic library is a WebAssembly binary with a special custom
 section that indicates this is a dynamic library and contains additional
 information needed by the loader.
 
-## The "dylink" Section
+## The "dylink.0" Section
 
-The "dylink" section is defined as:
+The "dylink.0" is a custom section, the existence of which signals that the
+module conforms the dynaminc linking ABI described in this document. This
+section is expected to be the very first section in the module.
+
+A "dylink.0" consists of a series of sub-sections using the same format as found
+in the ["names"][names_sec] section:
+
+| Field       | Type          | Description                          |
+| ----------- | ------------- | ------------------------------------ |
+| subsections | `subsection*` | sequence of `subsection`             |
+
+Each `subsection` is encoded as:
+
+| Field        | Type        | Description                          |
+| ------------ | ----------- | ------------------------------------ |
+| type         | `uint8`     | code identifying type of subsection  |
+| payload_len  | `varuint32` | size of this subsection in bytes     |
+| payload_data | `bytes`     | content of this subsection, of length `payload_len` |
+
+The current list of valid `type` codes are:
+
+- `1 / WASM_DYLINK_MEM_INFO` - Specifies the memory and table space requirements of the module
+
+- `2 / WASM_DYLINK_NEEDED` - Specifies external modules that this one depends on.
+
+For `WASM_DYLINK_MEM_INFO` the following fields are present in the
+subsection:
 
 | Field                  | Type            | Description                    |
 | ---------------------- | --------------- | ------------------------------ |
@@ -22,6 +48,12 @@ The "dylink" section is defined as:
 | memoryalignment        | `varuint32`     | The required alignment of the memory area, in bytes, encoded as a power of 2. |
 | tablesize              | `varuint32`     | Size of the table area the loader should reserve for the module, which will begin at `env.__table_base` |
 | tablealignment         | `varuint32`     | The required alignment of the table area, in elements, encoded as a power of 2. |
+
+For `WASM_DYLINK_NEEDED` the following fields are present in the
+subsection:
+
+| Field                  | Type            | Description                    |
+| ---------------------- | --------------- | ------------------------------ |
 | needed_dynlibs_count   | `varuint32`     | Number of needed shared libraries |
 | needed_dynlibs_entries | `dynlib_entry*` | Repeated dynamic library entries as described below |
 
@@ -50,6 +82,8 @@ first load needed libraries specified by `needed_dynlibs_entries`.
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
 entire contents.
+
+[names_sec]: https://github.com/WebAssembly/design/blob/master/BinaryEncoding.md#name-section
 
 ## Interface and usage
 
