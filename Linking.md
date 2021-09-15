@@ -606,15 +606,22 @@ WebAssembly start function and called automatically on instantiation but is not
 exported. `__wasm_init_memory` shall perform any synchronization necessary to
 ensure that no thread returns from instantiation until memory has been fully
 initialized, even if a module is instantiated on multiple threads
-simultaneously. This synchronization may involve waiting, so in a web context
-the runtime must ensure that the module is instantiated either first on the
-browser's main thread without racing with worker threads or not at all on the
-browser's main thread. To make the `memory.init` and `data.drop` instructions
-valid, a [DataCount section][datacount_section] will also be emitted.
+simultaneously. This synchronization may involve waiting, but waiting is
+disallowed in some Web contexts such as on the main thread or in Audio worklets.
+For instantiation to succeed on all threads, the embedder must guarantee for
+each thread in a context that disallows waiting that the thread either wins the
+race and becomes responsible for initializing memory or that it is initialized
+after memory has already been initialized[1]. To make the `memory.init` and
+`data.drop` instructions valid, a [DataCount section][datacount_section] will
+also be emitted.
 
 Note that `memory.init` and the DataCount section are features of the
 bulk-memory proposal, not the atomics proposal, so any engine that supports
 threads needs to support both of these proposals.
+
+[1] In LLVM 13 and earlier, embedders had to guarantee that threads on contexts
+that disallow waiting had to win the race to initialize memory. That meant that
+there could only be one such thread in the system.
 
 [passive_segments]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#design
 [datacount_section]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md#datacount-section
