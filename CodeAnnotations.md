@@ -22,17 +22,20 @@ Each type of code annotation is encoded in a custom section named `code_annotati
 Such sections have the following binary format:
 
 ```
-codeannotationsec(A) ::= vec(funcannotations(A))
+codeannotationsec(A) ::= section_0(codeannotationdata(A))
+
+codeannotationdata(A) ::= n:name (if n = 'code_annotation.A')
+                          vec(funcannotations(A))
 
 funcannotations(A) ::= idx: funcidx
-                    vec(annotation(A))
+                       vec(annotation(A))
 
 annotation(A) ::= funcpos: u32
-               size: u32 (if size = ||A||)
-               data: A
+                  size: u32 (if size = ||A||)
+                  data: A
 ```
 
-Where `funcpos` is the byte offset of the annotation starting from the beginning of the function,  and `data` is a further payload, whose content depends on the section type.
+Where `funcpos` is the byte offset of the annotation starting from the beginning of the function body,  and `data` is a further payload, whose content depends on the section type `A`.
 
 `funcannotations` entries must appear in order of increasing `idx`, and duplicate `idx` values are not allowed.
 `codeannotation` entries must appear in order of increasing `funcpos`, and duplicate `funcpos` values are not allowed.
@@ -47,7 +50,7 @@ Code annotations are representend in the .wat format using [custom annotations](
 The `data` fields correspond to the field with the same name in the binary representation.
 The code position is implicit and it is derived by the position of the annotation:
 
-Custom annotations can appear anywhere , but **code annotations** are allowed only before function definitions (in which case the code position is the offset of the start of the function body in the code section), or before an instruction (in which case the code position is the offset of the instruction in the code section).
+Custom annotations can appear anywhere , but **code annotations** are allowed only in function definitions (in which case the code position is the offset of the start of the function body in the code section), or before an instruction (in which case the code position is the byte offset of the instruction relative to the beginning of the function body).
 
 Example:
 
@@ -55,7 +58,7 @@ Example:
 (module
   (type (;0;) (func (param i32 result i32)))
   (func (@code_annotation.hotness "\1") $test (type 0)
-    (@code_annotation.branch_hints "\0") if
+    (@code_annotation.branch_hint "\0") if
       i32.const 0
       local.set 0
     end
@@ -71,16 +74,16 @@ Currently the following type of code annotations are defined:
 
 ### Branch Hints
 
-- section name: `code_annotation.branch_hints`
+- section name: `code_annotation.branch_hint`
 - binary format:
 
 ```
-annotation(branchhint) ::= funcpos: u32
+annotation(branch_hint) ::= funcpos: u32
                size: 0x01
                data: branchhint
-branchhint: unlikely | likely
-unlikely: 0x00
-likely: 0x01
+branch_hint ::= unlikely | likely
+unlikely ::= 0x00
+likely ::= 0x01
 ```
 
 Branch hints can appear only before a `if` or `br_if` instruction, and are considered attached to it.
