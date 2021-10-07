@@ -39,6 +39,10 @@ The current list of valid `type` codes are:
 
 - `2 / WASM_DYLINK_NEEDED` - Specifies external modules that this one depends on.
 
+- `3 / WASM_DYLINK_EXPORT_INFO` - Specify additional metadata about exports.
+
+- `4 / WASM_DYLINK_IMPORT_INFO` - Specify additional metadata about imports.
+
 For `WASM_DYLINK_MEM_INFO` the following fields are present in the
 subsection:
 
@@ -55,14 +59,14 @@ subsection:
 | Field                  | Type            | Description                    |
 | ---------------------- | --------------- | ------------------------------ |
 | needed_dynlibs_count   | `varuint32`     | Number of needed shared libraries |
-| needed_dynlibs_entries | `dynlib_entry*` | Repeated dynamic library entries as described below |
+| needed_dynlibs_entries | `string*`       | Repeated string names of dynamic libraries |
 
-The "dynlib_entry" type is defined as:
+The "string" type is defined as:
 
-| Field           | Type        | Description                    |
-| --------------- | ----------- | ------------------------------ |
-| dynlib_name_len | `varuint32` | Length of `dynlib_name_str` in bytes |
-| dynlib_name_str | `bytes`     | Name of a needed dynamic library: valid UTF-8 byte sequence |
+| Field          | Type        | Description                         |
+| -------------- | ----------- | ----------------------------------- |
+| string_len     | `varuint32` | Length of `string_payload` in bytes |
+| string_payload | `bytes`     | valid UTF-8 byte sequence           |
 
 `env.__memory_base` and `env.__table_base` are `i32` imports that contain
 offsets into the linked memory and table, respectively. If the dynamic library
@@ -78,6 +82,26 @@ imports.
 
 If `needed_dynlibs_count > 0` then the loader, before loading the library, will
 first load needed libraries specified by `needed_dynlibs_entries`.
+
+For `WASM_DYLINK_EXPORT_INFO` the following fields are present in the
+subsection:
+
+| Field | Type        | Description                              |
+| ----- | ----------- | ---------------------------------------- |
+| name  | `string`    | The name of the export                   |
+| flags | `varuint32` | Symbol flags for the export              |
+
+For `WASM_DYLINK_IMPORT` the following fields are present in the
+subsection:
+
+| Field  | Type        | Description                              |
+| -------| ----------- | ---------------------------------------- |
+| module | `string`    | The module name of the import            |
+| field  | `string`    | The field name of the import             |
+| flags  | `varuint32` | Symbol flags for the export              |
+
+The set of possible symbol flags are the same as those specified in
+[Linking](Linking.md).
 
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
