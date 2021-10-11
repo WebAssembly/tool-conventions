@@ -88,3 +88,17 @@ likely ::= 0x01
 
 Branch hints can appear only before a `if` or `br_if` instruction, and are considered attached to it.
 Code transformations that remove the instruction should remove the associated annotation, and transformations that flip the direction of the branch should preserve the hint but flip the hint.
+
+## Trace Instruction
+
+- section name: code_annotation.trace_inst
+- binary format:
+
+```
+annotation(trace_inst) ::= funcpos: u32
+               size: 0x04
+               data: mark_id
+mark_id ::= u32
+```
+
+Trace marks can appear on any instruction and are considered attached to the instruction. If a code transformation reorders the instruction, the trace mark should move with it. If a code transformation removes the instruction, the trace mark should be removed.
