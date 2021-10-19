@@ -106,7 +106,6 @@ where a `signature` is encoded as:
 3. Split `hashes` (included in the signature) into `h1 … hn`
 4. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
 5. Return an error if the number of the number of hashes doesn't match the number of parts.
-6. Verify that the signature is valid for `hashes`.
 
 ## Partial signatures
 
@@ -120,10 +119,9 @@ The format is compatible with partial verification, i.e. verification of an arbi
 
 1. Verify the presence of the header, extract the specification version, the hash function to use and the signatures.
 2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
-3. Split `hashes` (included in the signature) into `h1 … hn`
-4. Read the module, computing the hash of every `(pi, di)` tuple to verify, immediately returning an error if the output doesn't match `hi`
+3. Split `hashes` (included in the signature) into `h1 … hm` with `m` being the last section to verify.
+4. Read the module, computing the hash of the `(pi, di)` tuples to verify, immediately returning an error if the output doesn't match `hi`.
 5. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
-6. Verify that the signature is valid for `hashes`.
 
 Notes:
 
