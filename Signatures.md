@@ -92,7 +92,7 @@ where `signed_hashes` is encoded as:
 
 | Field           | Type         | Description                                       |
 | --------------- | ------------ | ------------------------------------------------- |
-| hashes_len      | `varuint32`  | Length of the concatenated hashes in bytes        |
+| hashes_count    | `varuint32`  | Number of the concatenated hashes in bytes        |
 | hashes          | `bytes`      | Concatenated hashes of the signed sections        |
 | signature_count | `varuint32`  | Number of signatures                              |
 | signatures      | `signature*` | Sequence of `signature_count` `signature` records |
