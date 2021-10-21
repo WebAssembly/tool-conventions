@@ -81,10 +81,17 @@ If embedded in a module, the section must be the first section of the module.
 
 The signature data contains a sequence of signatures, where the end of the last signature must coincide with the last byte of the data.
 
+| Field               | Type        | Description                                   |
+| ------------------- | ----------- | --------------------------------------------- |
+| spec_version        | `byte`      | Specification version (`0x01`)                |
+| hash_fn             | `byte`      | Hash function identifier (`0x01` for SHA-256) |
+| signed_hashes_count | `varuint32` | Number of signed hashes                       |
+| signed_hashes*      | `byte`      | Sequence of hashes and their signatures       |
+
+where `signed_hashes` is encoded as:
+
 | Field           | Type         | Description                                       |
 | --------------- | ------------ | ------------------------------------------------- |
-| spec_version    | `byte`       | Specification version (`0x01`)                    |
-| hash_fn         | `byte`       | Hash function identifier (`0x01` for SHA-256)     |
 | hashes_len      | `varuint32`  | Length of the concatenated hashes in bytes        |
 | hashes          | `bytes`      | Concatenated hashes of the signed sections        |
 | signature_count | `varuint32`  | Number of signatures                              |
