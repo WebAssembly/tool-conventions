@@ -186,3 +186,139 @@ Representation of Ed25519 keys:
 `0x81 ‖ secret key (32 bytes) ‖ public key (32 bytes)`
 
 Implementations may support additional signatures schemes and key encoding formats.
+
+## Appendix A. Examples
+
+The following examples assume the following unsigned module structure as a common stating point.
+
+```text
+0:	type section
+1:	import section
+2:	function section
+3:	table section
+4:	memory section
+5:	global section
+6:	export section
+7:	element section
+8:	code section
+9:	data section
+10:	custom section: [.debug_info]
+11:	custom section: [.debug_macinfo]
+12:	custom section: [.debug_loc]
+13:	custom section: [.debug_ranges]
+14:	custom section: [.debug_abbrev]
+15:	custom section: [.debug_line]
+16:	custom section: [.debug_str]
+17:	custom section: [name]
+18:	custom section: [producers]
+```
+
+### Signatures for the entire module.
+
+Signed module structure:
+
+```text
+0:	custom section: [signature]
+1:	type section
+2:	import section
+3:	function section
+4:	table section
+5:	memory section
+6:	global section
+7:	export section
+8:	element section
+9:	code section
+10:	data section
+11:	custom section: [.debug_info]
+12:	custom section: [.debug_macinfo]
+13:	custom section: [.debug_loc]
+14:	custom section: [.debug_ranges]
+15:	custom section: [.debug_abbrev]
+16:	custom section: [.debug_line]
+17:	custom section: [.debug_str]
+18:	custom section: [name]
+19:	custom section: [producers]
+20:	custom section: [signature_delimiter]
+```
+
+Content of the signature section, for a single signature:
+
+- `0x01` (spec_version)
+- `0x01` (hash_fn)
+- `1` (signed_hashes_count)
+- signed_hashes:
+  - `1` (hashes_count)
+  - `<32 bytes>` (hashes=SHA-256(sections 1..end))
+  - `1` (`signatures_count`)
+  - signature:
+    - `0` (`key_id_len` - no key ID)
+    - `65` (`signature_len`)
+    - `<65 bytes>` (0x01 ‖ Ed22519(k, hashes))
+
+### Signatures allowing partial verification.
+
+In this example, a signature can be verified for any of the following ranges of sections:
+
+- 1..10 (until the custom sections)
+- 1..17 (code, data and debugging information)
+- 1..end (entire module)
+
+```text
+0:	custom section: [signature]
+1:	type section
+2:	import section
+3:	function section
+4:	table section
+5:	memory section
+6:	global section
+7:	export section
+8:	element section
+9:	code section
+10:	data section
+11:	custom section: [signature_delimiter]
+12:	custom section: [.debug_info]
+13:	custom section: [.debug_macinfo]
+14:	custom section: [.debug_loc]
+15:	custom section: [.debug_ranges]
+16:	custom section: [.debug_abbrev]
+17:	custom section: [.debug_line]
+18:	custom section: [.debug_str]
+19:	custom section: [signature_delimiter]
+20:	custom section: [name]
+21:	custom section: [producers]
+22:	custom section: [signature_delimiter]
+```
+
+Content of the signature section, for a single signature:
+
+- `0x01` (spec_version)
+- `0x01` (hash_fn)
+- `1` (signed_hashes_count)
+- signed_hashes:
+  - `3` (hashes_count)
+  - `<96 bytes>` (hashes=SHA-256(sections 1..12) ‖ SHA-256(sections 1..20) ‖ SHA-256(sections 1..end))
+  - `1` (signatures_count)
+  - signature:
+    - `0` (key_id_len - no key ID)
+    - `65` (signature_len)
+    - `<65 bytes>` (0x01 ‖ Ed22519(k, hashes))
+
+Variant with two signatures for the same content and key identifiers:
+
+- `0x01` (spec_version)
+- `0x01` (hash_fn)
+- `1` (signed_hashes_count)
+- signed_hashes:
+  - `3` (hashes_count)
+  - `<96 bytes>` (hashes=SHA-256(sections 1..12) ‖ SHA-256(sections 1..20) ‖ SHA-256(sections 1..end))
+  - `2` (signatures_count)
+  - signature_1:
+    - `5` (key_id_len)
+    - `"first"` (key_id)
+    - `65` (`signature_len`)
+    - `<65 bytes>` (0x01 ‖ Ed22519(k_first, hashes))
+  - signature_2:
+    - `6` (key_id_len)
+    - `"second"` (key_id)
+    - `65` (`signature_len`)
+    - `<65 bytes>` (0x01 ‖ Ed22519(k_second, hashes))
