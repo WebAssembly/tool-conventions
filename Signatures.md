@@ -189,7 +189,7 @@ Implementations may support additional signatures schemes and key encoding forma
 
 ## Appendix A. Examples
 
-The following examples assume the following unsigned module structure as a common stating point.
+The following examples assume the following unsigned module structure as a common starting point:
 
 ```text
 0:	type section
