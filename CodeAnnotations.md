@@ -13,7 +13,7 @@ Its meaning depends on the particular type of annotation.
 
 Discarding a code annotation does not change the semantics of the module.
 
-A tool that transform the module must drop any code annotation that it does not know or know it can’t preserve.
+A tool that transforms the module must drop any code annotation that it does not know, or knows it can’t preserve.
 
 ## Binary Representation
 
