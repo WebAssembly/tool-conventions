@@ -16,6 +16,12 @@ Signatures have no semantic effects. A runtime that doesn't support signatures c
 
 Note: this is still a work in progress.
 
+## Discussion venues
+
+The [WebAssembly Modules Signatures](https://github.com/wasm-signatures/design) repository is the main discussion venue for this project.
+
+We also hold bimonthly open meetings. See the above repository for details.
+
 ## Custom sections
 
 Two custom section types are required for this signature format:
