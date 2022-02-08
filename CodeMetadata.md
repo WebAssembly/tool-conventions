@@ -45,7 +45,7 @@ Where `funcpos` is the byte offset of the annotation starting from the beginning
 
 ## Text Representation
 
-Code Metadata are representend in the .wat format using [custom annotations](https://github.com/WebAssembly/annotations), as follows:
+Code Metadata are represented in the .wat format using [custom annotations](https://github.com/WebAssembly/annotations), as follows:
 
 ```
 (@metadata.code.<type> data:str)
