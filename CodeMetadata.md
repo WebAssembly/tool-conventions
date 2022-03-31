@@ -99,7 +99,7 @@ Code transformations that remove the instruction should remove the associated in
 
 ```
 codemetadatainstance(trace_inst) ::= funcpos: u32
-               size: 0x04
+               size: u32v
                data: mark_id
 mark_id ::= u32
 ```
