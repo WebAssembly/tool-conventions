@@ -396,29 +396,6 @@ The generally accepted features are:
 1. `simd128`
 1. `tail-call`
 
-## Lowering Atomics and TLS to MVP WebAssembly
-
-MVP WebAssembly does not include support for atomic operations or the bulk
-memory operations necessary to implement thread-local storage. As a result, any
-atomics or TLS present at the source level must be lowered to non-atomic
-operations and normal storage when targeting MVP WebAssembly. This is safe as
-long as the resulting MVP object files are not used in a multi-threaded context.
-
-To enforce this safety guarantee, the linker will error out if a shared memory
-is requested but the `atomics` target feature is disallowed in the target
-features section of any input objects. The compiler is responsible for marking
-`atomics` disallowed and thereby preventing thread-unsafe linking if either
-atomic operations or TLS are stripped during compilation. If the compiler
-removes either one of atomic operations or TLS, the resulting object may only be
-used with a single thread with an unshared memory, so the other one should be
-removed as well.
-
-If `atomics` or `bulk-memory` is not available during compilation but the source
-does not contain atomic operations or TLS, then the result is a
-"thread-agnostic" object that neither uses nor disallows the `atomics` feature.
-Thread-agnostic objects can be safely linked with objects that do or do not use
-`atomics`, although not both at the same time.
-
 ## Merging Global Sections
 
 Merging of the global sections requires the re-numbering of globals.  This
@@ -588,10 +565,37 @@ memory as described below.
 
 ## Experimental Threading Support
 
-By default all atomics and TLS are currently lowered to WebAssembly MVP (see
-above) and threads are not supported.  However, when enabled, llvm does support
-an exprimental multithrading ABI based on the WebAssembly threads proposal.
-These features are used to support threading in Emscripten.
+By default all atomics and TLS are currently lowered to WebAssembly MVP and
+threads are not supported.  However, when enabled, llvm does support an
+exprimental multithreading ABI based on the WebAssembly threads proposal.  These
+features are used to support threading in Emscripten.
+
+The next section describes compatibility between threading features and MVP, and
+the following sections describe shared memory and TLS implementation based on
+bulk memory and experimental threading support.
+
+### Lowering Atomics and TLS to MVP
+
+MVP WebAssembly does not include support for atomic operations or the bulk
+memory operations necessary to implement thread-local storage. As a result, any
+atomics or TLS present at the source level must be lowered to non-atomic
+operations and normal storage when targeting MVP WebAssembly. This is safe as
+long as the resulting MVP object files are not used in a multi-threaded context.
+
+To enforce this safety guarantee, the linker will error out if a shared memory
+is requested but the `atomics` target feature is disallowed in the target
+features section of any input objects. The compiler is responsible for marking
+`atomics` disallowed and thereby preventing thread-unsafe linking if either
+atomic operations or TLS are stripped during compilation. If the compiler
+removes either one of atomic operations or TLS, the resulting object may only be
+used with a single thread with an unshared memory, so the other one should be
+removed as well.
+
+If `atomics` or `bulk-memory` is not available during compilation but the source
+does not contain atomic operations or TLS, then the result is a
+"thread-agnostic" object that neither uses nor disallows the `atomics` feature.
+Thread-agnostic objects can be safely linked with objects that do or do not use
+`atomics`, although not both at the same time.
 
 ### Shared Memory and Passive Segments
 
