@@ -48,7 +48,12 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  compiler-rt library functions.
  * A null pointer (for all types) has the value zero
  * The `size_t` type is defined as `unsigned long`.
- 
+ * An `enum` is `i32` if all the members of the `enum` can be represented
+   by an `int`.
+   An `enum` is `i32` if all the members of the `enum` can be represented
+   by an `unsigned int`.
+   Otherwise, if a compiler supports such an `enum`, it would use `i64`
+   for the `enum`.
 
 **Aggregates and Unions**
 
