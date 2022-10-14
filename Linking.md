@@ -363,7 +363,7 @@ and where a `comdat_sym` is encoded as:
 
 The target features section is an optional custom section with the name
 "target_features". The target features section must come after the
-["producers"](#linking-metadata-section) section.
+["producers"](./ProducersSection.md) section.
 
 The contents of the target features section is a vector of entries:
 
