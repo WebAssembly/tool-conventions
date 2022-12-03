@@ -24,7 +24,7 @@ tasks need to be performed:
 - Merging of globals sections (re-numbering globals)
 - Merging of event sections (re-numbering events)
 - Merging of table sections (re-numbering tables)
-- Merging of data segments (re-positioning data)
+- Merging of data segments (re-positioning data with [limitations](#limitations))
 - Resolving undefined external references
 - Synthesizing functions to call constructors and perform other initialization
 
@@ -686,3 +686,11 @@ have its address computed as follows:
 
 The variable can then be used as normal. Upon thread exit, the runtime should free
 the memory allocated for the TLS block.
+
+### Limitations
+
+- There is currently no support for passive data segments. The relocation types
+necessary for referencing such segments (e.g. in `data.drop` or `memory.init`
+instruction) do not yet exist.
+- There is currently no support for table element segments, either active or
+passive.
