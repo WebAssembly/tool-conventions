@@ -10,9 +10,9 @@ function parameters) and on the stack. Along with an instruction binary offset
 snapshot of the linear memory (or multiple linear memories when the
 [multi-memory] feature is used), tables and globals.
 
-All these informations are saved to the file, called the coredump file.
+All this information is saved to the file, called the coredump file.
 
-The post mortem analyze is done using the coredump and [DWARF] informations.
+The post mortem analysis is done using the coredump and [DWARF] information.
 Similar to the debugging flow with [gdb].
 
 # Implementation status
@@ -22,7 +22,7 @@ Stability of this specification is **experimental**.
 Tools that support the generation of Wasm coredumps:
 - [wasm-edit]
 
-Debugger that support post-mortem debugging with Wasm coredumps:
+Debugger that supports post-mortem debugging with Wasm coredumps:
 - [wasmgdb]
 
 ## Runtime support
@@ -39,7 +39,7 @@ Exit 1: Uncaught RuntimeError: memory access out of bounds (core dumped).
 ``` 
 A coredump file has been generated.
 
-For experimenting, runtime support is not strictly necessary. A tools can
+For experimenting, runtime support is not strictly necessary. A tool can
 transform the Wasm binary to inject code that will manually unwind the stack and
 collect debugging information, for instance [wasm-edit coredump]. Such a
 transformation has important limitations; a trap caused by an invalid memory
@@ -79,7 +79,7 @@ yet. However, for the sake of argument we assume it's at offset 0.
 
 # `coredump` struct
 
-The coredump struct starts with the numbers of frame recorded and the combined
+The coredump struct starts with the number of frames recorded and the combined
 size of all frames, followed by the frames themself.
 
 ```
