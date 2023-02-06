@@ -70,41 +70,52 @@ app's state) are in JS rather than Wasm.
 
 # Coredump file format
 
-The generated coredump is a binary file containing: 
+The coredump file is encoded using the [Wasm binary format], containing:
+- general information about the process.
+- the threads and stack frames.
 - a snapshot of the WebAssembly linear memory or relevant regions.
-- the `coredump` struct.
 
-The placement of the `coredump` struct within the coredump file is not defined
-yet. However, for the sake of argument we assume it's at offset 0.
+The order in which they appear in the file is not important.
 
-# `coredump` struct
+As opposed to regular Wasm files, Wasm Coredumps are not [instantiated].
 
-The coredump struct starts with the number of frames recorded and the combined
-size of all frames, followed by the frames themself.
+## Process information
 
-```
-coredump ::= size:u32 cont:vec(frame)
-```
-
-> implementer note: since the `frame` struct doesn't have a fixed size, the
-> `size` value can be used to append new frames because it's pointing at the end
-> of the `coredump`.
+General information about the process is stored in a [Custom section], called
+`core`.
 
 ```
-frame ::= codeoffset:u32
-          locals:vec(local)
-          stack:vec(stack)
-          reserved:u32
+core         ::= customsec(process-info)
+process-info ::= 0x0 executable-name:name
 ```
 
-The `reserved` bytes are decoded as an empty vector and reserved for future use.
+## Thread(s) and stack frames
 
-`vec` (same encoding as [Wasm Vectors]):
+For each thread a [Custom section], called `corestack`, is used to store the
+debugging information.
+
 ```
-vec(B) ::= n:u32 cont:B
+corestack  ::= customsec(thread-info vec(frame))
+thread-info ::= 0x0 thread-name:name
+frame       ::= codeoffset:u32
+                locals:vec(u32)
+                stack:vec(u32)
+                reserved:u32
 ```
 
-`u32` are encoding using LEB128, like [Wasm u32].
+The `reserved` byte is decoded as an empty vector and reserved for future use.
+
+## Memory
+
+The process memory is captured in the [Data Section], either entirely as one
+active data segment or as multiple active data segments (used to represent
+partial coredumps).
+
+## Globals
+
+Globals are captured in the [Global Section] as global constants (non mutable).
+
+One or multiple memories are written in the [Memory Section].
 
 # Demo
 
@@ -128,3 +139,9 @@ tooling: [demo].
 [Wasm u32]: https://webassembly.github.io/spec/core/binary/values.html#binary-int
 [demo]: https://github.com/xtuc/wasmgdb/wiki/Demo
 [multi-memory]: https://github.com/WebAssembly/multi-memory
+[Wasm binary format]: https://webassembly.github.io/spec/core/binary/index.html
+[Data Section]: https://webassembly.github.io/spec/core/binary/modules.html#data-section
+[Custom section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec
+[Memory Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-memsec
+[instantiated]: https://webassembly.github.io/spec/core/exec/modules.html#instantiation
+[Global Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-globalsec 
