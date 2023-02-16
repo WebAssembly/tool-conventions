@@ -95,15 +95,28 @@ For each thread a [Custom section], called `corestack`, is used to store the
 debugging information.
 
 ```
-corestack  ::= customsec(thread-info vec(frame))
+corestack   ::= customsec(thread-info vec(frame))
 thread-info ::= 0x0 thread-name:name
 frame       ::= codeoffset:u32
-                locals:vec(u32)
-                stack:vec(u32)
+                locals:vec(value)
+                stack:vec(value)
                 reserved:u32
 ```
 
 The `reserved` byte is decoded as an empty vector and reserved for future use.
+
+Local and stack values are encoded using one byte for the type (similar to
+Wasm's [Number Types]) followed by bytes representing the actual value:
+```
+value ::= 0x01       => ∅
+        | 0x7F n:i32 => n
+        | 0x7E n:i64 => n
+        | 0x7D n:f32 => n
+        | 0x7C n:f64 => n
+```
+
+The special byte `0x01` is used to represent a missing value, usually because it
+was optimized out by the WebAssembly engine.
 
 ## Memory
 
@@ -131,13 +144,13 @@ tooling: [demo].
 [ELF coredump]: https://www.gabriel.urdhr.fr/2015/05/29/core-file/
 [Core dump on Wikipedia]: https://en.wikipedia.org/wiki/Core_dump
 [gdb]: https://linux.die.net/man/1/gdb
-[wasm-edit coredump]: https://github.com/xtuc/wasm-edit/blob/main/src/coredump.rs
-[wasm-edit]: https://github.com/xtuc/wasm-edit
-[wasmgdb]: https://github.com/xtuc/wasmgdb
+[wasm-edit coredump]: https://github.com/xtuc/wasm-coredump/blob/main/bin/rewriter/src/rewriter.rs
+[wasm-edit]: https://github.com/xtuc/wasm-coredump/tree/main/bin/rewriter
+[wasmgdb]: https://github.com/xtuc/wasm-coredump/tree/main/bin/wasmgdb
 [DWARF]: https://yurydelendik.github.io/webassembly-dwarf
 [Wasmer FrameInfo]: https://docs.rs/wasmer/latest/wasmer/struct.FrameInfo.html
 [Wasm u32]: https://webassembly.github.io/spec/core/binary/values.html#binary-int
-[demo]: https://github.com/xtuc/wasmgdb/wiki/Demo
+[demo]: https://github.com/xtuc/wasm-coredump/blob/main/bin/wasmgdb/demo.md
 [multi-memory]: https://github.com/WebAssembly/multi-memory
 [Wasm binary format]: https://webassembly.github.io/spec/core/binary/index.html
 [Data Section]: https://webassembly.github.io/spec/core/binary/modules.html#data-section
@@ -145,3 +158,4 @@ tooling: [demo].
 [Memory Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-memsec
 [instantiated]: https://webassembly.github.io/spec/core/exec/modules.html#instantiation
 [Global Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-globalsec 
+[Number Types]: https://webassembly.github.io/spec/core/binary/types.html#binary-numtype
