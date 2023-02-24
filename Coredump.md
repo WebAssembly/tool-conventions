@@ -5,10 +5,10 @@ WebAssembly.
 
 When WebAssembly enters a trap, it starts unwinding and collects debugging
 information. For each stack frame, collect the values in locals (includes
-function parameters) and on the stack. Along with an instruction binary offset
-(relative to the code section, as specified by [DWARF]). Finally, make a
-snapshot of the linear memory (or multiple linear memories when the
-[multi-memory] feature is used), tables and globals.
+function parameters) and on the stack. Along with binary offsets to resolve to
+source file locations. Finally, make a snapshot of the linear memory (or
+multiple linear memories when the [multi-memory] feature is used), tables and
+globals.
 
 All this information is saved to the file, called the coredump file.
 
@@ -79,6 +79,8 @@ The order in which they appear in the file is not important.
 
 As opposed to regular Wasm files, Wasm Coredumps are not [instantiated].
 
+`u32` are encoded using [Wasm u32].
+
 ## Process information
 
 General information about the process is stored in a [Custom section], called
@@ -97,13 +99,15 @@ debugging information.
 ```
 corestack   ::= customsec(thread-info vec(frame))
 thread-info ::= 0x0 thread-name:name
-frame       ::= codeoffset:u32
-                locals:vec(value)
+frame       ::= 0x0 funcidx:u32 codeoffset:u32 locals:vec(value)
                 stack:vec(value)
-                reserved:u32
 ```
 
-The `reserved` byte is decoded as an empty vector and reserved for future use.
+`funcidx` is the WebAssembly function index in the module and `codeoffset` is
+the instruction's offset relative to the function's start.
+
+> Note: implementations may leave `codeoffset` offset empty if unknown. Setting
+> 0 will point to the function's start.
 
 Local and stack values are encoded using one byte for the type (similar to
 Wasm's [Number Types]) followed by bytes representing the actual value:
