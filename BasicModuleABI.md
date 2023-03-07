@@ -1,9 +1,9 @@
-Toolchain-independent ABI
-=========================
+Basic Module API
+================
 
 There are many different ways to use Wasm modules, and many different
-conventions and toolchain-specific ABIs. This document describes ABI features
-intended to be common across all ABIs.
+conventions, language-specific ABIs, and toolchain-specific ABIs. This
+document describes ABI features intended to be common across all ABIs.
 
 ## The `_initialize` function
 
