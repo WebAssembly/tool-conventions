@@ -1,4 +1,4 @@
-Basic Module API
+Basic Module ABI
 ================
 
 There are many different ways to use Wasm modules, and many different
