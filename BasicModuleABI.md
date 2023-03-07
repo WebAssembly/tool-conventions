@@ -13,4 +13,9 @@ that produced my assume that on any instance of the module, this `_initialize`
 function is called before any other exports are accessed.
 
 This is intended to support language features such as C++ static constructors,
-as well as "top-level scripts" in many scripting languages.
+as well as "top-level scripts" in many scripting languages, which can't use
+the [wasm start function] because they may call imports that need to access
+the module's exports. In use cases that don't need this, the wasm start
+function should be used.
+
+[wasm start section]: https://webassembly.github.io/spec/core/syntax/modules.html#syntax-start
