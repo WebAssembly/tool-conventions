@@ -98,7 +98,7 @@ Bitfield type | Witdh *w* | Range
 
 **Function pointers**
 
-A pointer to a function is an index into the table 0 of the module.
+A pointer to a function is an index into a table of the module.
 The type of the table is funcref.
 The table needs to be exported with the name `__indirect_function_table`
 if the function pointer is possibly used from the outside of the module.
