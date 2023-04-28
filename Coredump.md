@@ -103,6 +103,12 @@ frame       ::= 0x0 funcidx:u32 codeoffset:u32 locals:vec(value)
                 stack:vec(value)
 ```
 
+The frames in a `corestack` production are listed from youngest to oldest.
+
+> Example: If `f` calls `g` calls `h`, and `h` traps and the runtime creates a
+> coredump, then the coredump's `corestack` will list the frames in this order:
+> `h`, `g`, `f`.
+
 `funcidx` is the WebAssembly function index in the module and `codeoffset` is
 the instruction's offset relative to the function's start.
 
