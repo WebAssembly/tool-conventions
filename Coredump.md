@@ -21,6 +21,7 @@ Stability of this specification is **experimental**.
 
 Tools that support the generation of Wasm coredumps:
 - [wasm-edit]
+- [Wasmtime]
 
 Debugger that supports post-mortem debugging with Wasm coredumps:
 - [wasmgdb]
@@ -32,11 +33,13 @@ on crash to the user. When they are configured to emit a coredump, they collect
 the debugging information and write a coredump file.
 
 An example output:
+
 ```
-$ wasmrun module.wasm
+$ my-wasm-runtime module.wasm
 
 Exit 1: Uncaught RuntimeError: memory access out of bounds (core dumped).
 ```
+
 A coredump file has been generated.
 
 For experimenting, runtime support is not strictly necessary. A tool can
@@ -86,10 +89,60 @@ As opposed to regular Wasm files, Wasm Coredumps are not [instantiated].
 General information about the process is stored in a [Custom section], called
 `core`.
 
+This custom section must only appear once in the coredump file.
+
 ```
 core         ::= customsec(process-info)
 process-info ::= 0x0 executable-name:name
 ```
+
+## Module information
+
+Information about the modules present in the coredump are stored in a [Custom
+section] called `coremodules`.
+
+This custom section must only appear once in the coredump file.
+
+This custom section establishes an index space of modules that can be referenced
+in the `coreinstances` custom section (see below).
+
+```
+coremodules ::= customsec(vec(coremodule))
+coremodule ::= 0x0 module-name:name
+```
+
+The `module-name` may be a URL, file path, or other identifier for the module.
+
+## Instance information
+
+Information about the instances present in the coredump are stored in a [Custom
+section] called `coreinstances`.
+
+This custom section must only appear once in the coredump file.
+
+This custom section establishes an index space of instances that can be
+referenced in `frame` productions within the `corestack` custom section (see
+below).
+
+```
+coreinstances ::= customsec(vec(coreinstance))
+coreinstance ::= 0x0 moduleidx:u32 memories:vec(u32) globals:vec(u32)
+```
+
+Each `coreinstance` specifies:
+
+* Which module this is an instance of, via indexing into the `coremodules` index
+  space.
+
+* Which of the coredump's memories are this instance's memories, via indexing
+  into the memory index space. Memories are listed in instance order: the `i`th
+  entry in `coreinstance::memories` is the coredump memory index of this
+  instance's `i`th memory.
+
+* Which of the coredump's globals are this instance's globals, via indexing into
+  the global index space. Globals are listed in instance order: the `i`th entry
+  in `coreinstance::globals` is the coredump global index of this instance's
+  `i`th global.
 
 ## Thread(s) and stack frames
 
@@ -99,7 +152,7 @@ debugging information.
 ```
 corestack   ::= customsec(thread-info vec(frame))
 thread-info ::= 0x0 thread-name:name
-frame       ::= 0x0 funcidx:u32 codeoffset:u32 locals:vec(value)
+frame       ::= 0x0 instanceidx:u32 funcidx:u32 codeoffset:u32 locals:vec(value)
                 stack:vec(value)
 ```
 
@@ -109,8 +162,11 @@ The frames in a `corestack` production are listed from youngest to oldest.
 > coredump, then the coredump's `corestack` will list the frames in this order:
 > `h`, `g`, `f`.
 
-`funcidx` is the WebAssembly function index in the module and `codeoffset` is
-the instruction's offset relative to the function's start.
+The `instanceidx` is an index into the `coreinstances` index space, describing
+which instance is associated with this stack frame.
+
+`funcidx` is the WebAssembly function index in the instance's module and
+`codeoffset` is the instruction's offset relative to the function's start.
 
 > Note: implementations may leave `codeoffset` offset empty if unknown. Setting
 > 0 will point to the function's start.
@@ -130,15 +186,28 @@ was optimized out by the WebAssembly engine.
 
 ## Memory
 
-The process memory is captured in the [Data Section], either entirely as one
-active data segment or as multiple active data segments (used to represent
-partial coredumps).
+Each instance's memory is captured in the [Memory Section] and [Data Section].
+
+To determine which memory is associated with which instance(s), you can use the
+mapping defined in `coreinstances`.
+
+> Note: A single memory may be associated with multiple instances if it is, for
+> example, defined and exported by one instance and imported by another.
+
+> Note: A memory's data may be captured either entirely as one active data
+> segment, or as multiple data segments. The latter can be used as a space
+> saving mechanism to avoid long runs of zeroes or it can be used to represent
+> partial coredumps.
 
 ## Globals
 
-Globals are captured in the [Global Section] as global constants (non mutable).
+Globals are captured in the [Global Section] as constant, non-mutable globals.
 
-One or multiple memories are written in the [Memory Section].
+To determine which global is associated with which instance(s), you can use the
+mapping defined in `coreinstances`.
+
+> Note: A single global may be associated with multiple instances if it is, for
+> example, defined and exported by one instance and imported by another.
 
 # Demo
 
@@ -169,3 +238,4 @@ tooling: [demo].
 [instantiated]: https://webassembly.github.io/spec/core/exec/modules.html#instantiation
 [Global Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-globalsec
 [Number Types]: https://webassembly.github.io/spec/core/binary/types.html#binary-numtype
+[Wasmtime]: https://wasmtime.dev
