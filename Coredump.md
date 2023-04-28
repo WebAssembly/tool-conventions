@@ -36,7 +36,7 @@ An example output:
 $ wasmrun module.wasm
 
 Exit 1: Uncaught RuntimeError: memory access out of bounds (core dumped).
-``` 
+```
 A coredump file has been generated.
 
 For experimenting, runtime support is not strictly necessary. A tool can
@@ -103,6 +103,12 @@ frame       ::= 0x0 funcidx:u32 codeoffset:u32 locals:vec(value)
                 stack:vec(value)
 ```
 
+The frames in a `corestack` production are listed from youngest to oldest.
+
+> Example: If `f` calls `g` calls `h`, and `h` traps and the runtime creates a
+> coredump, then the coredump's `corestack` will list the frames in this order:
+> `h`, `g`, `f`.
+
 `funcidx` is the WebAssembly function index in the module and `codeoffset` is
 the instruction's offset relative to the function's start.
 
@@ -161,5 +167,5 @@ tooling: [demo].
 [Custom section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec
 [Memory Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-memsec
 [instantiated]: https://webassembly.github.io/spec/core/exec/modules.html#instantiation
-[Global Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-globalsec 
+[Global Section]: https://webassembly.github.io/spec/core/binary/modules.html#binary-globalsec
 [Number Types]: https://webassembly.github.io/spec/core/binary/types.html#binary-numtype
