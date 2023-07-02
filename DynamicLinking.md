@@ -18,7 +18,7 @@ The "dylink.0" is a custom section, the existence of which signals that the
 module conforms the dynaminc linking ABI described in this document. This
 section is expected to be the very first section in the module.
 
-A "dylink.0" consists of a series of sub-sections using the same format as found
+A "dylink.00" consists of a series of sub-sections using the same format as found
 in the ["names"][names_sec] section:
 
 | Field       | Type          | Description                          |
