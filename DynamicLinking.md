@@ -117,8 +117,8 @@ that will be provided by the dynamic loader:
 
  * `env.memory` - A wasm memory that is shared between all wasm modules that
    make up the program.
- * `env.table` - A wasm table that is shared between all wasm modules that make
-   up the program.
+ * `env.__indirect_function_table` - A wasm table that is shared between all
+   wasm modules that make up the program.
  * `env.__stack_pointer` - A mutable `i32` global representing the explicit
    stack pointer as an offset into the above memory.
  * `env.__memory_base` - An immutable `i32` global representing the offset in
