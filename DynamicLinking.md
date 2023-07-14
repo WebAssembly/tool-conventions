@@ -184,7 +184,7 @@ i32.load
 And an external function symbol as follows:
 
 ```wasm
-(import "GOT.func" "bar" (global $bar_addr i32))
+(import "GOT.func" "bar" (global $bar_addr (mut i32)))
 ...
 ...
 get_global $bar_addr
@@ -193,12 +193,8 @@ call_indirect
 
 Note: This has no effect on exports, or the import of functions for direct call.
 
-In the case of data symbols the imported global must be mutable as the dynamic
-linker will need to modify the value after instantiation.   This is because the
-data symbol offsets might be specified as wasm exports from other modules which
-have not yet been instantiated.  However, imports of function addresses do not
-need to be mutable since the linker can assign a table index to each imported
-function before it instantiates any of the modules.
+The imported global must be mutable as the dynamic linker might need to
+modify the value after instantiation.
 
 ### Exports
 
