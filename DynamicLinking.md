@@ -91,7 +91,7 @@ subsection:
 | name  | `string`    | The name of the export                   |
 | flags | `varuint32` | Symbol flags for the export              |
 
-For `WASM_DYLINK_IMPORT` the following fields are present in the
+For `WASM_DYLINK_IMPORT_INFO` the following fields are present in the
 subsection:
 
 | Field  | Type        | Description                              |
