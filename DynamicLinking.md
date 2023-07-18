@@ -170,10 +170,9 @@ position independant code and will be rejected at link time.
 For relocation within the data segments a runtime fixup may be required.  For
 example, if the address of an external symbol is stored in global data.  In this
 case the dynamic library must generate code to apply these relocations at
-startup.  The module can export a function called `__post_instantiate`. If it is
-so exported, the loader will call it after the module is instantiated, and
-before any other function is called.  The `__post_instantiate` function is used
-both to apply relocations and to run any static constructors.
+startup.  The module can export a function called `__wasm_apply_data_relocs`.
+If it is so exported, the loader will call it after the module is instantiated,
+and before any other function, including `__wasm_call_ctors`, is called.
 
 ### Imports
 
