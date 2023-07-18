@@ -86,6 +86,13 @@ first load needed libraries specified by `needed_dynlibs_entries`.
 For `WASM_DYLINK_EXPORT_INFO` the following fields are present in the
 subsection:
 
+| Field               | Type            | Description           |
+| ------------------- | --------------- | --------------------- |
+| export_info_count   | `varuint32`     | Number of export info |
+| export_info_entries | `export_info*`  | Repeated export info  |
+
+The "export_info" type is defined as:
+
 | Field | Type        | Description                              |
 | ----- | ----------- | ---------------------------------------- |
 | name  | `string`    | The name of the export                   |
@@ -93,6 +100,13 @@ subsection:
 
 For `WASM_DYLINK_IMPORT_INFO` the following fields are present in the
 subsection:
+
+| Field               | Type            | Description           |
+| ------------------- | --------------- | --------------------- |
+| import_info_count   | `varuint32`     | Number of import info |
+| import_info_entries | `import_info*`  | Repeated import info  |
+
+The "import_info" type is defined as:
 
 | Field  | Type        | Description                              |
 | -------| ----------- | ---------------------------------------- |
