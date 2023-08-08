@@ -86,13 +86,27 @@ first load needed libraries specified by `needed_dynlibs_entries`.
 For `WASM_DYLINK_EXPORT_INFO` the following fields are present in the
 subsection:
 
+| Field               | Type            | Description           |
+| ------------------- | --------------- | --------------------- |
+| export_info_count   | `varuint32`     | Number of export info |
+| export_info_entries | `export_info*`  | Repeated export info  |
+
+The "export_info" type is defined as:
+
 | Field | Type        | Description                              |
 | ----- | ----------- | ---------------------------------------- |
 | name  | `string`    | The name of the export                   |
 | flags | `varuint32` | Symbol flags for the export              |
 
-For `WASM_DYLINK_IMPORT` the following fields are present in the
+For `WASM_DYLINK_IMPORT_INFO` the following fields are present in the
 subsection:
+
+| Field               | Type            | Description           |
+| ------------------- | --------------- | --------------------- |
+| import_info_count   | `varuint32`     | Number of import info |
+| import_info_entries | `import_info*`  | Repeated import info  |
+
+The "import_info" type is defined as:
 
 | Field  | Type        | Description                              |
 | -------| ----------- | ---------------------------------------- |
@@ -117,8 +131,8 @@ that will be provided by the dynamic loader:
 
  * `env.memory` - A wasm memory that is shared between all wasm modules that
    make up the program.
- * `env.table` - A wasm table that is shared between all wasm modules that make
-   up the program.
+ * `env.__indirect_function_table` - A wasm table that is shared between all
+   wasm modules that make up the program.
  * `env.__stack_pointer` - A mutable `i32` global representing the explicit
    stack pointer as an offset into the above memory.
  * `env.__memory_base` - An immutable `i32` global representing the offset in
@@ -156,10 +170,9 @@ position independant code and will be rejected at link time.
 For relocation within the data segments a runtime fixup may be required.  For
 example, if the address of an external symbol is stored in global data.  In this
 case the dynamic library must generate code to apply these relocations at
-startup.  The module can export a function called `__post_instantiate`. If it is
-so exported, the loader will call it after the module is instantiated, and
-before any other function is called.  The `__post_instantiate` function is used
-both to apply relocations and to run any static constructors.
+startup.  The module can export a function called `__wasm_apply_data_relocs`.
+If it is so exported, the loader will call it after the module is instantiated,
+and before any other function, including `__wasm_call_ctors`, is called.
 
 ### Imports
 
@@ -184,7 +197,7 @@ i32.load
 And an external function symbol as follows:
 
 ```wasm
-(import "GOT.func" "bar" (global $bar_addr i32))
+(import "GOT.func" "bar" (global $bar_addr (mut i32)))
 ...
 ...
 get_global $bar_addr
@@ -193,12 +206,8 @@ call_indirect
 
 Note: This has no effect on exports, or the import of functions for direct call.
 
-In the case of data symbols the imported global must be mutable as the dynamic
-linker will need to modify the value after instantiation.   This is because the
-data symbol offsets might be specified as wasm exports from other modules which
-have not yet been instantiated.  However, imports of function addresses do not
-need to be mutable since the linker can assign a table index to each imported
-function before it instantiates any of the modules.
+The imported global must be mutable as the dynamic linker might need to
+modify the value after instantiation.
 
 ### Exports
 
