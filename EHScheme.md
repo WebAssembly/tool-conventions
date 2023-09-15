@@ -4,32 +4,20 @@ This document describes the plans for a new exception handling scheme for
 WebAssembly, regarding what each tool components does and how they interact with
 each other to implement the scheme.
 
-The exception handling support implemented in [WebAssembly upstream backend in
-LLVM][llvm_wasm_backend] and other tools ([binaryen][binaryen] and
-[emscripten][emscripten]) as for Sep 2017 uses library functions in asm.js,
-which is slow because there are many foreign function calls between WebAssembly
-and JavaScript involved. A new, low-cost WebAssembly exception support for
-WebAssembly has been [proposed][eh_proposal] and is currently being implemented
-in V8.
-
 Here we describe a new exception handling scheme for WebAssembly for the
 toolchain side to generate compatible wasm binary files to support the
 aforementioned [WebAssembly exception handling proposal][eh_proposal].
 
-This spec is tentative and may change in future. The prototype implementation
-work is in progress, and is currently only targeting C++ based on Itanium C++
-ABI. This document assumes you have general knowledge about Itanium C++ ABI
-based exception handling.
+We use [the exception IR designed for Windows EH][llvm_win_eh] for the Wasm IR
+because of its well-defined EH pad scopes and hierarchies between them, we
+use [the Itanium EH ABI][itanium_abi] for the communication between user code
+and libraries.
 
 ---
 
 ## Background
 
 ### WebAssembly try-catch Blocks
-
-_Disclaimer: Some Changes to the current spec have been
-[proposed](https://github.com/WebAssembly/exception-handling/issues/29), so this
-section may change in the future._
 
 WebAssembly's `try` and `catch` instructions are structured as follows:
 ```
@@ -123,8 +111,10 @@ sometimes is a dependency of other runtimes. GNU GCC's
 integrated unwinder. libunwind has a separate library for the unwinder and there
 are several implementations including [LLVM's libunwind][llvm_libunwind].
 
-Our prototype implementation will be based on LLVM's [libc++abi][llvm_libcxxabi]
-(also written as libcxxabi) and [libunwind][llvm_libunwind].
+Our prototype implementation will be based on LLVM's libc++abi and libunwind.
+Our ports of the libraries, which contain Wasm EH specific changes, are in
+https://github.com/emscripten-core/emscripten/tree/main/system/lib/libcxxabi and
+https://github.com/emscripten-core/emscripten/tree/main/system/lib/libunwind.
 
 
 ## Why New Exception Handing Scheme?
@@ -309,53 +299,6 @@ int selector = __wasm_lpad_context.selector;
 
 // use exn and selector hereafter
 ```
-
-
-### You Shouldn't Prune Unreachable Resumes
-
-Suppose you have this code:
-```cpp
-try {
-  foo(); // may throw
-} catch (int n) {
-  ...
-}
-
-some code...
-```
-In this code, when the type of a thrown exception is not int, the exception is
-rethrown to the caller. The possible CFG structure for this code is,
-```LLVM
-try:
-  foo();
-  if exception occured, go to lpad, or else go to try.cont
-
-lpad: ; landing pad block
-  if type of exception is int, go to catch, or else go to eh.resume
-
-catch:
-  catch int type exception
-
-eh.resume: ; resume block!
-  rethrow exception to caller
-
-try.cont:
-  some code...
-```
-
-Some compilers, such as LLVM,
-[prune](https://github.com/llvm/llvm-project/blob/e9e386870720a380baa1e4ba526c6c496fa6c1bd/llvm/lib/CodeGen/DwarfEHPrepare.cpp#L129-L167)
-basic blocks like `eh.resume` in the code above, considering it unreachable,
-which holds true in other exception handling schemes, because if there is
-neither matching catch site nor cleanup actions (such as calling destructors to
-stack-allocated objects) to do, the unwinder does not even stop at this call
-frame. But as we mentioned earlier, WebAssembly unwinding is done by a VM and it
-stops at every call frame that has WebAssembly `catch` instruction. So, in the
-example above, after we get a selector value from active personality function
-call, we actually need to execute the remaining parts of WebAssembly code to
-reach the eh.resume block, within which the exception is passed to the caller.
-So when we implement WebAssembly EH on a compiler, we should disable this kind
-of optimizations.
 
 ---
 
@@ -653,24 +596,6 @@ For the complete Itanium C++ ABI, refer to the spec [here][itanium_abi_cxx_abi].
 
 ---
 
-## Exception Structure Recovery
-
-To regroup instructions in CFG into this `try`-`catch i`-...-`try-end` structure
-described in the [WebAssembly exception handling proposal][eh_proposal] the
-compiler should recover the near-original try-catch clause structure from the
-CFG. We presented a very simple example of this grouping in [WebAssembly
-try-catch Blocks](#webassembly-try-catch-blocks) section. How we do this is more
-of an internal algorithm than the spec for our exception handling scheme, but we
-present the current algorithm implemented in LLVM here to show an example. Note
-that this is not the only way blocks can be grouped and other compiler
-implementations may use other algorithms. This currently only supports C++
-exceptions: it generates neither `catch` instructions for other language tags
-nor `catch_all` intructions.
-
-_TODO: This section will be filled once LLVM patch for this part is landed._
-
----
-
 ## References
 
 * [Exception Handling using the Windows Runtime](https://llvm.org/docs/ExceptionHandling.html#exception-handling-using-the-windows-runtime)
@@ -685,9 +610,12 @@ _TODO: This section will be filled once LLVM patch for this part is landed._
 [llvm_wasm_backend]: https://github.com/llvm/llvm-project/tree/main/llvm/lib/Target/WebAssembly
 [llvm_libcxxabi]: https://github.com/llvm/llvm-project/tree/main/libcxxabi
 [llvm_libunwind]: https://github.com/llvm/llvm-project/tree/main/libunwind
+[llvm_win_eh]: https://llvm.org/docs/ExceptionHandling.html#exception-handling-using-the-windows-runtime
 
 [binaryen]: https://github.com/WebAssembly/binaryen
 [emscripten]: https://github.com/emscripten-core/emscripten
+[emscripten_libcxxabi]: https://github.com/emscripten-core/emscripten/tree/main/system/lib/libcxxabi
+[emscripten_libunwind]: https://github.com/emscripten-core/emscripten/tree/main/system/lib/libunwind
 
 [eh_proposal]: https://github.com/WebAssembly/exception-handling/blob/main/proposals/exception-handling/Exceptions.md
 [eh_proposal_try_catch_blocks]: https://github.com/WebAssembly/exception-handling/blob/main/proposals/exception-handling/Exceptions.md#try-catch-blocks
