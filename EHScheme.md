@@ -111,7 +111,7 @@ sometimes is a dependency of other runtimes. GNU GCC's
 integrated unwinder. libunwind has a separate library for the unwinder and there
 are several implementations including [LLVM's libunwind][llvm_libunwind].
 
-Our prototype implementation will be based on LLVM's libc++abi and libunwind.
+Our implementation is based on LLVM's libc++abi and libunwind.
 Our ports of the libraries, which contain Wasm EH specific changes, are in
 https://github.com/emscripten-core/emscripten/tree/main/system/lib/libcxxabi and
 https://github.com/emscripten-core/emscripten/tree/main/system/lib/libunwind.
