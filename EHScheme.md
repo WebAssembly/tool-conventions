@@ -12,7 +12,7 @@ and JavaScript involved. A new, low-cost WebAssembly exception support for
 WebAssembly has been [proposed][eh_proposal] and is currently being implemented
 in V8.
 
-Here we propose a new exception handling scheme for WebAssembly for the
+Here we describe a new exception handling scheme for WebAssembly for the
 toolchain side to generate compatible wasm binary files to support the
 aforementioned [WebAssembly exception handling proposal][eh_proposal].
 
