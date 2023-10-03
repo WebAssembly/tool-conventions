@@ -327,6 +327,10 @@ The current set of valid flags for symbols are:
   names.
 - `0x80 / WASM_SYM_NO_STRIP` - The symbol is intended to be included in the
   linker output, regardless of whether it is used by the program.
+- `0x100 / WASM_SYM_TLS` - The symbol resides in thread local storage.
+- `0x200 / WASM_SYM_ABSOLUTE` - The symbol represents an absolute address. This
+  means it's offset is relative to the start of the wasm memory as opposed to
+  being relative to a data segment.
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
