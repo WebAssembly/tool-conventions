@@ -164,7 +164,7 @@ is used as the frame pointer or base pointer. This functionality is not needed f
 wasm VM must do this in any case); however it may still be desirable to allow this functionality for debugging
 or in-field crash reporting. Future ABIs may designate a convention for determining frame size and local usage.
 
-### Function signatures
+### Function arguments and return values
 
 Types can be passed directly via WebAssembly function parameters or indirectly
 via a pointer parameter that points to the value in memory. The callee is
@@ -182,6 +182,8 @@ other struct or union[3]     | indirect      | indirect |
 array                        | indirect      | N/A      |
 
 [1] `long long double` and `__int128` are passed directly as two `i64` values.
+Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit
+scalars are zero-extended before passing or returning.
 
 [2] Any struct or union that recursively (including through nested structs,
 unions, and arrays) contains just a single scalar value and is not specified to
