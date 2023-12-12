@@ -230,6 +230,10 @@ where a `segment` is encoded as:
 | alignment    | `varuint32`  | The required alignment of the segment, encoded as a power of 2 |
 | flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
+The current set of valid flag for segments are:
+- `1 / WASM_SEGMENT_FLAG_STRINGS`
+- `2 / WASM_SEGMENT_FLAG_TLS`
+
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
 
