@@ -230,6 +230,10 @@ where a `segment` is encoded as:
 | alignment    | `varuint32`  | The required alignment of the segment, encoded as a power of 2 |
 | flags        | `varuint32`  | a bitfield containing flags for this segment  |
 
+The current set of valid flag for segments are:
+- `1 / WASM_SEGMENT_FLAG_STRINGS` - Signals that the segment contains only null terminated strings allowing the linker to perform merging.
+- `2 / WASM_SEGMENT_FLAG_TLS` - The segment contains thread-local data. This means that a unique copy of this segment will be created for each thread.
+
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
 
