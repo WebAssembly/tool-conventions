@@ -109,6 +109,7 @@ where a `signature` is encoded as:
 | ------------- | ----------- | ---------------------------------------------------------- |
 | key_id_len    | `varuint32` | Public key identifier length in bytes (can be `0`)         |
 | key_id        | `bytes`     | Public key identifier                                      |
+| signature_id  | `byte`      | Signature algorithm identifier                             |
 | signature_len | `varuint32` | Signature length in bytes                                  |
 | signature     | `bytes`     | Signature for `hashes` that can be verified using `key_id` |
 
@@ -180,6 +181,8 @@ Public and private keys must include the algorithm and parameters they were crea
 | ------------------ | ------------------- | ---------- |
 | Ed25519 public key | 1 + 32 bytes        | `0x01`     |
 | Ed25519 key pair   | 1 + 64 bytes        | `0x81`     |
+
+Ed25519 algorithm identifier: `0x01`.
 
 Representation of Ed25519 keys:
 
@@ -258,8 +261,9 @@ Content of the signature section, for a single signature:
   - `1` (`signatures_count`)
   - signature:
     - `0` (`key_id_len` - no key ID)
-    - `65` (`signature_len`)
-    - `<65 bytes>` (0x01 ‖ Ed22519(k, hashes))
+    - `0x01` (Ed25519 algorithm identifier)
+    - `64` (`signature_len`)
+    - `<64 bytes>` (Ed22519(k, hashes))
 
 ### Signatures allowing partial verification.
 
@@ -306,8 +310,9 @@ Content of the signature section, for a single signature:
   - `1` (signatures_count)
   - signature:
     - `0` (key_id_len - no key ID)
-    - `65` (signature_len)
-    - `<65 bytes>` (0x01 ‖ Ed22519(k, hashes))
+    - `0x01` (Ed25519 algorithm identifier)
+    - `64` (signature_len)
+    - `<64 bytes>` (Ed22519(k, hashes))
 
 Variant with two signatures for the same content and key identifiers:
 
@@ -321,10 +326,12 @@ Variant with two signatures for the same content and key identifiers:
   - signature_1:
     - `5` (key_id_len)
     - `"first"` (key_id)
-    - `65` (`signature_len`)
-    - `<65 bytes>` (0x01 ‖ Ed22519(k_first, hashes))
+    - `0x01` (Ed25519 algorithm identifier)
+    - `64` (`signature_len`)
+    - `<64 bytes>` (Ed22519(k_first, hashes))
   - signature_2:
     - `6` (key_id_len)
     - `"second"` (key_id)
-    - `65` (`signature_len`)
-    - `<65 bytes>` (0x01 ‖ Ed22519(k_second, hashes))
+    - `0x01` (Ed25519 identifier)
+    - `64` (`signature_len`)
+    - `<64 bytes>` (Ed22519(k_second, hashes))
