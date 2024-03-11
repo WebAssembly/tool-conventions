@@ -162,7 +162,7 @@ relocation types for accessing data and functions address relative to
 - `17 / R_WASM_MEMORY_ADDR_REL_SLEB64` - the 64-bit counterpart of
   `R_WASM_MEMORY_ADDR_REL_SLEB`.
 - `21 / R_WASM_MEMORY_ADDR_TLS_SLEB` (in LLVM 12.0) - an offset from the
-`__tls_base` symbol encoded as a 5-byte [varint32]. Used for PIC case to reject
+`__tls_base` symbol encoded as a 5-byte [varint32]. Used for PIC case to avoid
 absolute relocation.
 - `25 / R_WASM_MEMORY_ADDR_TLS_SLEB64` (in LLVM 13.0) - the 64-bit counterpart
 of `R_WASM_MEMORY_ADDR_TLS_SLEB`.
