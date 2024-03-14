@@ -127,16 +127,27 @@ of `R_WASM_MEMORY_ADDR_SLEB`. A 64-bit linear memory index encoded as a 10-byte
 - `16 / R_WASM_MEMORY_ADDR_I64` (since LLVM 11.0) - the 64-bit counterpart of
 `R_WASM_MEMORY_ADDR`. A 64-bit linear memory index encoded as a [uint64], e.g.
 taking the 64-bit address of a C++ global in a static data initializer.
-- `18 / R_WASM_TABLE_INDEX_SLEB64` (in LLVM `master`) - the 64-bit counterpart
+- `18 / R_WASM_TABLE_INDEX_SLEB64` (in LLVM 12.0) - the 64-bit counterpart
 of  `R_WASM_TABLE_INDEX_SLEB`. A function table index encoded as a 10-byte
 [varint64]. Used to refer to the immediate argument of a `i64.const`
 instruction, e.g. taking the address of a function in Wasm64.
-- `19 / R_WASM_TABLE_INDEX_I64` (in LLVM `master`) - the 64-bit counterpart of
+- `19 / R_WASM_TABLE_INDEX_I64` (in LLVM 12.0) - the 64-bit counterpart of
 `R_WASM_TABLE_INDEX_I32`. A function table index encoded as a [uint64], e.g.
 taking the address of a function in a static data initializer.
-- `20 / R_WASM_TABLE_NUMBER_LEB` (in LLVM `master`) - a table number encoded as
+- `20 / R_WASM_TABLE_NUMBER_LEB` (in LLVM 12.0) - a table number encoded as
 a 5-byte [varuint32]. Used for the table immediate argument in the table.*
   instructions.
+- `22 / R_WASM_FUNCTION_OFFSET_I64` (in LLVM 12.0) - the 64-bit counterpart
+of `R_WASM_FUNCTION_OFFSET_I32`. A byte offset within code section for the
+specific function encoded as a [uint64].
+- `23 / R_WASM_MEMORY_ADDR_LOCREL_I32` (in LLVM 13.0) - a byte offset between
+the relocating address and a linear memory index encoded as a [uint32]. Used
+for pointer-relative addressing.
+- `24 / R_WASM_TABLE_INDEX_REL_SLEB64` (in LLVM 13.0) - the 64-bit counterpart
+of `R_WASM_TABLE_INDEX_REL_SLEB`. A function table index encoded as a 10-byte
+[varint64].
+- `26 / R_WASM_FUNCTION_INDEX_I32` (in LLVM 17.0) - a function index encoded as
+a [uint32]. Used in custom sections for function annotations (`__attribute__((annotate(<name>)))`).
 
 **Note**: Please note that the 64bit relocations are not yet stable and 
 therefore, subject to change.
@@ -233,6 +244,7 @@ where a `segment` is encoded as:
 The current set of valid flag for segments are:
 - `1 / WASM_SEGMENT_FLAG_STRINGS` - Signals that the segment contains only null terminated strings allowing the linker to perform merging.
 - `2 / WASM_SEGMENT_FLAG_TLS` - The segment contains thread-local data. This means that a unique copy of this segment will be created for each thread.
+- `4 / WASM_SEG_FLAG_RETAIN` - If the object file is included in the final link, the segment should be retained in the final output regardless of whether it is used by the program.
 
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
