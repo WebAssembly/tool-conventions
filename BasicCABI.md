@@ -173,23 +173,35 @@ making a copy of any indirectly passed data that the callee should not modify.
 Similarly, types can either be returned directly from WebAssembly functions or
 returned indirectly via a pointer parameter prepended to the parameter list.
 
-Type                         | Parameter     | Result   |
------------------------------|---------------|----------|
-scalar[1]                    | direct        | direct   |
-empty struct or union        | ignored       | ignored  |
-singleton struct or union[2] | direct        | direct   |
-other struct or union[3]     | indirect      | indirect |
-array                        | indirect      | N/A      |
+Type                         | Parameter     | Result             |
+-----------------------------|---------------|--------------------|
+scalar                       | direct[1]     | direct/indirect[2] |
+empty struct or union        | ignored       | ignored            |
+singleton struct or union[3] | direct        | direct             |
+other struct or union[4]     | indirect      | indirect           |
+array                        | indirect      | N/A                |
 
-[1] `long long double` and `__int128` are passed directly as two `i64` values.
-Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit
-scalars are zero-extended before passing or returning.
+[1] In case of parameters, `long long double`, `__int128`, and `__float128` are
+passed directly as two `i64` values. In case of return values, for
+non-compiler-rt functions, they are passed directly as two `i64` values if
+[multivalue](https://github.com/WebAssembly/multi-value) is enabled and
+indirectly passed via a pointer parameter otherwise.
+Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit scalars
+are zero-extended before passing or returning.
 
-[2] Any struct or union that recursively (including through nested structs,
+[2] In case of return values for compiler-rt functions, `long long double`,
+`__int128`, and `__float128` are indirectly passed via a pointer parameter that
+points to the value in memory, regardless of whether
+[multivalue](https://github.com/WebAssembly/multi-value) is enabled or not, to
+make the compiler-rt ABI uniform across the features.
+Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit scalars
+are zero-extended before passing or returning.
+
+[3] Any struct or union that recursively (including through nested structs,
 unions, and arrays) contains just a single scalar value and is not specified to
 have greater than natural alignment.
 
-[3] This calling convention was defined before
+[4] This calling convention was defined before
 [multivalue](https://github.com/WebAssembly/multi-value) was standardized. A new
 default calling convention that changes this behavior and takes advantage of
 multivalue may be introduced in the future.
