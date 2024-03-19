@@ -168,9 +168,9 @@ absolute relocation.
 of `R_WASM_MEMORY_ADDR_TLS_SLEB`.
 
 All code that gets linked into a WebAssembly dynamic library must be compiled
-as position independant.  The corresponding absolute reloction types
+as position independent.  The corresponding absolute relocation types
 (R_WASM_MEMORY_ADDR_SLEB and R_WASM_TABLE_INDEX_SLEB) are not permitted in
-position independant code and will be rejected at link time.
+position independent code and will be rejected at link time.
 
 For relocation within the data segments a runtime fixup may be required.  For
 example, if the address of an external symbol is stored in global data.  In this
