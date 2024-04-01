@@ -34,7 +34,7 @@ struct __WasmLongjmpArgs {
 
 The lifetime of this structure is rather short. It lives only during a
 single longjmp execution.
-A runtime can use a part of `jmpbuf` for this structure. It's also ok to use
+A runtime can use a part of `jmp_buf` for this structure. It's also ok to use
 a separate thread-local storage to place this structure. A runtime without
 multi-threading support can simply place this structure in a global variable.
 
