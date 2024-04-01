@@ -151,6 +151,15 @@ the following pseudo code.
 
 The compiler converts C `longjmp` calls to `__wasm_longjmp` calls.
 
+## Dynamic-linking consideration
+
+In case of [dynamic-linking], it's the dynamic linker's responsibility
+to provide the exception tag for this convention with the name
+"env.__c_longjmp". Modules should import the tag so that cross-module
+longjmp works.
+
+[dynamic-linking]: DynamicLinking.md
+
 ## Implementations
 
 * LLVM has a pass ([WebAssemblyLowerEmscriptenEHSjLj.cpp]) to perform
