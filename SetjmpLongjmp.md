@@ -13,12 +13,22 @@ This document describes a convention to implement C setjmp/longjmp via
 
 This convention uses a few structures on the WebAssembly linear memory.
 
-#### jmp_buf
+#### Reserved area in jmp_buf
 
-The first 6 words of C jmp_buf is reserved for the use of the runtime.
+The first 6 words of C jmp_buf is reserved for the use by the runtime.
 The `void *env` argument used by the ABI functions mentioned below points to
 this 6-word area.
 It should also have large enough alignment to store C pointers.
+
+##### Notes about the size of reserved area in jmp_buf
+
+Emscripten has been using 6 words. (`unsigned long [6]`)
+
+GCC and Clang uses `intptr_t [5]` for their [setjmp/longjmp builtins].
+It isn't relevant right now though, because LLVM's WebAssembly target
+doesn't provide these builtins.
+
+[setjmp/longjmp builtins]: https://gcc.gnu.org/onlinedocs/gcc/Nonlocal-Gotos.html
 
 #### __WasmLongjmpArgs
 
