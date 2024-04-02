@@ -16,8 +16,6 @@ This convention uses a few structures on the WebAssembly linear memory.
 #### Reserved area in jmp_buf
 
 The first 6 words of C jmp_buf is reserved for the use by the runtime.
-The `void *env` argument used by the ABI functions mentioned below points to
-this 6-word area.
 It should also have large enough alignment to store C pointers.
 
 ##### Notes about the size of reserved area in jmp_buf
@@ -37,7 +35,7 @@ data to the WebAssembly exception.
 
 ```
 struct __WasmLongjmpArgs {
-   void *env;
+   void *env; // a pointer to jmp_buf
    int val;
 };
 ```
@@ -63,9 +61,9 @@ on the linear memory.
 ### functions
 
 ```
-void __wasm_setjmp(void *env, uint32_t label, void *func_invocation_id);
-uint32_t __wasm_setjmp_test(void *env, void *func_invocation_id);
-void __wasm_longjmp(void *env, int val);
+void __wasm_setjmp(jmp_buf env, uint32_t label, void *func_invocation_id);
+uint32_t __wasm_setjmp_test(jmp_buf env, void *func_invocation_id);
+void __wasm_longjmp(jmp_buf env, int val);
 ```
 
 `__wasm_setjmp` records the necessary data in the `env` so that it can be
