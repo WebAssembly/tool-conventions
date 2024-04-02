@@ -17,6 +17,7 @@ This convention uses a few structures on the WebAssembly linear memory.
 
 The first 6 words of C jmp_buf is reserved for the use by the runtime.
 It should also have large enough alignment to store C pointers.
+The contents of this area is private to the runtime implementation.
 
 ##### Notes about the size of reserved area in jmp_buf
 
