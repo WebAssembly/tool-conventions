@@ -165,10 +165,6 @@ longjmp works.
   the convertion mentioned above.  It can be enabled with the
   `-mllvm -wasm-enable-sjlj` option.
 
-  Note: older LLVM versions have been using a slightly different runtime ABI,
-  which is supported by Emscripten. It has been switched to the ABI documented
-  above by https://github.com/llvm/llvm-project/pull/84137.
-
   Note: as of writing this, LLVM produces a bit older version of
   exception-handling instructions. (`try`, `delegate`, etc)
   binaryen has a conversion from the old instructions to the latest
