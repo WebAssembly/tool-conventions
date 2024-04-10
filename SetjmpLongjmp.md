@@ -161,8 +161,8 @@ longjmp works.
 
 ## Implementations
 
-* LLVM has a pass ([WebAssemblyLowerEmscriptenEHSjLj.cpp]) to perform
-  the convertion mentioned above.  It can be enabled with the
+* LLVM (19 and later) has a pass ([WebAssemblyLowerEmscriptenEHSjLj.cpp])
+  to perform the convertion mentioned above.  It can be enabled with the
   `-mllvm -wasm-enable-sjlj` option.
 
   Note: as of writing this, LLVM produces a bit older version of
