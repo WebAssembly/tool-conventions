@@ -174,13 +174,18 @@ longjmp works.
   binaryen has a conversion from the old instructions to the latest
   instructions. (`try_table` etc.)
 
-* Emscripten (TBD version) has the runtime support for the convention
-  documented above. It also supports a few traditional variations of the
-  setjmp/longjmp ABI.
+* Emscripten (TBD version) has the runtime support ([emscripten_setjmp.c])
+  for the convention documented above.
+  It also supports a few traditional variations of the setjmp/longjmp ABI.
 
-* A PR to add the runtime support to wasi-libc is under review: https://github.com/WebAssembly/wasi-libc/pull/483
+* wasi-libc has the runtime support ([wasi-libc rt.c]) for the convention
+  documented above.
 
 [WebAssemblyLowerEmscriptenEHSjLj.cpp]: https://github.com/llvm/llvm-project/blob/70deb7bfe90af91c68454b70683fbe98feaea87d/llvm/lib/Target/WebAssembly/WebAssemblyLowerEmscriptenEHSjLj.cpp
+
+[emscripten_setjmp.c]: https://github.com/emscripten-core/emscripten/blob/7d66497d96cdcffa394ad67d87f7118137edf9ab/system/lib/compiler-rt/emscripten_setjmp.c
+
+[wasi-libc rt.c]: https://github.com/WebAssembly/wasi-libc/blob/d03829489904d38c624f6de9983190f1e5e7c9c5/libc-top-half/musl/src/setjmp/wasm32/rt.c
 
 ## Future directions
 
