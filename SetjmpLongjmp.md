@@ -5,6 +5,9 @@
 This document describes a convention to implement C setjmp/longjmp via
 [WebAssembly exception-handling proposal].
 
+This document also briefly mentions another convention based on JavaScript
+exceptions.
+
 [WebAssembly exception-handling proposal]: https://github.com/WebAssembly/exception-handling
 
 ## Runtime ABI
@@ -159,6 +162,20 @@ longjmp works.
 
 [dynamic-linking]: DynamicLinking.md
 
+## Emscripten JavaScript-based exceptions
+
+Emscripten has a mode to use JavaScript-based exceptions instead of
+WebAssembly exceptions. In that mode, `emscripten_longjmp` function,
+which throws a JavaScript exception, is used instead of `__wasm_longjmp`.
+
+```c
+void emscripten_longjmp(uintptr_t env, int val);
+```
+
+The compiler translates C function calls which possibly ends up with
+calling `longjmp` to indirect calls via a JavaScript wrapper which
+catches the JavaScript exception.
+
 ## Implementations
 
 * LLVM (19 and later) has a pass ([WebAssemblyLowerEmscriptenEHSjLj.cpp])
@@ -172,7 +189,6 @@ longjmp works.
 
 * Emscripten (TBD version) has the runtime support ([emscripten_setjmp.c])
   for the convention documented above.
-  It also supports a few traditional variations of the setjmp/longjmp ABI.
 
 * wasi-libc has the runtime support ([wasi-libc rt.c]) for the convention
   documented above.
