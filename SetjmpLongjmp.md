@@ -193,7 +193,3 @@ longjmp works.
 
 * If/When WebAssembly exception gets more ubiquitous, we might want to move
   the runtime to compiler-rt.
-
-## References
-
-* [A discussion about the runtime ABI](https://docs.google.com/document/d/1ZvTPT36K5jjiedF8MCXbEmYjULJjI723aOAks1IdLLg/edit#heading=h.metx1fc16ots)
