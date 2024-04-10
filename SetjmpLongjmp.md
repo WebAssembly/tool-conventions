@@ -136,8 +136,8 @@ the following pseudo code.
       $val = __WasmLongjmpArgs.val
       $label = $__wasm_setjmp_test($env, $func_invocation_id)
       if ($label == 0) {
-         ;; not for us. rethrow.
-         call $__wasm_longjmp($env, $val)
+        ;; not for us. rethrow.
+        call $__wasm_longjmp($env, $val)
       }
       ;; ours.
       ;; somehow jump to the block corresponding to the $label
