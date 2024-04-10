@@ -34,7 +34,7 @@ doesn't provide these builtins.
 An equivalent of the following structure is used to associate necessary
 data to the WebAssembly exception.
 
-```
+```c
 struct __WasmLongjmpArgs {
    void *env; // a pointer to jmp_buf
    int val;
@@ -61,7 +61,7 @@ on the linear memory.
 
 ### functions
 
-```
+```c
 void __wasm_setjmp(jmp_buf env, uint32_t label, void *func_invocation_id);
 uint32_t __wasm_setjmp_test(jmp_buf env, void *func_invocation_id);
 void __wasm_longjmp(jmp_buf env, int val);
