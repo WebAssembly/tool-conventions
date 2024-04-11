@@ -39,8 +39,8 @@ data to the WebAssembly exception.
 
 ```c
 struct __WasmLongjmpArgs {
-   void *env; // a pointer to jmp_buf
-   int val;
+  void *env; // a pointer to jmp_buf
+  int val;
 };
 ```
 
@@ -124,14 +124,12 @@ compiler-generated logic should rethrow the exception by calling
 For an example, a C function like this would be converted like
 the following pseudo code.
 ```c
-    void
-    f(void)
-    {
-        jmp_buf env;
-        if (!setjmp(env)) {
-            might_call_longjmp(env);
-        }
-    }
+void f(void) {
+  jmp_buf env;
+  if (!setjmp(env)) {
+    might_call_longjmp(env);
+  }
+}
 ```
 
 ```wat
