@@ -187,7 +187,7 @@ catches the JavaScript exception.
   binaryen has a conversion from the old instructions to the latest
   instructions. (`try_table` etc.)
 
-* Emscripten (TBD version) has the runtime support ([emscripten_setjmp.c])
+* Emscripten (3.1.57 or later) has the runtime support ([emscripten_setjmp.c])
   for the convention documented above.
 
 * wasi-libc has the runtime support ([wasi-libc rt.c]) for the convention
