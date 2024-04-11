@@ -159,8 +159,8 @@ the following pseudo code.
       }
       ;; ours.
       ;; somehow jump to the block corresponding to the $label
-      :
-      :
+      ...
+      ...
     end
 ```
 
