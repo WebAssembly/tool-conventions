@@ -102,9 +102,24 @@ because the pointer is merely used as an identifier and never be dereferenced.
 
 Also, the compiler converts C `setjmp` calls to `__wasm_setjmp` calls.
 
+For each setjmp callsite, the compiler allocates non-zero identifier called
+"label". The label value passed to `__wasm_setjmp` is recorded by the
+runtime and returned by later `__wasm_setjmp_test` when processing a longjmp
+to the corresponding jmp_buf.
+
 Also, for code blocks which possibly call `longjmp` directly or indirectly,
 the compiler generates instructions to catch and process the
 `__c_longjmp` exception accordingly.
+
+When catching the exception, the compiler-generated logic calls
+`___wasm_setjmp_test` to see if the exception is for this invocation
+of this function.
+If it is, `__wasm_setjmp_test` returns the non-zero label value recorded by
+the last `__wasm_setjmp` call for the jmp_buf. The compiler-generated logic
+can use the label value to pretend a return from the corresponding setjmp.
+Otherwise, `__wasm_setjmp_test` returns 0. In that case, the
+compiler-generated logic should rethrow the exception by calling
+`__wasm_longjmp` so that it can be eventually caught by the right function.
 
 For an example, a C function like this would be converted like
 the following pseudo code.
