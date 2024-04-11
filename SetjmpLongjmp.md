@@ -112,7 +112,7 @@ the compiler generates instructions to catch and process the
 `__c_longjmp` exception accordingly.
 
 When catching the exception, the compiler-generated logic calls
-`___wasm_setjmp_test` to see if the exception is for this invocation
+`__wasm_setjmp_test` to see if the exception is for this invocation
 of this function.
 If it is, `__wasm_setjmp_test` returns the non-zero label value recorded by
 the last `__wasm_setjmp` call for the jmp_buf. The compiler-generated logic
