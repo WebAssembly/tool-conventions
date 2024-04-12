@@ -67,7 +67,7 @@ linear memory.
 
 [memory64]: https://github.com/WebAssembly/memory64
 
-### functions
+### Functions
 
 ```c
 void __wasm_setjmp(jmp_buf env, uint32_t label, void *func_invocation_id);
@@ -99,7 +99,7 @@ The C compiler detects `setjmp` and `longjmp` calls in a program and
 converts them into the corresponding WebAssembly exception-handling
 instructions and calls to the above mentioned runtime ABI.
 
-### functions calling setjmp()
+### Functions calling setjmp()
 
 On the function entry, the compiler would generate the logic to create
 the identifier of this function invocation, typically by performing an
@@ -168,7 +168,7 @@ void f(void) {
   end
 ```
 
-### longjmp calls
+### Longjmp calls
 
 The compiler converts C `longjmp` calls to `__wasm_longjmp` calls.
 
