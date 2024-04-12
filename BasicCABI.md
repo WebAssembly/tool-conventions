@@ -42,6 +42,7 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  Floating point | `float` | 4 | 4 | f32
  Floating point | `double` | 8 | 8 | f64
  Floating point | `long double` | 16 | 16 | (none)
+ Floating point | `long double` (Emscripten) | 16 | 8 | (none)
  
  * `long double` values correspond to 128-bit IEEE-754 quad-precision binary128 values.
  Operations on these values are currently implemented as calls to
@@ -54,6 +55,7 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
    by an `unsigned int`.
    Otherwise, if a compiler supports such an `enum`, it would use `i64`
    for the `enum`.
+ * Emscripten uses 8 byte alignment for `long double`.
 
 **Aggregates and Unions**
 
