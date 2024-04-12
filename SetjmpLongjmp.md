@@ -50,15 +50,17 @@ A runtime can use a part of `jmp_buf` for this structure. It's also ok to use
 a separate thread-local storage to place this structure. A runtime without
 multi-threading support can simply place this structure in a global variable.
 
-### Exception
+### Exception tag
 
 This convention uses a WebAssembly exception to perform a non-local jump
 for C `longjmp`.
 
-The name of exception is `__c_longjmp`.
-The type of exception is `(param i32)`. (Or, `(param i64)` for [memory64])
-The parameter of the exception is the address of `__WasmLongjmpArgs` structure
-on the linear memory.
+The exception is created with an exception tag named `__c_longjmp`.
+The name is used for both of [static linking](Linking.md) and
+[dynamic linking](DynamicLinking.md).
+The type of exception tag is `(param i32)`. (Or, `(param i64)` for [memory64])
+The parameter is the address of the `__WasmLongjmpArgs` structure on the
+linear memory.
 
 [memory64]: https://github.com/WebAssembly/memory64
 
@@ -85,7 +87,8 @@ saved by `__wasm_setjmp`. Otherwise, it returns 0.
 `__wasm_longjmp` is similar to C `longjmp`.
 If `val` is 0, it's `__wasm_longjmp`'s responsibility to convert it to 1.
 It performs a long jump by filling a `__WasmLongjmpArgs` structure and
-throwing `__c_longjmp` exception with its address.
+throwing an exception with its address. The exception is created with
+the `__c_longjmp` exception tag.
 
 ## Code conversion
 
@@ -108,8 +111,8 @@ runtime and returned by later `__wasm_setjmp_test` when processing a longjmp
 to the corresponding jmp_buf.
 
 Also, for code blocks which possibly call `longjmp` directly or indirectly,
-the compiler generates instructions to catch and process the
-`__c_longjmp` exception accordingly.
+the compiler generates instructions to catch and process exceptions with
+the `__c_longjmp` exception tag accordingly.
 
 When catching the exception, the compiler-generated logic calls
 `__wasm_setjmp_test` to see if the exception is for this invocation
