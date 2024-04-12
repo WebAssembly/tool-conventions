@@ -219,5 +219,14 @@ catches the JavaScript exception.
 
 * `__WasmLongjmpArgs` can be replaced with WebAssembly multivalue.
 
+* Or, alternatively, we can make `__wasm_setjmp_test` take the
+  `__WasmLongjmpArgs` pointer so that we can drop the `__WasmLongjmpArgs`
+  structure layout from the ABI.
+
+* It might be simpler for the complier-generated catching logic to rethrow
+  the exception with the `rethrow`/`throw_ref` instruction instead of
+  calling `__wasm_longjmp`. Or, it might be simpler to make
+  `__wasm_setjmp_test` rethow the exception internally.
+
 * If/When WebAssembly exception gets more ubiquitous, we might want to move
   the runtime to compiler-rt.
