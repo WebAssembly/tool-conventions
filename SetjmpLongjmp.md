@@ -19,12 +19,15 @@ This convention uses a few structures on the WebAssembly linear memory.
 #### Reserved area in jmp_buf
 
 The first 6 words of C jmp_buf is reserved for the use by the runtime.
-It should also have large enough alignment to store C pointers.
-The contents of this area is private to the runtime implementation.
+("words" here are C pointer types specified in the [C ABI].)
+It should have large enough alignment to store C pointers.
+The actual contents of this area is private to the runtime implementation.
+
+[C ABI]: BasicCABI.md
 
 ##### Notes about the size of reserved area in jmp_buf
 
-Emscripten has been using 6 words. (`unsigned long [6]`)
+Emscripten has been using 6 `unsigned long`s. (`unsigned long [6]`)
 
 GCC and Clang uses `intptr_t [5]` for their [setjmp/longjmp builtins].
 It isn't relevant right now though, because LLVM's WebAssembly target
