@@ -21,7 +21,7 @@ This convention uses a few structures on the WebAssembly linear memory.
 The first 6 words of C jmp_buf is reserved for the use by the runtime.
 ("words" here are C pointer types specified in the [C ABI].)
 It should have large enough alignment to store C pointers.
-The actual contents of this area is private to the runtime implementation.
+The actual contents of this area are private to the runtime implementation.
 
 [C ABI]: BasicCABI.md
 
