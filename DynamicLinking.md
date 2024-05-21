@@ -214,6 +214,40 @@ Note: This has no effect on exports, or the import of functions for direct call.
 The imported global must be mutable as the dynamic linker might need to
 modify the value after instantiation.
 
+### Text format of `dylink.0`
+
+The text format for the `dylink.0` custom section uses [annotations proposal]
+extension to the WebAssembly text format. The text format looks like:
+
+[annotations proposal]: https://github.com/WebAssembly/annotations
+
+```wasm
+(module
+  (@dylink.0
+    (mem-info
+        (memory 1024 8)
+        (table 7 1))
+    (needed "libc.so" "libz.so")
+    (export-info "free" exported no-strip visibilty-hidden)
+    (import-info "malloc" undefined absolute tls 0x1000)
+  )
+)
+```
+
+The `(@dylink.0 ...)` structure must be placed directly within an `(@module
+...)` declaration and must be placed at the beginning of the module. Within
+`@dylink.0` there is a list of parenthesis-delimited fields. The four accepted
+fields correspond to the subsections within `dylink.0`:
+
+* `(@mem-info ...)`
+* `(@needed ...)`
+* `(@export-info ...)`
+* `(@import-info ...)`
+
+The `dylink.0` subsections are emitted in the same order they're listed within
+the `@dylink.0` annotation. The `export-info` and `import-info` subsections
+concatenate adjacent entries into one subsection, however. For example
+
 ### Exports
 
 Functions are directly exported as WebAssembly function exports.  Exported
@@ -223,6 +257,90 @@ connect export the final relocated addresses (i.e. they cannot add
 `__memory_base` before exporting). Thus, the exported address is before
 relocation; the loader, which knows `__memory_base`, can then calculate the
 final relocated address.
+
+```wasm
+(module
+  (@dylink.0
+    (export-info "a" 0)
+    (export-info "b" 0)
+    (import-info "c" 0)
+  )
+)
+```
+
+would produce two subsections where the first one has type
+`WASM_DYLINK_EXPORT_INFO` with two symbols.
+
+**`mem-info`**
+
+The `mem-info` section optionally contains `(memory ..)` and `(table ..)`
+entries. These correspond to the memory size/alignment and table size/alignment.
+If not specified the defaults are 0.
+
+For example:
+
+```wasm
+(module
+  (@dylink.0
+    (mem-info (memory 100 1)) ;; 100-byte memory with 1-byte alignment
+                              ;; 0-entry table with 0 alignment
+
+    (mem-info (table 10 2)) ;; 0-byte memory with 0-byte alignment
+                            ;; 10-entry table with 2 alignment
+
+    (mem-info
+        (memory 100 1)
+        (table 10 2))
+  )
+)
+```
+
+**`needed`**
+
+The `needed` section contains a list of strings which are the needed modules
+present in `WASM_DYLINK_NEEDED`:
+
+```wasm
+(module
+  (@dylink.0
+    (needed "libfoo.so" "libbar.so")
+  )
+)
+```
+
+**`export-info` / `import-info`**
+
+The `export-info` and `import-info` constructs correspond to
+`WASM_DYLINK_EXPORT_INFO` and `WASM_DYLINK_IMPORT_INFO`. Each structure
+specifies information on a single symbol. After the symbol is a list of flags or
+integer values for flags. For example:
+
+```wasm
+(module
+  (@dylink.0
+    (import-info "malloc" undefined absolute tls 0x1000)
+  )
+)
+```
+
+This indicates a single symbol is imported, `malloc`, and it has the flags
+`undefined`, `absolute`, `tls`, and `0x1000` all or'd together for the final
+flags value.
+
+Supported flags are:
+
+* `binding-weak` - `WASM_SYM_BINDING_WEAK`
+* `binding-local` - `WASM_SYM_BINDING_LOCAL`
+* `visibility-hidden` - `WASM_SYM_VISIBILITY_HIDDEN`
+* `undefined` - `WASM_SYM_UNDEFINED`
+* `exported` - `WASM_SYM_EXPORTED`
+* `explicit-name` - `WASM_SYM_EXPLICIT_NAME`
+* `no-strip` - `WASM_SYM_NO_STRIP`
+* `tls` - `WASM_SYM_TLS`
+* `absolute` - `WASM_SYM_ABSOLUTE`
+
+Flags can also be specified with an integer literal and the integer literal may
+have more than one bit set as well.
 
 ## Implementation Status
 

@@ -116,4 +116,53 @@ produce the wasm module.
 
 ## Text format
 
-TODO
+The text format for the `producers` custom section uses [annotations proposal]
+extension to the WebAssembly text format. The text format looks like:
+
+[annotations proposal]: https://github.com/WebAssembly/annotations
+
+```wasm
+(module
+  (@producers
+    (processed-by "rustc" "1.78.0 (9b00956e5 2024-04-29)")
+    (language "Rust" "1.78.0")
+  )
+)
+```
+
+The `(@producers ...)` structure must be placed directly within an `(@module
+...)` declaration. Within `@producers` there is a list of parenthesis-delimited
+fields. The three accepted fields correspond to the three possible `field_name`s
+above:
+
+* `(@language ...)`
+* `(@processed-by ...)`
+* `(@sdk ...)`
+
+Each field takes two strings corresponding to the `name` and `version` fields of
+the `versioned-name` construction in the custom section. For example:
+
+```wasm
+(module
+  (@producers
+    (language "C" "18.1.2")
+    (processed-by "LLVM" "18.1.2")
+    (sdk "Emscripten" "3.1.60")
+  )
+)
+```
+
+The three fields can be specified in any order and any number of times.
+
+```wasm
+(module
+  (@producers
+    (sdk "Emscripten" "3.1.60")
+    (processed-by "LLVM" "18.1.2")
+    (language "C" "18.1.2")
+    (processed-by "LLVM" "17.1.0")
+    (language "Rust" "1.78.0")
+    (processed-by "clang" "18.1.2")
+  )
+)
+```
