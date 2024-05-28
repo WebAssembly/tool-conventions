@@ -222,14 +222,22 @@ extension to the WebAssembly text format. The text format looks like:
 [annotations proposal]: https://github.com/WebAssembly/annotations
 
 ```wasm
-(module
+(module $libc.so
   (@dylink.0
-    (mem-info
-        (memory 1024 8)
-        (table 7 1))
-    (needed "libc.so" "libz.so")
-    (export-info "free" exported no-strip visibilty-hidden)
-    (import-info "malloc" undefined absolute tls 0x1000)
+    (mem-info (memory 208392 4) (table 31 0))
+    (import-info "env" "__main_argc_argv" binding-weak undefined)
+  )
+)
+```
+
+or
+
+```
+(module $libbar.so
+  (@dylink.0
+    (needed "libfoo.so" "libc.so")
+    (export-info "my_tls_variable_1" tls)
+    (export-info "my_tls_variable_2" tls)
   )
 )
 ```
@@ -246,24 +254,17 @@ correspond to the subsections within `dylink.0`:
 
 The `dylink.0` subsections are emitted in the same order they're listed within
 the `@dylink.0` annotation. The `export-info` and `import-info` subsections
-concatenate adjacent entries into one subsection, however. For example
-
-### Exports
-
-Functions are directly exported as WebAssembly function exports.  Exported
-addresses (i.e., exported memory locations or exported table locations) are
-exported as i32 WebAssembly globals.  However since exports are static, modules
-connect export the final relocated addresses (i.e. they cannot add
-`__memory_base` before exporting). Thus, the exported address is before
-relocation; the loader, which knows `__memory_base`, can then calculate the
-final relocated address.
+concatenate adjacent entries into one subsection.
 
 ```wasm
 (module
   (@dylink.0
-    (export-info "a" 0)
-    (export-info "b" 0)
-    (import-info "c" 0)
+    ;; these two symbols are concatenated into one subsection
+    (export-info "a" tls)
+    (export-info "b" tls)
+
+    ;; this generates a second subsection
+    (import-info "env" "c" binding-weak undefined)
   )
 )
 ```
@@ -318,14 +319,11 @@ integer values for flags. For example:
 ```wasm
 (module
   (@dylink.0
-    (import-info "malloc" undefined absolute tls 0x1000)
+    (import-info "env" "__main_argc_argv" binding-weak undefined)
+    (export-info "my_tls_variable_1" tls)
   )
 )
 ```
-
-This indicates a single symbol is imported, `malloc`, and it has the flags
-`undefined`, `absolute`, `tls`, and `0x1000` all or'd together for the final
-flags value.
 
 Supported flags are:
 
@@ -340,7 +338,20 @@ Supported flags are:
 * `absolute` - `WASM_SYM_ABSOLUTE`
 
 Flags can also be specified with an integer literal and the integer literal may
-have more than one bit set as well.
+have more than one bit set as well. Note that many of these flags aren't used in
+`dylink.0` but instead are used as part of the `linking` section, the current
+implementation in `wasm-ld` of emitting `dylink.0` only uses `import-info` for
+`binding-weak` symbols and `export-info` for `tls` symbols.
+
+### Exports
+
+Functions are directly exported as WebAssembly function exports.  Exported
+addresses (i.e., exported memory locations or exported table locations) are
+exported as i32 WebAssembly globals.  However since exports are static, modules
+connect export the final relocated addresses (i.e. they cannot add
+`__memory_base` before exporting). Thus, the exported address is before
+relocation; the loader, which knows `__memory_base`, can then calculate the
+final relocated address.
 
 ## Implementation Status
 
