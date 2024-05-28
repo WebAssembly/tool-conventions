@@ -130,14 +130,14 @@ extension to the WebAssembly text format. The text format looks like:
 )
 ```
 
-The `(@producers ...)` structure must be placed directly within an `(@module
+The `(@producers ...)` structure must be placed directly within a `(module
 ...)` declaration. Within `@producers` there is a list of parenthesis-delimited
 fields. The three accepted fields correspond to the three possible `field_name`s
 above:
 
-* `(@language ...)`
-* `(@processed-by ...)`
-* `(@sdk ...)`
+* `(language ...)`
+* `(processed-by ...)`
+* `(sdk ...)`
 
 Each field takes two strings corresponding to the `name` and `version` fields of
 the `versioned-name` construction in the custom section. For example:

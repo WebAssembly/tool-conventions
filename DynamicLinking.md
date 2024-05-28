@@ -234,15 +234,15 @@ extension to the WebAssembly text format. The text format looks like:
 )
 ```
 
-The `(@dylink.0 ...)` structure must be placed directly within an `(@module
+The `(@dylink.0 ...)` structure must be placed directly within a `(module
 ...)` declaration and must be placed at the beginning of the module. Within
-`@dylink.0` there is a list of parenthesis-delimited fields. The four accepted
-fields correspond to the subsections within `dylink.0`:
+`@dylink.0` there is a list of four possible parenthesis-delimited fields that
+correspond to the subsections within `dylink.0`:
 
-* `(@mem-info ...)`
-* `(@needed ...)`
-* `(@export-info ...)`
-* `(@import-info ...)`
+* `(mem-info ...)`
+* `(needed ...)`
+* `(export-info ...)`
+* `(import-info ...)`
 
 The `dylink.0` subsections are emitted in the same order they're listed within
 the `@dylink.0` annotation. The `export-info` and `import-info` subsections
