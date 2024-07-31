@@ -224,6 +224,8 @@ The current list of valid `type` codes are:
 - `8 / WASM_SYMBOL_TABLE` - Specifies extra information about the symbols present
   in the module.
 
+### Segment Info Subsection
+
 For `WASM_SEGMENT_INFO` the following fields are present in the
 subsection:
 
@@ -246,6 +248,8 @@ The current set of valid flag for segments are:
 - `2 / WASM_SEGMENT_FLAG_TLS` - The segment contains thread-local data. This means that a unique copy of this segment will be created for each thread.
 - `4 / WASM_SEG_FLAG_RETAIN` - If the object file is included in the final link, the segment should be retained in the final output regardless of whether it is used by the program.
 
+### Init Functions Subsection
+
 For `WASM_INIT_FUNCS` the following fields are present in the
 subsection:
 
@@ -262,6 +266,8 @@ where an `init_func` is encoded as:
 | symbol_index | `varuint32` | the symbol index of init function (*not* the function index) |
 
 The `WASM_INIT_FUNC` subsection must come after the `WASM_SYMBOL_TABLE` subsection.
+
+### Symbol Table Subsection
 
 For `WASM_SYMBOL_TABLE` the following fields are present in the
 subsection:
@@ -347,6 +353,8 @@ The current set of valid flags for symbols are:
 - `0x200 / WASM_SYM_ABSOLUTE` - The symbol represents an absolute address. This
   means it's offset is relative to the start of the wasm memory as opposed to
   being relative to a data segment.
+
+### COMDAT Info Subsection
 
 For `WASM_COMDAT_INFO` the following fields are present in the
 subsection:
