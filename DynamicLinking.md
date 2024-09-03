@@ -353,6 +353,25 @@ connect export the final relocated addresses (i.e. they cannot add
 relocation; the loader, which knows `__memory_base`, can then calculate the
 final relocated address.
 
+### Note for memory/table exports
+
+The commonly used C conventions including WASIp1 require modules to
+export the "memory" memory and the "__indirect_function_table" table.
+
+However, because PIE executables with this dynamic-linking convention
+are already importing these instance resources, it's redundant to
+export them as well. For that reason, for PIE executables, we don't
+require these resources exported.
+
+Shared libraries don't need to export these instance resoures either
+because it's assumed that these instance resources for the main module
+are shared among linked shared libraries as well. (The runtime linkers
+can validate if it's actually the case and reject loading modules
+otherwise.)
+
+On the other hand, non-PIE executables need to export these instance
+resources as usual.
+
 ## Implementation Status
 
 ### LLVM Implementation
