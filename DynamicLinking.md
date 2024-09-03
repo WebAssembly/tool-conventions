@@ -363,9 +363,9 @@ are already importing these instance resources, it's redundant to
 export them as well. For that reason, for PIE executables, we don't
 require these resources exported.
 
-Shared libraries don't need to export these instance resoures either
-because it's assumed that these instance resources for the main module
-are shared among linked shared libraries as well. (The runtime linkers
+Shared libraries don't need to export these resources either.
+They should also import these resources, since they share the memory
+and function table with the main module. (The runtime linkers
 can validate if it's actually the case and reject loading modules
 otherwise.)
 
