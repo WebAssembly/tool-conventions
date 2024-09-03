@@ -356,7 +356,7 @@ final relocated address.
 ### Note for memory/table exports
 
 The commonly used C conventions including WASIp1 require modules to
-export the "memory" memory and the "__indirect_function_table" table.
+export the `memory` memory and the `__indirect_function_table` table.
 
 However, because PIE executables with this dynamic-linking convention
 are already importing these instance resources, it's redundant to
