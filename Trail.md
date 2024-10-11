@@ -19,7 +19,8 @@ The following Trail configurations have been defined:
 
 ### Trail1
 
-The Trail1 target consists of WebAssembly with the following features:
+The Trail1 target consists of [WebAssembly 1.0] plus the following standardized
+([phase-5]) features:
 
  - [mutable-globals]
  - [multivalue]
@@ -30,6 +31,8 @@ The Trail1 target consists of WebAssembly with the following features:
  - [call-indirect-overlong]
 
 [WebAssembly features]: https://webassembly.org/features/
+[WebAssembly 1.0]: https://www.w3.org/TR/wasm-core-1/
+[phase-5]: https://github.com/WebAssembly/meetings/blob/main/process/phases.md#5-the-feature-is-standardized-working-group
 [mutable-globals]: https://github.com/WebAssembly/mutable-global/blob/master/proposals/mutable-global/Overview.md
 [multivalue]: https://github.com/WebAssembly/spec/blob/master/proposals/multi-value/Overview.md
 [sign-ext]: https://github.com/WebAssembly/spec/blob/master/proposals/sign-extension-ops/Overview.md
