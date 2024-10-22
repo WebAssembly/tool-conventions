@@ -1,25 +1,25 @@
-# The Trail Series
+# The Lime Series
 
-Trail is a series of defined and stable subsets of [WebAssembly features] that producers
+Lime is a series of defined and stable subsets of [WebAssembly features] that producers
 and consumers can both use to promote interoperability. It is intended to be implemented
 by producers such as LLVM, using features such as LLVM's concept of target CPUs. Once a
-Trail configuration is defined, it will be stable and not add or remove any features.
+Lime configuration is defined, it will be stable and not add or remove any features.
 
-Trail configuration names include a version number, such as "Trail1". When there is a
-need to add or remove features, a new Trail configuration with a new version number will
-be defined, such as "Trail2".
+Lime configuration names include a version number, such as "Lime1". When there is a
+need to add or remove features, a new Lime configuration with a new version number will
+be defined, such as "Lime2".
 
-Trail aims for features which do not involve significant new runtime cost or complexity,
+Lime aims for features which do not involve significant new runtime cost or complexity,
 and can be implemented in mobile devices and other highly constrained environments.
 
 ## The configurations
 
-The following Trail configurations have been defined:
- - [Trail1](#trail1)
+The following Lime configurations have been defined:
+ - [Lime1](#lime1)
 
-### Trail1
+### Lime1
 
-The Trail1 target consists of [WebAssembly 1.0] plus the following standardized
+The Lime1 target consists of [WebAssembly 1.0] plus the following standardized
 ([phase-5]) features:
 
  - [mutable-globals]
@@ -46,7 +46,7 @@ The Trail1 target consists of [WebAssembly 1.0] plus the following standardized
 [WebAssembly features] sometimes contain several features combined into a
 single proposal to simplify the standardization process, but can have very
 different implementation considerations. This section defines subsets of
-standardized features for use in Trail configurations.
+standardized features for use in Lime configurations.
 
 ### bulk-memory-opt
 
