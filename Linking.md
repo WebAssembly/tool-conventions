@@ -442,7 +442,7 @@ link-time.
 
 Events are meant to represent various control-flow changing constructs of wasm.
 Currently, we have a
-[proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/Exceptions.md)
+[proposal](https://github.com/WebAssembly/exception-handling/blob/master/proposals/exception-handling/Exceptions.md)
 for one kind of events: exceptions, but the event section can be used to support
 other kinds of events in future as well. The event section is a list of declared
 events associated with the module.
