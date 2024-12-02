@@ -38,6 +38,8 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  Integer | `unsigned long` | 4 | 4 | i32
  Integer | `long long` / `signed long long` | 8 | 8 | i64
  Integer | `unsigned long long` | 8 | 8 | i64
+ Integer | `__int128_t` | 16 | 16 | (none)
+ Integer | `__uint128_t` | 16 | 16 | (none)
  Pointer | *`any-type *`* / *`any-type (*)()`* | 4 | 4 | i32
  Floating point | `float` | 4 | 4 | f32
  Floating point | `double` | 8 | 8 | f64
@@ -56,6 +58,13 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
    Otherwise, if a compiler supports such an `enum`, it would use `i64`
    for the `enum`.
  * Emscripten uses 8 byte alignment for `long double`.
+ * `__int128_t` and `__uint128_t` are passed as two `i64`s in little-endian
+   order, and are otherwise represented in the ABI as a struct containing two
+   `i64` fields, in little-endian order.
+ * `_Complex` types are represented in the ABI as a struct containing two
+   corresponding floating-point fields, real and imaginary.
+ * `_BitInt(N)` types are supported up to width 128 and are represented as the
+   smallest same-signedness Integer type with at least as many bits.
 
 **Aggregates and Unions**
 
