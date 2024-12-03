@@ -13,7 +13,7 @@ Lime aims for features which do not involve significant new runtime cost or comp
 and can be implemented in mobile devices and other highly constrained environments.
 
 The name "Lime" was inspired by abbreviating *Li*near *Me*mory, as this series currently
-lacks wasm-gc and is therefore focused on linear-memory languages.
+lacks wasm-gc and is therefore focused on linear-memory languages or language implementations.
 
 ## The configurations
 
