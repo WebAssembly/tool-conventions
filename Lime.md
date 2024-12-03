@@ -12,6 +12,9 @@ be defined, such as "Lime2".
 Lime aims for features which do not involve significant new runtime cost or complexity,
 and can be implemented in mobile devices and other highly constrained environments.
 
+The name "Lime" was inspired by abbreviating *Li*near *Me*mory, as this series currently
+lacks wasm-gc and is therefore focused on linear-memory languages.
+
 ## The configurations
 
 The following Lime configurations have been defined:
