@@ -415,13 +415,26 @@ The generally accepted features are:
 
 1. `atomics`
 1. `bulk-memory`
+1. `bulk-memory-opt`
+1. `call-indirect-overlong`
 1. `exception-handling`
+1. `extended-const`
+1. `memory64`
+1. `multimemory`
 1. `multivalue`
 1. `mutable-globals`
 1. `nontrapping-fptoint`
+1. `reference-types`
+1. `relaxed-simd`
 1. `sign-ext`
 1. `simd128`
 1. `tail-call`
+
+These features generally correspond to feature proposals as standardized in the CG with two exceptions:
+`bulk-memory-opt` refers to the `memory.copy` and `memory.fill` operations (a subset of `bulk-memory`).
+`call-indirect-overlong` allows the table field of the `call_indirect` instruction to be encoded
+as an LEB (which allows multibyte "overlong" encodings of small integers); this is a subset of the
+`reference-types` proposal.
 
 ## Merging Global Sections
 
