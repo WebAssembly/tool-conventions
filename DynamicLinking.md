@@ -364,7 +364,7 @@ export them as well. For that reason, for PIE executables, we don't
 require these resources exported.
 
 Shared libraries don't need to export these resources either.
-They should also import these resources, since they share the memory
+Instead, they should import these resources, since they share the memory
 and function table with the main module. (The runtime linkers
 can validate if it's actually the case and reject loading modules
 otherwise.)
