@@ -381,6 +381,59 @@ code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
 entries.  Such code must then be linked with either `-shared` to produce a
 shared library or `-pie` to produced a dynamically linked executable.
 
+#### shared libraries
+
+A typical set of options to build a shared library is:
+
+```
+-fPIC \
+-shared \
+-Xlinker --experimental-pic \
+-Wl,--unresolved-symbols=import-dynamic
+```
+
+#### PIE executables
+
+A typical set of options to build a PIE executable is:
+
+```
+-fPIC \
+-Xlinker -pie \
+-Xlinker --experimental-pic \
+-Xlinker --import-memory
+```
+
+#### Non-PIE executables
+
+A typical set of options to build a non-PIE executable is:
+
+```
+-fPIC \
+-Xlinker --experimental-pic \
+-Xlinker --unresolved-symbols=import-dynamic \
+-Xlinker --export-table \
+-Xlinker --growable-table \
+-Xlinker --export=__stack_pointer \
+-Xlinker --export=__heap_base \
+-Xlinker --export=__heap_end \
+-z stack-size=16384
+```
+
+### WASI-SDK
+
+WASI-SDK 21.0 and later ships shared builds of its libraries including libc.
+
+Note: You might need
+`-Xlinker --export-if-defined=__main_argc_argv` to workaround
+a [wasi-libc bug].
+
+[wasi-libc bug]: https://github.com/WebAssembly/wasi-libc/issues/485
+
+Note: WASI-SDK 25.0 ships an LLVM version with
+[an issue for non-PIE executable].
+
+[an issue for non-PIE executable]: https://github.com/llvm/llvm-project/issues/107387
+
 ### Emscripten
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
@@ -389,3 +442,9 @@ See `test_dylink_*` and `test_dlfcn_*` in the test suite for examples.
 
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
+
+### toywasm
+
+Its `libdyld` library implements dynamic linking.
+It supports both of PIE and non-PIE executables.
+It also provides dlopen-like host functions.
