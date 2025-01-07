@@ -381,44 +381,6 @@ code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
 entries.  Such code must then be linked with either `-shared` to produce a
 shared library or `-pie` to produced a dynamically linked executable.
 
-#### shared libraries
-
-A typical set of options to build a shared library is:
-
-```
--fPIC \
--shared \
--Xlinker --experimental-pic \
--Wl,--unresolved-symbols=import-dynamic
-```
-
-#### PIE executables
-
-A typical set of options to build a PIE executable is:
-
-```
--fPIC \
--Xlinker -pie \
--Xlinker --experimental-pic \
--Xlinker --import-memory
-```
-
-#### Non-PIE executables
-
-A typical set of options to build a non-PIE executable is:
-
-```
--fPIC \
--Xlinker --experimental-pic \
--Xlinker --unresolved-symbols=import-dynamic \
--Xlinker --export-table \
--Xlinker --growable-table \
--Xlinker --export=__stack_pointer \
--Xlinker --export=__heap_base \
--Xlinker --export=__heap_end \
--z stack-size=16384
-```
-
 ### WASI-SDK
 
 WASI-SDK 21.0 and later ships shared builds of its libraries including libc.
