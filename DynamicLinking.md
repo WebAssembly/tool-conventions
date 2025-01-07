@@ -383,11 +383,13 @@ shared library or `-pie` to produced a dynamically linked executable.
 
 ### WASI-SDK
 
-WASI-SDK 21.0 and later ships shared builds of its libraries including libc.
+[WASI-SDK] 21.0 and later ships shared builds of its libraries including libc.
 
 Note: You might need
 `-Xlinker --export-if-defined=__main_argc_argv` to workaround
 a [wasi-libc bug].
+
+[WASI-SDK]: https://github.com/WebAssembly/wasi-sdk
 
 [wasi-libc bug]: https://github.com/WebAssembly/wasi-libc/issues/485
 
@@ -407,6 +409,8 @@ option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-St
 
 ### toywasm
 
-Its `libdyld` library implements dynamic linking.
+Toywasm's [libdyld] library implements dynamic linking.
 It supports both of PIE and non-PIE executables.
 It also provides dlopen-like host functions.
+
+[libdyld]: https://github.com/yamt/toywasm/tree/master/libdyld
