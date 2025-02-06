@@ -325,13 +325,6 @@ in the `runtime-path`. The tokens are as follows:
 * `$ORIGIN` and `${ORIGIN}` -- these expand to the directory containing the
   shared object.
 
-* `$LIB` and `${LIB}` -- these expand to `lib` on `wasm32` architecture and
-  `lib64` on `wasm64` architecture.
-
-* `$PLATFORM` and `${PLATFORM}` -- these expand to the platform string for the
-  host system. E.g., `wasm32` or `wasm64`.
-
-
 **`export-info` / `import-info`**
 
 The `export-info` and `import-info` constructs correspond to
