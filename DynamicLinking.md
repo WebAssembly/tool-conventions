@@ -119,7 +119,13 @@ The "import_info" type is defined as:
 The set of possible symbol flags are the same as those specified in
 [Linking](Linking.md).
 
-For `WASM_DYLINK_RUNTIME_PATH` the payload is a valid UTF-8 byte sequence.
+For `WASM_DYLINK_RUNTIME_PATH` the following fields are present in the
+subsection:
+
+| Field                  | Type            | Description                           |
+| ---------------------- | --------------- | ------------------------------------- |
+| runtime_path_count     | `varuint32`     | Number of runtime_path entries        |
+| runtime_path_entries   | `string*`       | string values of runtime_path entries |
 
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
@@ -315,9 +321,9 @@ present in `WASM_DYLINK_NEEDED`:
 
 ** `runtime-path` **
 
-The `runtime-path` contains a single colon-separated sequence of directories.
-The loader should look in these directories to locate `needed` dependencies that
-do not contain a slash in their name.
+The `runtime-path` contains a list of paths. The loader should look in these
+directories to locate `needed` dependencies that do not contain a slash in their
+name.
 
 Dynamic string tokens: The loader should expand certain string tokens appearing
 in the `runtime-path`. The tokens are as follows:
