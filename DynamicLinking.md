@@ -43,6 +43,8 @@ The current list of valid `type` codes are:
 
 - `4 / WASM_DYLINK_IMPORT_INFO` - Specify additional metadata about imports.
 
+- `5 / WASM_DYLINK_RUNTIME_PATH` - Specify the runtime path, corresponding to `DT_RUNPATH` in an ELF `.dynamic` section.
+
 For `WASM_DYLINK_MEM_INFO` the following fields are present in the
 subsection:
 
@@ -116,6 +118,14 @@ The "import_info" type is defined as:
 
 The set of possible symbol flags are the same as those specified in
 [Linking](Linking.md).
+
+For `WASM_DYLINK_RUNTIME_PATH` the following fields are present in the
+subsection:
+
+| Field                  | Type            | Description                           |
+| ---------------------- | --------------- | ------------------------------------- |
+| runtime_path_count     | `varuint32`     | Number of runtime_path entries        |
+| runtime_path_entries   | `string*`       | string values of runtime_path entries |
 
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
@@ -308,6 +318,18 @@ present in `WASM_DYLINK_NEEDED`:
   )
 )
 ```
+
+** `runtime-path` **
+
+The `runtime-path` contains a list of paths. The loader should look in these
+directories to locate `needed` dependencies that do not contain a slash in their
+name.
+
+Dynamic string tokens: The loader should expand certain string tokens appearing
+in the `runtime-path`. The tokens are as follows:
+
+* `$ORIGIN` and `${ORIGIN}` -- these expand to the directory containing the
+  shared object.
 
 **`export-info` / `import-info`**
 
