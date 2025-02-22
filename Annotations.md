@@ -18,7 +18,7 @@ image was published by.
 ## Custom Sections
 
 This specifies custom sections for Wasm binaries, their encoding, and how they
-map to fields in the OpenContainers Annotation Spec.
+map to pre-defined annotation keys from the OpenContainers Annotation Spec.
 
 | Wasm Custom Section Name | OCI Annotation Key                     | Custom Section Encoding                                                                                                 |
 | :----------------------- | :------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
@@ -40,7 +40,7 @@ map to fields in the OpenContainers Annotation Spec.
 
 ## References
 
-- [OpenContainers Annotations Spec](https://specs.opencontainers.org/image-spec/annotations/)
 - [webassembly/tool-conventions#230](https://github.com/WebAssembly/tool-conventions/issues/230)
+- [OpenContainers Annotations Spec](https://specs.opencontainers.org/image-spec/annotations/)
 - [IETF RFC 3339 | Date and Time on the Internet: Timestamps](https://tools.ietf.org/html/rfc3339)
 - [SPDX License Expressions](https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions)
