@@ -375,6 +375,25 @@ connect export the final relocated addresses (i.e. they cannot add
 relocation; the loader, which knows `__memory_base`, can then calculate the
 final relocated address.
 
+### Note for memory/table exports
+
+The commonly used C conventions including WASIp1 require modules to
+export the `memory` memory and the `__indirect_function_table` table.
+
+However, because PIE executables with this dynamic-linking convention
+are already importing these instance resources, it's redundant to
+export them as well. For that reason, for PIE executables, we don't
+require these resources exported.
+
+Shared libraries don't need to export these resources either.
+Instead, they should import these resources, since they share the memory
+and function table with the main module. (The runtime linkers
+can validate if it's actually the case and reject loading modules
+otherwise.)
+
+On the other hand, non-PIE executables need to export these instance
+resources as usual.
+
 ## Implementation Status
 
 ### LLVM Implementation
@@ -384,6 +403,23 @@ code that accesses non-DSO-local addresses via the `GOT.mem` and `GOT.func`
 entries.  Such code must then be linked with either `-shared` to produce a
 shared library or `-pie` to produced a dynamically linked executable.
 
+### WASI-SDK
+
+[WASI-SDK] 21.0 and later ships shared builds of its libraries including libc.
+
+Note: You might need
+`-Xlinker --export-if-defined=__main_argc_argv` to workaround
+a [wasi-libc bug].
+
+[WASI-SDK]: https://github.com/WebAssembly/wasi-sdk
+
+[wasi-libc bug]: https://github.com/WebAssembly/wasi-libc/issues/485
+
+Note: WASI-SDK 25.0 ships an LLVM version with
+[an issue for non-PIE executable].
+
+[an issue for non-PIE executable]: https://github.com/llvm/llvm-project/issues/107387
+
 ### Emscripten
 
 Emscripten can load WebAssembly dynamic libraries either at startup (using
@@ -392,3 +428,11 @@ See `test_dylink_*` and `test_dlfcn_*` in the test suite for examples.
 
 Emscripten can create WebAssembly dynamic libraries with its `SIDE_MODULE`
 option, see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly-Standalone).
+
+### toywasm
+
+Toywasm's [libdyld] library implements dynamic linking.
+It supports both of PIE and non-PIE executables.
+It also provides dlopen-like host functions.
+
+[libdyld]: https://github.com/yamt/toywasm/tree/master/libdyld
