@@ -192,7 +192,7 @@ singleton struct or union[2] | direct        | direct   |
 other struct or union[3]     | indirect      | indirect |
 array                        | indirect      | N/A      |
 
-[1] `long long double` and `__int128` are passed directly as two `i64` values.
+[1] `long double` and `__int128` are passed directly as two `i64` values.
 Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit
 scalars are zero-extended before passing or returning.
 
