@@ -33,6 +33,10 @@ The Lime1 target consists of [WebAssembly 1.0] plus the following standardized
  - [extended-const]
  - [call-indirect-overlong]
 
+This set of features can be tested for by using the [Lime1 test]. This is not a
+comprehensive conformance test, but it does at least minimally use all of the
+features mentioned above.
+
 [WebAssembly features]: https://webassembly.org/features/
 [WebAssembly 1.0]: https://www.w3.org/TR/wasm-core-1/
 [phase-5]: https://github.com/WebAssembly/meetings/blob/main/process/phases.md#5-the-feature-is-standardized-working-group
@@ -43,6 +47,7 @@ The Lime1 target consists of [WebAssembly 1.0] plus the following standardized
 [bulk-memory-opt]: #bulk-memory-opt
 [extended-const]: https://github.com/WebAssembly/extended-const/blob/main/proposals/extended-const/Overview.md
 [call-indirect-overlong]: #call-indirect-overlong
+[Lime1 test]: lime1.wast
 
 ## Feature subsets
 
