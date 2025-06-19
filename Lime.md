@@ -47,7 +47,7 @@ features mentioned above.
 [bulk-memory-opt]: #bulk-memory-opt
 [extended-const]: https://github.com/WebAssembly/extended-const/blob/main/proposals/extended-const/Overview.md
 [call-indirect-overlong]: #call-indirect-overlong
-[Lime1 test]: lime1.wast
+[Lime1 test]: tests/lime1.wast
 
 ## Feature subsets
 
