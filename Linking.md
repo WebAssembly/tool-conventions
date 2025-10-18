@@ -764,9 +764,9 @@ Relocations are represented as WebAssembly annotations of the form
 | `global`    | global*     | `R_WASM_GLOBAL_INDEX_*`            | Final WebAssembly global index    |
 | `func`      | function*   | `R_WASM_FUNCTION_INDEX_*`          | Final WebAssembly function index  |
 | `functable` | function    | `R_WASM_TABLE_INDEX_*`             | Index into the dynamic function table, used for taking address of functions |
-| `text`      | function    | `R_WASM_FUNCTION_OFFSET`           | Offset into the function body     |
-| `funcsec`   | function    | `R_WASM_SECTION_OFFSET`            | Offset into a function section    |
-| `datasec`   | data        | `R_WASM_SECTION_OFFSET`            | Offset into a data section        |
+| `codeseg`   | function    | `R_WASM_FUNCTION_OFFSET`           | Offset into the function body from the start of the function |
+| `codesec`   | function    | `R_WASM_SECTION_OFFSET`            | Offset into the function section  |
+| `datasec`   | data        | `R_WASM_SECTION_OFFSET`            | Offset into the data section      |
 | `customsec` | N/A         | `R_WASM_SECTION_OFFSET`            | Offset into a custom section      |
 | `data`      | data        | `R_WASM_MEMORY_ADDR_*`             | WebAssembly linear memory address |
 
@@ -782,12 +782,12 @@ Symbol kinds marked with `*` are considered *primary*.
 
 - `addend` describes the additional components of a relocation.
 
-| `<addend>`   | interpretation       | condition                                                         |
-|--------------|----------------------|-------------------------------------------------------------------|
-| nothing      | Zero addend          | always                                                            |
-| `+<integer>` | Positive byte offset | `method` allows addend                                            |
-| `-<integer>` | Negative byte offset | `method` allows addend and `format` is signed                     |
-| `<labeluse>` | Byte offest to label | `method` allows addend and `method` is either `text` or `section` |
+| `<addend>`   | interpretation       | condition                                     |
+|--------------|----------------------|-----------------------------------------------|
+| nothing      | Zero addend          | always                                        |
+| `+<integer>` | Positive byte offset | `method` allows addend                        |
+| `-<integer>` | Negative byte offset | `method` allows addend and `format` is signed |
+| `<labeluse>` | Byte offest to label | `method` is either `codeseg` or `*sec`        |
 
 - `symbol` describes the symbol against which to perform relocation.
   - For `funcsec` relocation method, this is the function id, so that if the addend is zero, the relocation points to the first instruction of that function.
