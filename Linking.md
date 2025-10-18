@@ -745,6 +745,7 @@ Relocations are represented as WebAssembly annotations of the form
 ```
 
 - `format` determines the resulting format of a relocation
+
 |`<format>`| corresponding relocation constants | interpretation      |
 |----------|------------------------------------|---------------------|
 |`i32`     | `R_WASM_*_I32`                     | 4-byte [uint32]     |
@@ -755,6 +756,7 @@ Relocations are represented as WebAssembly annotations of the form
 |`sleb64`  | `R_WASM_*_SLEB`                    | 10-byte [varint64]  |
 
 - `method` describes the type of relocation, so what kind of symbol we are relocating against and how to interpret that symbol.
+
 | `<method>`  | symbol kind | corresponding relocation constants | interpretation                    |
 |-------------|-------------|------------------------------------|-----------------------------------|
 | `tag`       | event*      | `R_WASM_EVENT_INDEX_*`             | Final WebAssembly event index     |
@@ -770,6 +772,7 @@ Relocations are represented as WebAssembly annotations of the form
 Symbol kinds marked with `*` are considered *primary*.
 
 - `modifier` describes the additional attributes that a relocation might have.
+
 | `<modifier>` | corresponding relocation constants    | interpretation    |
 |--------------|---------------------------------------|-------------------|
 | nothing      | nothing                               | Normal relocation |
@@ -777,6 +780,7 @@ Symbol kinds marked with `*` are considered *primary*.
 | `tls`        | `R_WASM_*_TLS*`                       | Address relative to `env.__tls_base`, used for thread-local storage |
 
 - `addend` describes the additional components of a relocation.
+
 | `<addend>`   | interpretation       | condition                                                         |
 |--------------|----------------------|-------------------------------------------------------------------|
 | nothing      | Zero addend          | always                                                            |
@@ -911,6 +915,7 @@ Data segment flags are represented as WebAssembly annotations of the form
 ```
 
 - `qualifier` is one of the allowed qualifiers on a data segment declaration. Qualifiers may not repeat.
+
 | `<qualifier>`   | effect                                        |
 |-----------------|-----------------------------------------------|
 | `align=<int>`   | sets segment's `alignment` appropriately      |
