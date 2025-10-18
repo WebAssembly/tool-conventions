@@ -769,6 +769,7 @@ Relocations are represented as WebAssembly annotations of the form
 | `datasec`   | data        | `R_WASM_SECTION_OFFSET`            | Offset into a data section        |
 | `customsec` | N/A         | `R_WASM_SECTION_OFFSET`            | Offset into a custom section      |
 | `data`      | data        | `R_WASM_MEMORY_ADDR_*`             | WebAssembly linear memory address |
+
 Symbol kinds marked with `*` are considered *primary*.
 
 - `modifier` describes the additional attributes that a relocation might have.
