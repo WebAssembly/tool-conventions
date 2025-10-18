@@ -737,6 +737,10 @@ passive.
 
 # Text format
 
+The text format for linking metadata is intended for WAT consumers that wish to
+emit relocatable object files, and WAT producers wish to emit human-readable
+relocation metadata for later creation of a relocatable object file.
+
 ## Relocations
 
 Relocations are represented as WebAssembly annotations of the form
