@@ -843,10 +843,11 @@ In data segments, relocation annotations can be interleaved into the data
 string sequence. When that happens, relocations are situated after the last
 byte of the value being relocated.
 
-For example, relocation of a 32-bit function pointer `$foo` into the data
-segment of size 4 would look like following:
+For example, relocation of a 32-bit function pointer `$foo` and a 32-bit
+reference to a data symbol `$bar` into the data segment of size 8 would look
+like following:
 ```wat
-(data (i32.const 0) "\00\00\00\00" (@reloc i32 functbl $foo))
+(data (i32.const 0) "\00\00\00\00" (@reloc i32 functbl $foo) "\00\00\00\00" (@reloc i32 data $bar))
 ```
 
 ## Symbols
