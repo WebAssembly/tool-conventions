@@ -734,3 +734,194 @@ necessary for referencing such segments (e.g. in `data.drop` or `memory.init`
 instruction) do not yet exist.
 - There is currently no support for table element segments, either active or
 passive.
+
+# Text format
+
+## Relocations
+
+Relocations are represented as WebAssembly annotations of the form
+```wat
+(@reloc <format> <method> <modifier> <symbol-reference> <addend>)
+```
+
+- `format` determines the resulting format of a relocation
+|`<format>`| corresponding relocation constants | interpretation      |
+|----------|------------------------------------|---------------------|
+|`i32`     | `R_WASM_*_I32`                     | 4-byte [uint32]     |
+|`i64`     | `R_WASM_*_I64`                     | 8-byte [uint64]     |
+|`leb`     | `R_WASM_*_LEB`                     | 5-byte [varuint32]  |
+|`sleb`    | `R_WASM_*_SLEB`                    | 5-byte [varint32]   |
+|`leb64`   | `R_WASM_*_LEB`                     | 10-byte [varuint64] |
+|`sleb64`  | `R_WASM_*_SLEB`                    | 10-byte [varint64]  |
+
+- `method` describes the type of relocation, so what kind of symbol we are relocating against and how to interpret that symbol.
+| `<method>`  | symbol kind | corresponding relocation constants | interpretation                    |
+|-------------|-------------|------------------------------------|-----------------------------------|
+| `tag`       | event*      | `R_WASM_EVENT_INDEX_*`             | Final WebAssembly event index     |
+| `table`     | table*      | `R_WASM_TABLE_NUMBER_*`            | Final WebAssembly table index (index of a table, not into one) |
+| `global`    | global*     | `R_WASM_GLOBAL_INDEX_*`            | Final WebAssembly global index    |
+| `func`      | function*   | `R_WASM_FUNCTION_INDEX_*`          | Final WebAssembly function index  |
+| `functable` | function    | `R_WASM_TABLE_INDEX_*`             | Index into the dynamic function table, used for taking address of functions |
+| `text`      | function    | `R_WASM_FUNCTION_OFFSET`           | Offset into the function body     |
+| `funcsec`   | function    | `R_WASM_SECTION_OFFSET`            | Offset into a function section    |
+| `datasec`   | data        | `R_WASM_SECTION_OFFSET`            | Offset into a data section        |
+| `customsec` | N/A         | `R_WASM_SECTION_OFFSET`            | Offset into a custom section      |
+| `data`      | data        | `R_WASM_MEMORY_ADDR_*`             | WebAssembly linear memory address |
+Symbol kinds marked with `*` are considered *primary*.
+
+- `modifier` describes the additional attributes that a relocation might have.
+| `<modifier>` | corresponding relocation constants    | interpretation    |
+|--------------|---------------------------------------|-------------------|
+| nothing      | nothing                               | Normal relocation |
+| `pic`        | `R_WASM_*_LOCREL_*`, `R_WASM_*_REL_*` | Address relative to `env.__memory_base` or `env.__table_base`, used for dynamic linking |
+| `tls`        | `R_WASM_*_TLS*`                       | Address relative to `env.__tls_base`, used for thread-local storage |
+
+- `addend` describes the additional components of a relocation.
+| `<addend>`   | interpretation       | condition                                                         |
+|--------------|----------------------|-------------------------------------------------------------------|
+| nothing      | Zero addend          | always                                                            |
+| `+<integer>` | Positive byte offset | `method` allows addend                                            |
+| `-<integer>` | Negative byte offset | `method` allows addend and `format` is signed                     |
+| `<labeluse>` | Byte offest to label | `method` allows addend and `method` is either `text` or `section` |
+
+- `symbol` describes the symbol against which to perform relocation.
+  - For `funcsec` relocation metod, this is the function id, so that if the addend is zero, the relocation points to the first instruction of that function.
+  - For `datasec` relocation metod, this is the data segment id, so that if the addend is zero, the relocation points to the first byte of data in that segment.
+  - For `customsec` relocation metod, this is the name of the custom section, so that if the addend is zero, the relocation points to the first byte of data in that segment.
+  - For other relocation metods, this denotes the symbol in the scope of that symbol kind.
+
+The relocation type is looked up from the combination of `format`, `method`, and `modifier`. If no relocation type exists, an error is raised.
+
+If a component of a relocation is predetermined, it must be skipped in the annotation text.
+If a component of a relocation is defaulted, it may be skipped in the annotation text.
+For example, a relocation into the function table by the index of `$foo` with a predetermined `format` would look like following:
+```wat
+(@reloc functable $foo)
+```
+If all components of a relocation annotation are skipped, the annotation may be omitted.
+
+### Instruction relocations
+
+For every usage of an `typeidx`, `funcidx`, `globalidx`, `tagidx`, a relocation annotation is added afterwards, with `format` predefined as `leb`, `method` predefined as the *primary* method for that type, and `symbol` defaulted as the *primary* symbol of that `idx`
+
+For the `i32.const` instruction, a relocation annotation is added after the integer literal operand, with `format` predefined as `sleb`, and `method` is allowed to be either `data` or `functable`.
+For the `i64.const` instruction, a relocation annotation is added after the integer literal operand, with `format` predefined as `sleb64`, and `method` is allowed to be either `data` or `functable`.
+For the `i{32,64}.{load,store}*` instructions, a relocation annotation is added after the offset operand, with `format` predefined as `leb` if the *memory* being referenced is 32-bit, and `leb64` otherwise, and `method` predefined as `data`.
+
+### Data relocations
+
+In data segments, relocation annotations can be interleaved into the data string sequence. When that happens, relocations are situated after the last byte of the value being relocated.
+For example, relocation of a 32-bit function pointer `$foo` into the data segment of size 4 would look like following:
+```wat
+(data (i32.const 0) "\00\00\00\00" (@reloc i32 functbl $foo))
+```
+
+## Symbols
+
+Symbols are represented as WebAssembly annotations of the form
+```wat
+(@sym <name> <qualifier>*)
+```
+Data imports represented as WebAssembly annotations of the form
+```wat
+(@sym.import.data <name> <qualifier>*)
+```
+
+- `name` is the symbol name written as WebAssembly `id`, it is the name by which relocation annotations reference the symbol. If it is not present, the symbol is considered *primary* symbol for that WebAssembly object, its name is taken from the related object
+  - There may only be one primary symbol for each WebAssembly object.
+  - If a symbol is not associated with an object, it may not be the primary symbol.
+
+- `qualifier` is one of the allowed qualifiers on a symbol declaration. Qualifiers may not repeat.
+
+| `<qualifier>`    | effect                                                                           |
+|------------------|----------------------------------------------------------------------------------|
+| `weak`           | sets `WASM_SYM_BINDING_WEAK` symbol flag                                         |
+| `static`         | sets `WASM_SYM_BINDING_LOCAL` symbol flag                                        |
+| `hidden`         | sets `WASM_SYM_VISIBILITY_HIDDEN` symbol flag                                    |
+| `retain`         | sets `WASM_SYM_NO_STRIP` symbol flag                                             |
+| `thread_local`   | sets `WASM_SYM_TLS` symbol flag                                                  |
+| `size=<int>`     | sets symbol's `size` appropriately                                               |
+| `offset=<int>`   | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately       |
+| `name=<string>`  | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets `name_len`, `name_data`          |
+| `priority=<int>` | adds symbol to `WASM_INIT_FUNCS` section with the given priority                 |
+| `comdat=<id>`    | adds symbol to a `comdat` with the given id                                      |
+
+`priority` qualifier may only be applied to function symbols.
+`size` and `offset` qualifiers may only be applied to data symbols.
+`size` and `name` qualifiers must be applied to data symbols.
+`name` qualifier must be applied to data imports.
+
+If all components of a symbol annotation are skipped, the annotation may be omitted.
+
+### WebAssembly object symbols
+
+For symbols related to WebAssembly objects, the sequence of symbol annotation occurs after the optional `id` of the declaration.
+For example, the following code:
+```wat
+(import "env" "foo" (func (@sym $a retain name="a") (@sym $b hidden name="b") (param) (result)))
+```
+declares 3 symbols: one primary symbol with the name of the index of the function, one symbol with the name `$a`, and one symbol with the name `$b`.
+
+### Data symbols
+
+Data symbol annotations can be interleaved into the data string sequence. When that happens, relocations are situated before the first byte of the value being defined.
+For example, declaration of a 32-bit global by with the name `$foo` and linkage name "foo" would look like following:
+```wat
+(data (i32.const 0) (@sym $foo name="foo" size=4) "\00\00\00\00")
+```
+
+### Data imports
+
+Data imports occur in the same place as module fields. Data imports are always situated before data symbols.
+
+## COMDATs
+
+COMDATs are represented as WebAssembly annotations of the form
+```wat
+(@comdat <id> <string>)
+```
+where `id` is the WebAssembly name of the COMDAT, and `<string>` is `name_len` and `name_str` of the `comdat`.
+
+COMDAT declarations occur in the same place as module fields.
+
+## Labels
+
+For some relocation types, an offset into a section/function is necessary. For these cases, lablels exsist.
+Labels are represented as WebAssembly annotations of the form
+```wat
+(@sym.label <id>)
+```
+
+### Function labels
+Function labels occur in the same place as instructions. A label always denotes the first byte of the next instruction, or the byte after end of function's instruction stream if there isn't a next instruction
+Function label names are local to the function in which they occur.
+
+### Data labels
+Data labels can be interleaved into the data string sequence. When that happens, relocations are situated after the last byte of the value being relocated.
+Data label names are local to the data segment in which they occur.
+
+### Custom labels
+Custom labels can be interleaved into the data string sequence. When that happens, relocations are situated after the last byte of the value being relocated.
+Custom label names are local to the custom section in which they occur.
+
+## Data segment flags
+Data segment flags are represented as WebAssembly annotations of the form
+```wat
+(@sym.segment <qualifier>*)
+```
+
+- `qualifier` is one of the allowed qualifiers on a data segment declaration. Qualifiers may not repeat.
+| `<qualifier>`   | effect                                        |
+|-----------------|-----------------------------------------------|
+| `align=<int>`   | sets segment's `alignment` appropriately      |
+| `name=<string>` | sets `name_len`, `name_data`                  |
+| `strings`       | sets `WASM_SEGMENT_FLAG_STRINGS` segment flag |
+| `thread_local`  | sets `WASM_SEGMENT_FLAG_TLS` segment flag     |
+| `retain`        | sets `WASM_SEG_FLAG_RETAIN` segment flag      |
+
+If `align` is not specified, it is given a default value of 1.
+If `name` is not specified, it is given an empty default value.
+
+If all components of segment flags are skipped, the annotation may be omitted.
+
+Data segment annotation occurs after the optional `id` of the data segment declaration.
