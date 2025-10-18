@@ -790,33 +790,61 @@ Symbol kinds marked with `*` are considered *primary*.
 | `<labeluse>` | Byte offest to label | `method` is either `codeseg` or `*sec`        |
 
 - `symbol` describes the symbol against which to perform relocation.
-  - For `funcsec` relocation method, this is the function id, so that if the addend is zero, the relocation points to the first instruction of that function.
-  - For `datasec` relocation method, this is the data segment id, so that if the addend is zero, the relocation points to the first byte of data in that segment.
-  - For `customsec` relocation method, this is the name of the custom section, so that if the addend is zero, the relocation points to the first byte of data in that segment.
-  - For other relocation methods, this denotes the symbol in the scope of that symbol kind.
+  - For `funcsec` relocation method, this is the function id, so that if the
+    addend is zero, the relocation points to the first instruction of that
+    function.
+  - For `datasec` relocation method, this is the data segment id, so that if
+    the addend is zero, the relocation points to the first byte of data in that
+    segment.
+  - For `customsec` relocation method, this is the name of the custom section,
+    so that if the addend is zero, the relocation points to the first byte of
+    data in that segment.
+  - For other relocation methods, this denotes the symbol in the scope of that
+    symbol kind.
 
-The relocation type is looked up from the combination of `format`, `method`, and `modifier`. If no relocation type exists, an error is raised.
+The relocation type is looked up from the combination of `format`, `method`,
+and `modifier`. If no relocation type exists, an error is raised.
 
-If a component of a relocation is predetermined, it must be skipped in the annotation text.
-If a component of a relocation is defaulted, it may be skipped in the annotation text.
-For example, a relocation into the function table by the index of `$foo` with a predetermined `format` would look like following:
+If a component of a relocation is predetermined, it must be skipped in the
+annotation text.
+
+If a component of a relocation is defaulted, it may be skipped in the
+annotation text.
+
+For example, a relocation into the function table by the index of `$foo` with a
+predetermined `format` would look like following:
 ```wat
 (@reloc functable $foo)
 ```
-If all components of a relocation annotation are skipped, the annotation may be omitted.
+If all components of a relocation annotation are skipped, the annotation may be
+omitted.
 
 ### Instruction relocations
 
-For every usage of `typeidx`, `funcidx`, `globalidx`, `tagidx`, a relocation annotation is added afterwards, with `format` predefined as `leb`, `method` predefined as the *primary* method for that type, and `symbol` defaulted as the *primary* symbol of that `idx`
+For every usage of `typeidx`, `funcidx`, `globalidx`, `tagidx`, a relocation
+annotation is added afterwards, with `format` predefined as `leb`, `method`
+predefined as the *primary* method for that type, and `symbol` defaulted as the
+*primary* symbol of that `idx`
 
-- For the `i32.const` instruction, a relocation annotation is added after the integer literal operand, with `format` predefined as `sleb`, and `method` is allowed to be either `data` or `functable`.
-- For the `i64.const` instruction, a relocation annotation is added after the integer literal operand, with `format` predefined as `sleb64`, and `method` is allowed to be either `data` or `functable`.
-- For the `i{32,64}.{load,store}*` instructions, a relocation annotation is added after the offset operand, with `format` predefined as `leb` if the *memory* being referenced is 32-bit, and `leb64` otherwise, and `method` predefined as `data`.
+- For the `i32.const` instruction, a relocation annotation is added after the
+  integer literal operand, with `format` predefined as `sleb`, and `method` is
+  allowed to be either `data` or `functable`.
+- For the `i64.const` instruction, a relocation annotation is added after the
+  integer literal operand, with `format` predefined as `sleb64`, and `method`
+  is allowed to be either `data` or `functable`.
+- For the `i{32,64}.{load,store}*` instructions, a relocation annotation is
+  added after the offset operand, with `format` predefined as `leb` if the
+  *memory* being referenced is 32-bit, and `leb64` otherwise, and `method`
+  predefined as `data`.
 
 ### Data relocations
 
-In data segments, relocation annotations can be interleaved into the data string sequence. When that happens, relocations are situated after the last byte of the value being relocated.
-For example, relocation of a 32-bit function pointer `$foo` into the data segment of size 4 would look like following:
+In data segments, relocation annotations can be interleaved into the data
+string sequence. When that happens, relocations are situated after the last
+byte of the value being relocated.
+
+For example, relocation of a 32-bit function pointer `$foo` into the data
+segment of size 4 would look like following:
 ```wat
 (data (i32.const 0) "\00\00\00\00" (@reloc i32 functbl $foo))
 ```
@@ -832,11 +860,16 @@ Data imports represented as WebAssembly annotations of the form
 (@sym.import.data <name> <qualifier>*)
 ```
 
-- `name` is the symbol name written as WebAssembly `id`, it is the name by which relocation annotations reference the symbol. If it is not present, the symbol is considered *primary* symbol for that WebAssembly object, its name is taken from the related object
+- `name` is the symbol name written as WebAssembly `id`, it is the name by
+  which relocation annotations reference the symbol. If it is not present, the
+  symbol is considered *primary* symbol for that WebAssembly object, its name
+  is taken from the related object
   - There may only be one primary symbol for each WebAssembly object.
-  - If a symbol is not associated with an object, it may not be the primary symbol.
+  - If a symbol is not associated with an object, it may not be the primary
+    symbol.
 
-- `qualifier` is one of the allowed qualifiers on a symbol declaration. Qualifiers may not repeat.
+- `qualifier` is one of the allowed qualifiers on a symbol declaration.
+  Qualifiers may not repeat.
 
 | `<qualifier>`    | effect                                                                                         |
 |------------------|------------------------------------------------------------------------------------------------|
@@ -856,28 +889,37 @@ Data imports represented as WebAssembly annotations of the form
 - The `size` and `name` qualifiers must be applied to data symbols.
 - The `name` qualifier must be applied to data imports.
 
-If all components of a symbol annotation are skipped, the annotation may be omitted.
+If all components of a symbol annotation are skipped, the annotation may be
+omitted.
 
 ### WebAssembly object symbols
 
-For symbols related to WebAssembly objects, the symbol annotation sequence occurs after the optional `id` of the declaration.
+For symbols related to WebAssembly objects, the symbol annotation sequence
+occurs after the optional `id` of the declaration.
+
 For example, the following code:
 ```wat
 (import "env" "foo" (func (@sym $a retain name="a") (@sym $b hidden name="b") (param) (result)))
 ```
-declares 3 symbols: one primary symbol with the name of the index of the function, one symbol with the name `$a`, and one symbol with the name `$b`.
+declares 3 symbols: one primary symbol with the name of the index of the
+function, one symbol with the name `$a`, and one symbol with the name `$b`.
 
 ### Data symbols
 
-Data symbol annotations can be interleaved into the data string sequence. When that happens, relocations are situated before the first byte of the value being defined.
-For example, a declaration of a 32-bit global with the name `$foo` and linkage name "foo" would look like following:
+Data symbol annotations can be interleaved into the data string sequence.
+When that happens, relocations are situated before the first byte of the value
+being defined.
+
+For example, a declaration of a 32-bit global with the name `$foo` and linkage
+name "foo" would look like following:
 ```wat
 (data (i32.const 0) (@sym $foo name="foo" size=4) "\00\00\00\00")
 ```
 
 ### Data imports
 
-Data imports occur in the same place as module fields. Data imports are always situated before data symbols.
+Data imports occur in the same place as module fields. Data imports are always
+situated before data symbols.
 
 ## COMDATs
 
@@ -885,13 +927,15 @@ COMDATs are represented as WebAssembly annotations of the form
 ```wat
 (@comdat <id> <string>)
 ```
-where `id` is the WebAssembly name of the COMDAT, and `<string>` is `name_len` and `name_str` of the `comdat`.
+where `id` is the WebAssembly name of the COMDAT, and `<string>` is `name_len`
+and `name_str` of the `comdat`.
 
 COMDAT declarations occur in the same place as module fields.
 
 ## Labels
 
-For some relocation types, an offset into a section/function is necessary. For these cases, labels exsist.
+For some relocation types, an offset into a section/function is necessary. For
+these cases, labels exsist.
 Labels are represented as WebAssembly annotations of the form
 ```wat
 (@sym.label <id>)
@@ -899,19 +943,23 @@ Labels are represented as WebAssembly annotations of the form
 
 ### Function labels
 Function labels occur in the same place as instructions.
-A label always denotes the first byte of the next instruction, or the byte after the end of the function's instruction stream, if there isn't a next instruction.
+A label always denotes the first byte of the next instruction, or the byte
+after the end of the function's instruction stream, if there isn't a next
+instruction.
 
 Function label names are local to the function in which they occur.
 
 ### Data labels
 Data labels can be interleaved into the data string sequence.
-When that happens, relocations are situated after the last byte of the value being relocated.
+When that happens, relocations are situated after the last byte of the value
+being relocated.
 
 Data label names are local to the data segment in which they occur.
 
 ### Custom labels
 Custom labels can be interleaved into the data string sequence.
-When that happens, relocations are situated after the last byte of the value being relocated.
+When that happens, relocations are situated after the last byte of the value
+being relocated.
 
 Custom label names are local to the custom section in which they occur.
 
@@ -921,7 +969,8 @@ Data segment flags are represented as WebAssembly annotations of the form
 (@sym.segment <qualifier>*)
 ```
 
-- `qualifier` is one of the allowed qualifiers on a data segment declaration. Qualifiers may not repeat.
+- `qualifier` is one of the allowed qualifiers on a data segment declaration.
+Qualifiers may not repeat.
 
 | `<qualifier>`   | effect                                               |
 |-----------------|------------------------------------------------------|
@@ -936,4 +985,5 @@ If `name` is not specified, it is given an empty default value.
 
 If all components of segment flags are skipped, the annotation may be omitted.
 
-Data segment annotation occurs after the optional `id` of the data segment declaration.
+Data segment annotation occurs after the optional `id` of the data segment
+declaration.
