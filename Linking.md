@@ -871,18 +871,36 @@ Data imports represented as WebAssembly annotations of the form
 - `qualifier` is one of the allowed qualifiers on a symbol declaration.
   Qualifiers may not repeat.
 
-| `<qualifier>`    | effect                                                                                         |
-|------------------|------------------------------------------------------------------------------------------------|
-| `weak`           | sets `WASM_SYM_BINDING_WEAK` symbol flag                                                       |
-| `static`         | sets `WASM_SYM_BINDING_LOCAL` symbol flag                                                      |
-| `hidden`         | sets `WASM_SYM_VISIBILITY_HIDDEN` symbol flag                                                  |
-| `retain`         | sets `WASM_SYM_NO_STRIP` symbol flag                                                           |
-| `thread_local`   | sets `WASM_SYM_TLS` symbol flag                                                                |
-| `size=<int>`     | sets symbol's `size` appropriately                                                             |
-| `offset=<int>`   | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately                     |
-| `name=<string>`  | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets symbol's `name_len`, `name_data` appropriately |
-| `priority=<int>` | adds symbol to `WASM_INIT_FUNCS` section with the given priority                               |
-| `comdat=<id>`    | adds symbol to a `comdat` with the given id                                                    |
+| `<qualifier>`             | effect                                        |
+|---------------------------|-----------------------------------------------|
+| `binding=<binding>`       | sets symbol flags according to `<binding>`    |
+| `visibility=<visibility>` | sets symbol flags according to `<visibility>` |
+| `retain`                  | sets `WASM_SYM_NO_STRIP` symbol flag          |
+| `thread_local`            | sets `WASM_SYM_TLS` symbol flag               |
+| `size=<int>`              | sets symbol's `size` appropriately            |
+| `offset=<int>`            | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately |
+| `name=<string>`           | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets symbol's `name_len`, `name_data` appropriately |
+| `priority=<int>`          | adds symbol to `WASM_INIT_FUNCS` section with the given priority |
+| `comdat=<id>`             | adds symbol to a `comdat` with the given id   |
+
+| `<binding>` | flag                     |
+|-------------|--------------------------|
+| `global`    | 0                        |
+| `local`     | `WASM_SYM_BINDING_LOCAL` |
+| `weak`      | `WASM_SYM_BINDING_WEAK`  |
+
+| `<visibility>` | flag                         |
+|----------------|------------------------------|
+| `default`      |                              |
+| `hidden`       | `WASM_SYM_VISIBILITY_HIDDEN` |
+
+Shorthands may be used in place of full qualifiers:
+
+| shorthand | resulting qualifier |
+|-----------|---------------------|
+| `hidden`  | `visibility=hidden` |
+| `local`   | `binding=local`     |
+| `weak`    | `binding=weak`      |
 
 - The `priority` qualifier may only be applied to function symbols.
 - The `size` and `offset` qualifiers may only be applied to data symbols.
