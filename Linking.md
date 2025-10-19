@@ -181,6 +181,47 @@ relocations applied to the CODE section, a relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
 
+### Additional validation rules
+
+When perfoming validation on object files, care must be taken to ensure that
+meaningless relocations are not present in the binary.
+
+**Note**: Linker is not required to perform validation on its input object
+files.
+
+When relocations occur in the CODE section, only the following relocations may
+occur:
+
+| relocation type                 | condition the value at relocation offset |
+|---------------------------------|------------------------------------------|
+| `R_WASM_FUNCTION_INDEX_LEB`     | must represent a `funcidx`               |
+| `R_WASM_TYPE_INDEX_LEB`         | must represent a `typeidx`               |
+| `R_WASM_GLOBAL_INDEX_LEB`       | must represent a `globalidx`             |
+| `R_WASM_EVENT_INDEX_LEB`        | must represent a `tagidx`                |
+| `R_WASM_TABLE_NUMBER_LEB`       | must represent a `tableidx`              |
+| `R_WASM_TABLE_INDEX_SLEB`       | must represent an operand of `i32.const` |
+| `R_WASM_TABLE_INDEX_SLEB64`     | must represent an operand of `i64.const` |
+| `R_WASM_MEMORY_ADDR_SLEB`       | must represent an operand of `i32.const` |
+| `R_WASM_MEMORY_ADDR_REL_SLEB`   | must represent an operand of `i32.const` |
+| `R_WASM_MEMORY_ADDR_TLS_SLEB`   | must represent an operand of `i32.const` |
+| `R_WASM_MEMORY_ADDR_SLEB64`     | must represent an operand of `i64.const` |
+| `R_WASM_MEMORY_ADDR_REL_SLEB64` | must represent an operand of `i64.const` |
+| `R_WASM_MEMORY_ADDR_TLS_SLEB64` | must represent an operand of `i64.const` |
+| `R_WASM_MEMORY_ADDR_LEB`        | must represent the `offset` part of `memarg` where `memidx` references a 32-bit memory |
+| `R_WASM_MEMORY_ADDR_LEB64`      | must represent the `offset` part of `memarg` where `memidx` references a 64-bit memory |
+
+For `R_WASM_*_OFFSET_I*` relocations, the following condidions must hold for
+the addend:
+
+- If `index` references the CODE section, the addend must represent the first
+  byte of an instruction, or the byte after the last instruction.
+- If `index` references the DATA section, the addend must represent a valid
+  offset into a data segment's data area.
+- If `index` references the custom section, the addend must represent a valid
+  offset into that custom section's data area.
+
+All other relocations are considered invalid for the purposes of validation
+
 ## Linking Metadata Section
 
 A linking metadata section is a user-defined section with the name
@@ -321,6 +362,8 @@ For section symbols:
 | Field        | Type           | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
 | section      | `varuint32`    | the index of the target section             |
+
+Section symbols may only reference the CODE section, the DATA section, or custom sections.
 
 The current set of valid flags for symbols are:
 
