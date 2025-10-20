@@ -189,26 +189,37 @@ All LEB128-encoded values that are to be relocated must be maximally padded so
 that they can be rewritten without affecting the position of any other bytes.
 For instance, the function index 3 must be encoded as `0x83 0x80 0x80 0x80 0x00`.
 
-When relocations occur in the CODE section, only the following relocations may
-occur:
+The `offset` part of a `memarg` where `memidx` represents a 32-bit memory may
+be treated as either [varuint32], or [varuint64].
 
-| relocation type                 | condition the value at relocation offset |
-|---------------------------------|------------------------------------------|
-| `R_WASM_FUNCTION_INDEX_LEB`     | must represent a `funcidx`               |
-| `R_WASM_TYPE_INDEX_LEB`         | must represent a `typeidx`               |
-| `R_WASM_GLOBAL_INDEX_LEB`       | must represent a `globalidx`             |
-| `R_WASM_EVENT_INDEX_LEB`        | must represent a `tagidx`                |
-| `R_WASM_TABLE_NUMBER_LEB`       | must represent a `tableidx`              |
-| `R_WASM_TABLE_INDEX_SLEB`       | must represent an operand of `i32.const` |
-| `R_WASM_TABLE_INDEX_SLEB64`     | must represent an operand of `i64.const` |
-| `R_WASM_MEMORY_ADDR_SLEB`       | must represent an operand of `i32.const` |
-| `R_WASM_MEMORY_ADDR_REL_SLEB`   | must represent an operand of `i32.const` |
-| `R_WASM_MEMORY_ADDR_TLS_SLEB`   | must represent an operand of `i32.const` |
-| `R_WASM_MEMORY_ADDR_SLEB64`     | must represent an operand of `i64.const` |
-| `R_WASM_MEMORY_ADDR_REL_SLEB64` | must represent an operand of `i64.const` |
-| `R_WASM_MEMORY_ADDR_TLS_SLEB64` | must represent an operand of `i64.const` |
-| `R_WASM_MEMORY_ADDR_LEB`        | must represent the `offset` part of `memarg` where `memidx` references a 32-bit memory |
-| `R_WASM_MEMORY_ADDR_LEB64`      | must represent the `offset` part of `memarg` where `memidx` references a 64-bit memory |
+Constraints are placed on relocations based on the data encoding of the value
+to be relocated:
+
+| Data encoding | Allowed relocation types |
+|---------------|--------------------------|
+| [uint32]      | `R_WASM_*_I32`           |
+| [uint64]      | `R_WASM_*_I64`           |
+| [varint32]    | `R_WASM_*_SLEB`          |
+| [varint64]    | `R_WASM_*_SLEB64`        |
+| [varuint32]   | `R_WASM_*_LEB`           |
+| [varuint64]   | `R_WASM_*_LEB64`         |
+
+If a data encoding for the relocation cannot be determined (i.e. there isn't a
+known grammar construct at the relocation offset), the data encoding constraints
+aren't applied. For example, this is the case for unknown custom sections and
+data segments.
+
+In the CODE section, only certain grammar constructs are allowed to be targeted
+by relocations:
+
+- For the constant operand of `i*.const` instructions, only
+  `R_WASM_TABLE_INDEX_*` and `R_WASM_MEMORY_ADDR_*` relocations are allowed.
+- For the `offset` part of a `memarg`, only `R_WASM_MEMORY_ADDR_*` relocations
+  are allowed.
+- For `funcidx`, only `R_WASM_FUNCTION_INDEX_*` relocations are allowed.
+- For `globalidx`, only `R_WASM_GLOBAL_INDEX_*` relocations are allowed.
+- For `tagidx`, only `R_WASM_EVENT_INDEX_*` relocations are allowed.
+- For `tableidx`, only `R_WASM_TABLE_NUMBER_*` relocations are allowed.
 
 For `R_WASM_*_OFFSET_I*` relocations, the following condidions must hold for
 the addend:
@@ -219,8 +230,6 @@ the addend:
   offset into a data segment's data area.
 - If `index` references the custom section, the addend must represent a valid
   offset into that custom section's data area.
-
-All other relocations are considered invalid for the purposes of validation
 
 ## Linking Metadata Section
 
