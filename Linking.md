@@ -192,6 +192,18 @@ For instance, the function index 3 must be encoded as `0x83 0x80 0x80 0x80 0x00`
 The `offset` part of a `memarg` where `memidx` represents a 32-bit memory may
 be treated as either [varuint32], or [varuint64].
 
+If relocation's `index` represents a symbol table entry, constraints are placed
+on the relocation based on the symbol type it references:
+
+| Symbol type       | Allowed relocation types  |
+|-------------------|---------------------------|
+| `SYMTAB_FUNCTION` | `R_WASM_FUNCTION_IDX_*`, `R_WASM_TABLE_IDX_*`, `R_WASM_FUNCTION_OFFSET_*` |
+| `SYMTAB_DATA`     | `R_WASM_MEMORY_ADDR_*`    |
+| `SYMTAB_GLOBAL`   | `R_WASM_GLOBAL_INDEX_*`   |
+| `SYMTAB_SECTION`  | `R_WASM_SECTION_OFFSET_*` |
+| `SYMTAB_EVENT`    | `R_WASM_EVENT_INDEX_*`    |
+| `SYMTAB_TABLE`    | `R_WASM_TABLE_NUMBER_*`   |
+
 Constraints are placed on relocations based on the data encoding of the value
 to be relocated:
 
@@ -204,7 +216,7 @@ to be relocated:
 | [varuint32]   | `R_WASM_*_LEB`           |
 | [varuint64]   | `R_WASM_*_LEB64`         |
 
-If a data encoding for the relocation cannot be determined (i.e. there isn't a
+If an data encoding for the relocation cannot be determined (i.e. there isn't a
 known grammar construct at the relocation offset), the data encoding constraints
 aren't applied. For example, this is the case for unknown custom sections and
 data segments.
