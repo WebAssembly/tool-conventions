@@ -237,8 +237,8 @@ by relocations:
 For `R_WASM_*_OFFSET_I*` relocations, the following condidions must hold for
 the addend:
 
-- If `index` references the CODE section, the addend must represent the first
-  byte of an instruction, or the byte after the last instruction.
+- If `index` references the CODE section, the addend must represent an offset
+  of an instruction boundary.
 - If `index` references the DATA section, the addend must represent a valid
   offset into a data segment's data area.
 - If `index` references the custom section, the addend must represent a valid
