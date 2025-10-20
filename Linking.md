@@ -217,7 +217,7 @@ to be relocated:
 | [varuint32]   | `R_WASM_*_LEB`           |
 | [varuint64]   | `R_WASM_*_LEB64`         |
 
-If an data encoding for the relocation cannot be determined (i.e. there isn't a
+If a data encoding for the relocation cannot be determined (i.e. there isn't a
 known grammar construct at the relocation offset), the data encoding constraints
 aren't applied. For example, this is the case for unknown custom sections and
 data segments.
