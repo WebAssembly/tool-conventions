@@ -177,13 +177,14 @@ relocations applied to the CODE section, a relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
 
-### Additional validation rules
+### Object file validation rules
 
-When perfoming validation on object files, care must be taken to ensure that
-meaningless relocations are not present in the binary.
+For a module to be considered a valid object file, additional constraints are
+imposed on the data in custom sections related to linking, to ensure that the
+linking process will yield a valid module.
 
-**Note**: Linker is not required to perform validation on its input object
-files.
+Tools that process object files are only required to produce output if source
+object files they process are valid object files.
 
 All LEB128-encoded values that are to be relocated must be maximally padded so
 that they can be rewritten without affecting the position of any other bytes.
