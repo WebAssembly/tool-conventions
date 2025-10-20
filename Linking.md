@@ -63,6 +63,10 @@ The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
 
+Any LEB128-encoded values should be maximally padded so that they can be
+rewritten without affecting the position of any other bytes. For instance, the
+function index 3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
+
 Relocations contain the following fields:
 
 | Field     | Type                | Description                     |
@@ -184,10 +188,6 @@ meaningless relocations are not present in the binary.
 
 **Note**: Linker is not required to perform validation on its input object
 files.
-
-All LEB128-encoded values that are to be relocated must be maximally padded so
-that they can be rewritten without affecting the position of any other bytes.
-For instance, the function index 3 must be encoded as `0x83 0x80 0x80 0x80 0x00`.
 
 When relocations occur in the CODE section, only the following relocations may
 occur:
