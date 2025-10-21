@@ -290,11 +290,12 @@ where a `syminfo` is encoded as:
 |              |                |   `5 / SYMTAB_TABLE`                        |
 | flags        | `varuint32`    | a bitfield containing flags for this symbol |
 
-For functions, globals, events and tables, we reference an existing Wasm object, which
-is either an import or a defined function/global/event/table (recall that the operand of a
-Wasm `call` instruction uses an index space consisting of the function imports
-followed by the defined functions, and similarly `get_global` for global imports
-and definitions and `throw` for event imports and definitions).
+For functions, globals, events and tables, we reference an existing WebAssembly
+entity, which is either an import or a defined function/global/event/table
+(recall that the operand of a Wasm `call` instruction uses an index space
+consisting of the function imports followed by the defined functions, and
+similarly `get_global` for global imports and definitions and `throw` for event
+imports and definitions).
 
 If a symbols refers to an import, and the
 `WASM_SYM_EXPLICIT_NAME` flag is not set, then the name is taken from the
@@ -302,7 +303,7 @@ import; otherwise the `syminfo` specifies the symbol's name.
 
 | Field        | Type           | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
-| index        | `varuint32`    | the index of the Wasm object corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
+| index        | `varuint32`    | the index of the WebAssembly entity corresponding to the symbol, which references an import if and only if the `WASM_SYM_UNDEFINED` flag is set  |
 | name_len     | `varuint32` ?  | the optional length of `name_data` in bytes, omitted if `index` references an import |
 | name_data    | `bytes` ?      | UTF-8 encoding of the symbol name, omitted if `index` references an import |
 
@@ -876,9 +877,9 @@ Data imports represented as WebAssembly annotations of the form
 
 - `name` is the symbol name written as WebAssembly `id`, it is the name by
   which relocation annotations reference the symbol. If it is not present, the
-  symbol is considered *primary* symbol for that WebAssembly object, its name
-  is taken from the related object
-  - There may only be one primary symbol for each WebAssembly object.
+  symbol is considered *primary* symbol for that WebAssembly entity, its name
+  is taken from the related entity
+  - There may only be one primary symbol for each WebAssembly entity.
   - If a symbol is not associated with a WebAssembly entity, it may not be the
     primary symbol.
 
@@ -888,7 +889,7 @@ identifier namespace corresponding to that symbol type.
 > [!Note]
 > As a consequence of that, the only symbols that can be referred to by a
 > numeric index are _primary_ symbols, since they inherit their numeric index
-> form the relocatable WebAssebly object.
+> form the relocatable WebAssebly entity.
 
 - `qualifier` is one of the allowed qualifiers on a symbol declaration.
   Qualifiers may not repeat.
@@ -937,9 +938,9 @@ omitted.
 > exists for all WebAssembly entities, even if the annotation without a `name`
 > is not present in the symbol sequence
 
-### WebAssembly object symbols
+### WebAssembly entity symbols
 
-For symbols related to WebAssembly objects, the symbol annotation sequence
+For symbols related to WebAssembly entity, the symbol annotation sequence
 occurs after the optional `id` of the declaration.
 
 For example, the following code:
