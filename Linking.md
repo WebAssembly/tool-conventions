@@ -894,17 +894,17 @@ identifier namespace corresponding to that symbol type.
 - `qualifier` is one of the allowed qualifiers on a symbol declaration.
   Qualifiers may not repeat.
 
-| `<qualifier>`             | effect                                        |
-|---------------------------|-----------------------------------------------|
-| `binding=<binding>`       | sets symbol flags according to `<binding>`    |
-| `visibility=<visibility>` | sets symbol flags according to `<visibility>` |
-| `retain`                  | sets `WASM_SYM_NO_STRIP` symbol flag          |
-| `tls`                     | sets `WASM_SYM_TLS` symbol flag               |
-| `size=<int>`              | sets symbol's `size` appropriately            |
-| `offset=<int>`            | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately |
-| `name=<string>`           | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets symbol's `name_len`, `name_data` appropriately |
-| `priority=<int>`          | adds symbol to `WASM_INIT_FUNCS` section with the given priority |
-| `comdat=<id>`             | adds symbol to a `comdat` with the given id   |
+| `<qualifier>`       | effect                                        |
+|---------------------|-----------------------------------------------|
+| `<binding>`         | sets symbol flags according to `<binding>`    |
+| `<visibility>`      | sets symbol flags according to `<visibility>` |
+| `retain`            | sets `WASM_SYM_NO_STRIP` symbol flag          |
+| `tls`               | sets `WASM_SYM_TLS` symbol flag               |
+| `(size <int>)`      | sets symbol's `size` appropriately            |
+| `(offset <int>)`    | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately |
+| `(name <string>)`   | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets symbol's `name_len`, `name_data` appropriately |
+| `(init_prio <int>)` | adds symbol to `WASM_INIT_FUNCS` section with the given priority |
+| `(comdat <id>)`     | adds symbol to a `comdat` with the given id   |
 
 | `<binding>` | flag                     |
 |-------------|--------------------------|
@@ -914,16 +914,8 @@ identifier namespace corresponding to that symbol type.
 
 | `<visibility>` | flag                         |
 |----------------|------------------------------|
-| `default`      |                              |
+| `default`      | 0                            |
 | `hidden`       | `WASM_SYM_VISIBILITY_HIDDEN` |
-
-Shorthands may be used in place of full qualifiers:
-
-| shorthand | resulting qualifier |
-|-----------|---------------------|
-| `hidden`  | `visibility=hidden` |
-| `local`   | `binding=local`     |
-| `weak`    | `binding=weak`      |
 
 - The `priority` qualifier may only be applied to function symbols.
 - The `size` and `offset` qualifiers may only be applied to data symbols.
@@ -945,7 +937,7 @@ occurs after the optional `id` of the declaration.
 
 For example, the following code:
 ```wat
-(import "env" "foo" (func (@sym $a retain name="a") (@sym $b hidden name="b") (param) (result)))
+(import "env" "foo" (func (@sym $a retain (name "a")) (@sym $b hidden (name "b")) (param) (result)))
 ```
 declares 3 symbols: one primary symbol with the name of the index of the
 function, one symbol with the name `$a`, and one symbol with the name `$b`.
@@ -959,7 +951,7 @@ being defined.
 For example, a declaration of a 32-bit global with the name `$foo` and linkage
 name "foo" would look like following:
 ```wat
-(data (i32.const 0) (@sym $foo name="foo" size=4) "\00\00\00\00")
+(data (i32.const 0) (@sym $foo (name "foo") (size 4)) "\00\00\00\00")
 ```
 
 ### Data imports
@@ -1018,13 +1010,13 @@ Data segment flags are represented as WebAssembly annotations of the form
 - `qualifier` is one of the allowed qualifiers on a data segment declaration.
 Qualifiers may not repeat.
 
-| `<qualifier>`   | effect                                               |
-|-----------------|------------------------------------------------------|
-| `align=<int>`   | sets segment's `alignment` appropriately             |
-| `name=<string>` | sets segment's `name_len`, `name_data` appropriately |
-| `strings`       | sets `WASM_SEGMENT_FLAG_STRINGS` segment flag        |
-| `thread_local`  | sets `WASM_SEGMENT_FLAG_TLS` segment flag            |
-| `retain`        | sets `WASM_SEG_FLAG_RETAIN` segment flag             |
+| `<qualifier>`     | effect                                               |
+|-------------------|------------------------------------------------------|
+| `(align <int>)`   | sets segment's `alignment` appropriately             |
+| `(name <string>)` | sets segment's `name_len`, `name_data` appropriately |
+| `strings`         | sets `WASM_SEGMENT_FLAG_STRINGS` segment flag        |
+| `tls`             | sets `WASM_SEGMENT_FLAG_TLS` segment flag            |
+| `retain`          | sets `WASM_SEG_FLAG_RETAIN` segment flag             |
 
 If `align` is not specified, it is given a default value of 1.
 If `name` is not specified, it is given an empty default value.
