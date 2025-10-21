@@ -899,7 +899,7 @@ identifier namespace corresponding to that symbol type.
 | `binding=<binding>`       | sets symbol flags according to `<binding>`    |
 | `visibility=<visibility>` | sets symbol flags according to `<visibility>` |
 | `retain`                  | sets `WASM_SYM_NO_STRIP` symbol flag          |
-| `thread_local`            | sets `WASM_SYM_TLS` symbol flag               |
+| `tls`                     | sets `WASM_SYM_TLS` symbol flag               |
 | `size=<int>`              | sets symbol's `size` appropriately            |
 | `offset=<int>`            | sets `WASM_SYM_ABSOLUTE` symbol flag, sets symbol's `offset` appropriately |
 | `name=<string>`           | sets `WASM_SYM_EXPLICIT_NAME` symbol flag, sets symbol's `name_len`, `name_data` appropriately |
