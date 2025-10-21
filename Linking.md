@@ -856,6 +856,15 @@ like following:
 
 ## Symbols
 
+For each relocatable WebAssembly entity type, there exists a corresponding
+symbol identifier namespaces for symbols of that type.
+
+Additionally, a symbol identifier namespace exists for data symbols.
+
+Symbol idenitfier namespaces differ from common index spaces in that they also
+allow purely textual names in addition to numeric + optional textual names
+allowed by index spaces.
+
 Symbols are represented as WebAssembly annotations of the form
 ```wat
 (@sym <name> <qualifier>*)
@@ -870,8 +879,16 @@ Data imports represented as WebAssembly annotations of the form
   symbol is considered *primary* symbol for that WebAssembly object, its name
   is taken from the related object
   - There may only be one primary symbol for each WebAssembly object.
-  - If a symbol is not associated with an object, it may not be the primary
-    symbol.
+  - If a symbol is not associated with a WebAssembly entity, it may not be the
+    primary symbol.
+
+After a name for the symbol is determined, it is placed into the symbol
+identifier namespace corresponding to that symbol type.
+
+> [!Note]
+> As a consequence of that, the only symbols that can be referred to by a
+> numeric index are _primary_ symbols, since they inherit their numeric index
+> form the relocatable WebAssebly object.
 
 - `qualifier` is one of the allowed qualifiers on a symbol declaration.
   Qualifiers may not repeat.
@@ -914,6 +931,11 @@ Shorthands may be used in place of full qualifiers:
 
 If all components of a symbol annotation are skipped, the annotation may be
 omitted.
+
+> [!Note]
+> Since all components of a symbol can be skipped, a _primary_ symbol always
+> exists for all WebAssembly entities, even if the annotation without a `name`
+> is not present in the symbol sequence
 
 ### WebAssembly object symbols
 
