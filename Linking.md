@@ -63,10 +63,6 @@ The "reloc." custom sections must come after the
 ["linking"](#linking-metadata-section) custom section in order to validate
 relocation indices.
 
-Any LEB128-encoded values should be maximally padded so that they can be
-rewritten without affecting the position of any other bytes. For instance, the
-function index 3 should be encoded as `0x83 0x80 0x80 0x80 0x00`.
-
 Relocations contain the following fields:
 
 | Field     | Type                | Description                     |
@@ -180,6 +176,73 @@ where such a distinction exists (it may not for custom sections).  For example, 
 relocations applied to the CODE section, a relocation cannot straddle two
 functions, and for the DATA section relocations must lie within a data element's
 body.
+
+### Object file validation rules
+
+For a module to be considered a valid object file, additional constraints are
+imposed on the data in custom sections related to linking, to ensure that the
+linking process will yield a valid module.
+
+Tools that process object files are only required to produce output if source
+object files they process are valid object files.
+
+All LEB128-encoded values that are to be relocated must be maximally padded so
+that they can be rewritten without affecting the position of any other bytes.
+For instance, the function index 3 must be encoded as `0x83 0x80 0x80 0x80 0x00`.
+
+The `offset` part of a `memarg` where `memidx` represents a 32-bit memory may
+be treated as either [varuint32], or [varuint64].
+
+If relocation's `index` represents a symbol table entry, constraints are placed
+on the relocation based on the symbol type it references:
+
+| Symbol type       | Allowed relocation types  |
+|-------------------|---------------------------|
+| `SYMTAB_FUNCTION` | `R_WASM_FUNCTION_IDX_*`, `R_WASM_TABLE_IDX_*`, `R_WASM_FUNCTION_OFFSET_*` |
+| `SYMTAB_DATA`     | `R_WASM_MEMORY_ADDR_*`    |
+| `SYMTAB_GLOBAL`   | `R_WASM_GLOBAL_INDEX_*`   |
+| `SYMTAB_SECTION`  | `R_WASM_SECTION_OFFSET_*` |
+| `SYMTAB_EVENT`    | `R_WASM_EVENT_INDEX_*`    |
+| `SYMTAB_TABLE`    | `R_WASM_TABLE_NUMBER_*`   |
+
+Constraints are placed on relocations based on the data encoding of the value
+to be relocated:
+
+| Data encoding | Allowed relocation types |
+|---------------|--------------------------|
+| [uint32]      | `R_WASM_*_I32`           |
+| [uint64]      | `R_WASM_*_I64`           |
+| [varint32]    | `R_WASM_*_SLEB`          |
+| [varint64]    | `R_WASM_*_SLEB64`        |
+| [varuint32]   | `R_WASM_*_LEB`           |
+| [varuint64]   | `R_WASM_*_LEB64`         |
+
+If a data encoding for the relocation cannot be determined (i.e. there isn't a
+known grammar construct at the relocation offset), the data encoding constraints
+aren't applied. For example, this is the case for unknown custom sections and
+data segments.
+
+In the CODE section, only certain grammar constructs are allowed to be targeted
+by relocations:
+
+- For the constant operand of `i*.const` instructions, only
+  `R_WASM_TABLE_INDEX_*` and `R_WASM_MEMORY_ADDR_*` relocations are allowed.
+- For the `offset` part of a `memarg`, only `R_WASM_MEMORY_ADDR_*` relocations
+  are allowed.
+- For `funcidx`, only `R_WASM_FUNCTION_INDEX_*` relocations are allowed.
+- For `globalidx`, only `R_WASM_GLOBAL_INDEX_*` relocations are allowed.
+- For `tagidx`, only `R_WASM_EVENT_INDEX_*` relocations are allowed.
+- For `tableidx`, only `R_WASM_TABLE_NUMBER_*` relocations are allowed.
+
+For `R_WASM_*_OFFSET_I*` relocations, the following condidions must hold for
+the addend:
+
+- If `index` references the CODE section, the addend must represent an offset
+  of an instruction boundary.
+- If `index` references the DATA section, the addend must represent a valid
+  offset into a data segment's data area.
+- If `index` references the custom section, the addend must represent a valid
+  offset into that custom section's data area.
 
 ## Linking Metadata Section
 
@@ -321,6 +384,8 @@ For section symbols:
 | Field        | Type           | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
 | section      | `varuint32`    | the index of the target section             |
+
+Section symbols may only reference the CODE section, the DATA section, or custom sections.
 
 The current set of valid flags for symbols are:
 
