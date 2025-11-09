@@ -63,6 +63,14 @@ bulk-memory-opt is a subset of the [bulk-memory] feature that contains just the
 
 It does not include the table instructions, `memory.init`, or `data.drop`.
 
+#### Rationale
+
+`memory.init` and `data.drop` require implementations to support passive data
+segments, which entail significant new runtime complexity.
+
+The `table.*` instructions require implementations to support mutable tables,
+which is not commonly needed in linear-memory-oriented languages.
+
 ### call-indirect-overlong
 
 call-indirect-overlong is a subset of the [reference-types] feature that contains
@@ -70,6 +78,14 @@ just the change to the `call_indirect` instruction encoding to change the zero
 byte to an LEB encoding which may have an overlong encoding.
 
 It does not include the actual reference types.
+
+#### Rationale
+
+Actual reference types imply significant new runtime complexity.
+
+The call-indirect overlong instruction encoding is expected to be very
+easy to support in any decoder, and it does not entail any new
+runtime complexity.
 
 [bulk-memory]: https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md
 [reference-types]: https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md
