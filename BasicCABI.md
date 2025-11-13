@@ -107,6 +107,15 @@ Bitfield type | Witdh *w* | Range
 `signed long long` | 1 to 64 | -2<sup>(w-1)</sup> to 2<sup>(w-1)</sup>-1
 `long long`, `unsigned long long` | 1 to 64 | 0 to 2<sup>w</sup>-1
 
+**Function pointers**
+
+A pointer to a function is an index into a table of the module.
+The type of the table is funcref.
+The table needs to be exported with the name `__indirect_function_table`
+if the function pointer is possibly used from the outside of the module.
+Eg. If the module passes a function pointer to a host function as
+a callback.
+
 **SIMD Vector types**
 
 The ABI for vector types is not stable and may change as new optimization opportunities are
