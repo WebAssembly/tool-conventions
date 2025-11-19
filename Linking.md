@@ -804,7 +804,7 @@ Symbol kinds marked with `*` are considered *primary*.
     function.
   - For `customtext` relocation method, this is the name of the custom section,
     so that if the addend is zero, the relocation points to the first byte of
-    data in that segment.
+    data in that section.
   - For other relocation methods, this denotes the symbol in the scope of that
     symbol kind.
 
