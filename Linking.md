@@ -742,6 +742,12 @@ The text format for linking metadata is intended for WAT consumers that wish to
 emit relocatable object files, and WAT producers wish to emit human-readable
 relocation metadata for later creation of a relocatable object file.
 
+> [!NOTE]
+> This WAT-based text format is still a work in progress and not yet implemented
+> by widely used toolchains. Specifically, this is not the format used by
+> Clang/LLVM which uses a more traditional assembly-style format colloquially
+> refereed to as ths `.s` format.
+
 ## Relocations
 
 Relocations are represented as WebAssembly annotations of the form
