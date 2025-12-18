@@ -4,7 +4,7 @@ This document describes a digital signature format specifically designed for Web
 
 It satisfies the following requirements:
 
-- Is is possible to verify a module before execution.
+- It is possible to verify a module before execution.
 - It is possible to add signed custom sections to an already signed module.
 - It is possible to verify a subset of the module sections, at predefined boundaries.
 - The entire module doesn't have to fit in memory in order for a signature to be verified.
@@ -45,7 +45,7 @@ Example structure of a module with an embedded signature and delimiters:
 ## Parts and delimiters
 
 A module can be split into one or more parts (one or more consecutive sections).
-Each part is followd by a delimiter. A delimiter is a custom section named `signature_delimiter`, containing a 16 byte random string.
+Each part is followed by a delimiter. A delimiter is a custom section named `signature_delimiter`, containing a 16 byte random string.
 
 | sections                                       |
 | ---------------------------------------------- |
@@ -59,25 +59,30 @@ Each part is followd by a delimiter. A delimiter is a custom section named `sign
 
 If a signature covers the entire module (i.e. there is only one part), the delimiter is optional.
 
-However, its absence prevents additional sections to be added and signed later.
+However, its absence prevents additional sections from being added and signed later.
 
 ## Signature data
 
 The signature data is a concatenation of the following:
 
 - An identifier representing the version of the specification the module was signed with.
+- An identifier representing the content type (`0x01` for WebAssembly modules).
 - An identifier representing the hash function whose output will be signed.
 - A sequence of hashes and their signatures.
 
-A hash is computed for all the parts to be signed:
+Hashes are computed using a rolling hash. Instead of hashing each part independently, the hash state accumulates across all parts:
 
-`hn = H(pn‖dn)`
+- `h1 = H(p1‖d1)`
+- `h2 = H(p1‖d1‖p2‖d2)`
+- `hn = H(p1‖d1‖p2‖d2‖…‖pn‖dn)`
+
+Each hash `hi` represents a commitment to all content from the beginning of the module up to and including delimiter `di`.
 
 A signature is computed on the concatenation of these hashes:
 
 `hashes = h1 ‖ h2 ‖ … ‖ hn`
 
-`s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ hashes)`
+`s = Sign(k, "wasmsig" ‖ spec_version ‖ content_type ‖ hash_fn ‖ hashes)`
 
 One or more signatures can be associated with `hashes`, allowing multiple parties to sign the same data.
 
@@ -87,19 +92,20 @@ If embedded in a module, the section must be the first section of the module.
 
 The signature data contains a sequence of signatures, where the end of the last signature must coincide with the last byte of the data.
 
-| Field               | Type        | Description                                   |
-| ------------------- | ----------- | --------------------------------------------- |
-| spec_version        | `byte`      | Specification version (`0x01`)                |
-| hash_fn             | `byte`      | Hash function identifier (`0x01` for SHA-256) |
-| signed_hashes_count | `varuint32` | Number of signed hashes                       |
-| signed_hashes*      | `byte`      | Sequence of hashes and their signatures       |
+| Field               | Type        | Description                                       |
+| ------------------- | ----------- | ------------------------------------------------- |
+| spec_version        | `byte`      | Specification version (`0x01`)                    |
+| content_type        | `byte`      | Content type (`0x01` for WebAssembly modules)     |
+| hash_fn             | `byte`      | Hash function identifier (`0x01` for SHA-256)     |
+| signed_hashes_count | `varuint32` | Number of signed hash sets                        |
+| signed_hashes*      | `bytes`     | Sequence of signed hash sets and their signatures |
 
 where `signed_hashes` is encoded as:
 
 | Field           | Type         | Description                                       |
 | --------------- | ------------ | ------------------------------------------------- |
-| hashes_count    | `varuint32`  | Number of the concatenated hashes in bytes        |
-| hashes          | `bytes`      | Concatenated hashes of the signed sections        |
+| hashes_count    | `varuint32`  | Number of hashes                                  |
+| hashes          | `bytes`      | Concatenated hashes (each 32 bytes for SHA-256)   |
 | signature_count | `varuint32`  | Number of signatures                              |
 | signatures      | `signature*` | Sequence of `signature_count` `signature` records |
 
@@ -115,11 +121,11 @@ where a `signature` is encoded as:
 
 ## Signature verification algorithm for an entire module
 
-1. Verify the presence of the signature section, extract the specification version, the hash function to use and the signatures.
+1. Verify the presence of the signature section, extract the specification version, content type, the hash function to use and the signatures.
 2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
 3. Split `hashes` (included in the signature) into `h1 … hn`
-4. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
-5. Return an error if the number of the number of hashes doesn't match the number of parts.
+4. Read the module using a rolling hash: for each delimiter `di` encountered, verify that the current hash state matches `hi`. The hash state accumulates across all parts and delimiters.
+5. Return an error if the number of hashes doesn't match the number of parts.
 
 ## Partial signatures
 
@@ -131,11 +137,11 @@ In order to do so, a signer only includes hashes of relevant parts.
 
 The format is compatible with partial verification, i.e. verification of an arbitrary subset of a module:
 
-1. Verify the presence of the header, extract the specification version, the hash function to use and the signatures.
+1. Verify the presence of the header, extract the specification version, content type, the hash function to use and the signatures.
 2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
 3. Split `hashes` (included in the signature) into `h1 … hm` with `m` being the last section to verify.
-4. Read the module, computing the hash of the `(pi, di)` tuples to verify, immediately returning an error if the output doesn't match `hi`.
-5. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
+4. Read the module using a rolling hash up to the desired verification point. Verify the hash state at each delimiter matches the expected hash.
+5. Return an error if the number of hashes doesn't match the number of parts to verify.
 
 Notes:
 
@@ -194,7 +200,7 @@ Representation of Ed25519 keys:
 
 `0x81 ‖ secret key (32 bytes) ‖ public key (32 bytes)`
 
-Implementations may support additional signatures schemes and key encoding formats.
+Implementations may support additional signature schemes and key encoding formats.
 
 ## Appendix A. Examples
 
@@ -253,6 +259,7 @@ Signed module structure:
 Content of the signature section, for a single signature:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
@@ -263,7 +270,7 @@ Content of the signature section, for a single signature:
     - `0` (`key_id_len` - no key ID)
     - `0x01` (Ed25519 algorithm identifier)
     - `64` (`signature_len`)
-    - `<64 bytes>` (Ed22519(k, hashes))
+    - `<64 bytes>` (Ed25519(k, hashes))
 
 ### Signatures allowing partial verification.
 
@@ -302,36 +309,38 @@ In this example, a signature can be verified for any of the following ranges of 
 Content of the signature section, for a single signature:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
   - `3` (hashes_count)
-  - `<96 bytes>` (hashes=SHA-256(sections 1..12) ‖ SHA-256(sections 1..20) ‖ SHA-256(sections 1..end))
+  - `<96 bytes>` (hashes=SHA-256(sections 1..11) ‖ SHA-256(sections 1..19) ‖ SHA-256(sections 1..22))
   - `1` (signatures_count)
   - signature:
     - `0` (key_id_len - no key ID)
     - `0x01` (Ed25519 algorithm identifier)
     - `64` (signature_len)
-    - `<64 bytes>` (Ed22519(k, hashes))
+    - `<64 bytes>` (Ed25519(k, hashes))
 
 Variant with two signatures for the same content and key identifiers:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
   - `3` (hashes_count)
-  - `<96 bytes>` (hashes=SHA-256(sections 1..12) ‖ SHA-256(sections 1..20) ‖ SHA-256(sections 1..end))
+  - `<96 bytes>` (hashes=SHA-256(sections 1..11) ‖ SHA-256(sections 1..19) ‖ SHA-256(sections 1..22))
   - `2` (signatures_count)
   - signature_1:
     - `5` (key_id_len)
     - `"first"` (key_id)
     - `0x01` (Ed25519 algorithm identifier)
     - `64` (`signature_len`)
-    - `<64 bytes>` (Ed22519(k_first, hashes))
+    - `<64 bytes>` (Ed25519(k_first, hashes))
   - signature_2:
     - `6` (key_id_len)
     - `"second"` (key_id)
     - `0x01` (Ed25519 identifier)
     - `64` (`signature_len`)
-    - `<64 bytes>` (Ed22519(k_second, hashes))
+    - `<64 bytes>` (Ed25519(k_second, hashes))
