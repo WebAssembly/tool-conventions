@@ -2,7 +2,7 @@
 
 This document describes a digital signature format specifically designed for WebAssembly modules.
 
-It also support [WebAssembly components](https://github.com/WebAssembly/component-model). Everything in this document that refers to "modules" also applies to "components".
+It also supports [WebAssembly components](https://github.com/WebAssembly/component-model). As with modules, everything in components, including nested components, are stored in sections, including custom sections. Consequently, everything in this document that refers to "modules" also applies to "components".
 
 It satisfies the following requirements:
 
