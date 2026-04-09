@@ -2,19 +2,20 @@ This document describes conventions regarding debugging.
 
 # DWARF
 
-It is a goal to support DWARF in WebAssembly, see
-[the proposed additions to DWARF](https://yurydelendik.github.io/webassembly-dwarf/)
-for how that is planned to work.
+For a detailed description of how to use DWARF debug information with
+WebAssembly, see [Dwarf.md](Dwarf.md).
 
 ## Embedded DWARF
 
-The proposal allows [embedding the DWARF sections](https://yurydelendik.github.io/webassembly-dwarf/#embedding-DWARF)
-as WebAssembly custom sections with the same name (`.debug_*`) and raw data as in the DWARF spec.
+DWARF sections are embedded as WebAssembly custom sections with the same name
+(`.debug_*`) and raw data as in the DWARF spec. See
+[Embedding DWARF Within a WebAssembly File](Dwarf.md#embedding-dwarf-within-a-webassembly-file)
+for details.
 
 ## External DWARF
 
-The proposal also allows keeping the DWARF information
-[external to the Wasm](https://yurydelendik.github.io/webassembly-dwarf/#external-DWARF).
+DWARF information can also be kept external to the Wasm file. See
+[External DWARF File](Dwarf.md#external-dwarf-file) for details.
 When doing so, the main Wasm file does not need to contain any debug info, and
 instead has a custom section with the name `external_debug_info`. That section
 contains:
