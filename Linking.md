@@ -371,13 +371,14 @@ import; otherwise the `syminfo` specifies the symbol's name.
 
 For data symbols:
 
-| Field        | Type           | Description                                 |
-| ------------ | -------------- | ------------------------------------------- |
-| name_len     | `varuint32`    | the length of `name_data` in bytes          |
-| name_data    | `bytes`        | UTF-8 encoding of the symbol name           |
-| index        | `varuint32` ?  | the index of the data segment; provided if the symbol is defined |
-| offset       | `varuint32` ?  | the offset within the segment; provided if the symbol is defined; must be <= the segment's size |
-| size         | `varuint32` ?  | the size (which can be zero); provided if the symbol is defined; `offset + size` must be <= the segment's size |
+| Field     | Type          | Description                                                                                                                                                                        |
+|-----------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| name_len  | `varuint32`   | the length of `name_data` in bytes                                                                                                                                                 |
+| name_data | `bytes`       | UTF-8 encoding of the symbol name                                                                                                                                                  |
+| index     | `varuint32` ? | the index of the data segment; provided if the symbol is defined and not a common symbol (i.e., `WASM_SYM_UNDEFINED` is not set, and the binding is not `WASM_SYM_BINDING_COMMON`) |
+| offset    | `varuint32` ? | the offset within the segment; provided if the symbol is defined and not a common symbol; must be <= the segment's size                                                            |
+| size      | `varuint32` ? | the size; provided if the symbol is defined; if not a common symbol, it can be zero and `offset + size` must be <= the segment's size
+| alignment | `uint8` ?     | the required alignment of the common symbol, encoded as the log2 of the alignment in bytes; provided if the symbol is defined and is a common symbol                               |
 
 For section symbols:
 
@@ -389,22 +390,32 @@ Section symbols may only reference the CODE section, the DATA section, or custom
 
 The current set of valid flags for symbols are:
 
-- `1 / WASM_SYM_BINDING_WEAK` - Indicating that this is a weak symbol.  When
-  linking multiple modules defining the same symbol, all weak definitions are
-  discarded if any strong definitions exist; then if multiple weak definitions
-  exist all but one (unspecified) are discarded; and finally it is an error if
-  more than one definition remains.
-- `2 / WASM_SYM_BINDING_LOCAL` - Indicating that this is a local symbol (this
-  is exclusive with `WASM_SYM_BINDING_WEAK`). Local symbols are not to be
-  exported, or linked to other modules/sections. The names of all non-local
-  symbols must be unique, but the names of local symbols are not considered for
-  uniqueness. A local function or global symbol cannot reference an import.
+- `WASM_SYM_BINDING_MASK / 0x3` - A 2-bit mask indicating the binding of the symbol:
+  - `0 / WASM_SYM_BINDING_GLOBAL` - Indicating that this is a strong global symbol.
+  - `1 / WASM_SYM_BINDING_WEAK` - Indicating that this is a weak symbol. When
+    linking multiple modules defining the same symbol, all weak definitions are
+    discarded if any strong definitions exist; then if multiple weak definitions
+    exist all but one (unspecified) are discarded; and finally it is an error if
+    more than one definition remains.
+  - `2 / WASM_SYM_BINDING_LOCAL` - Indicating that this is a local symbol.
+    Local symbols are not to be exported, or linked to other modules/sections.
+    The names of all non-local symbols must be unique, but the names of local
+    symbols are not considered for uniqueness. A local function or global symbol
+    cannot reference an import.
+  - `3 / WASM_SYM_BINDING_COMMON` - Indicating that this is a common symbol (only
+    valid for defined data symbols). Common symbols represent uninitialized,
+    global data. The linker allocates space for them in the linear memory (BSS).
+    If multiple common symbols with the same name are merged, the linker will
+    allocate space according to the largest size and largest alignment among all
+    definitions. If a strong definition also exists, the common symbols are
+    resolved to the strong definition.
 - `4 / WASM_SYM_VISIBILITY_HIDDEN` - Indicating that this is a hidden symbol.
   Hidden symbols are not to be exported when performing the final link, but
   may be linked to other modules.
 - `0x10 / WASM_SYM_UNDEFINED` - Indicating that this symbol is not defined.
   For non-data symbols, this must match whether the symbol is an import
-  or is defined; for data symbols, determines whether a segment is specified.
+  or is defined; for data symbols, determines whether a segment (or size and alignment)
+  is specified.
 - `0x20 / WASM_SYM_EXPORTED` - The symbol is intended to be exported from the
   wasm module to the host environment. This differs from the visibility flags
   in that it effects the static linker.
@@ -416,7 +427,7 @@ The current set of valid flags for symbols are:
   linker output, regardless of whether it is used by the program.
 - `0x100 / WASM_SYM_TLS` - The symbol resides in thread local storage.
 - `0x200 / WASM_SYM_ABSOLUTE` - The symbol represents an absolute address. This
-  means it's offset is relative to the start of the wasm memory as opposed to
+  means its offset is relative to the start of the wasm memory as opposed to
   being relative to a data segment.
 
 ### COMDAT Info Subsection
@@ -579,6 +590,32 @@ which reference a data symbol.
 
 Segments are linked as a whole, and a segment is either entirely included or
 excluded from the link.
+
+### Merging Common Symbols
+
+Unlike regular data symbols, common symbols (`WASM_SYM_BINDING_COMMON`) do not
+have associated data segments in the input object files. Instead, their merging
+and allocation are performed dynamically by the static linker:
+
+1.  **Symbol Resolution**:
+    *   When merging multiple common symbols with the same name, they are combined
+        into a single definition.
+    *   The size of the merged symbol is set to the largest size requested among
+        all declarations ($\max(\text{size}_1, \dots, \text{size}_n)$).
+    *   The alignment of the merged symbol is set to the largest alignment
+        requested among all declarations ($\max(\text{align}_1, \dots, \text{align}_n)$).
+    *   If a strong definition (neither weak nor common) of the symbol exists in
+        any linked object file, the common symbols are resolved to that strong
+        definition, and the common allocations are discarded.
+    *   If a weak definition exists but no strong definition exists, the common
+        symbol takes precedence over the weak definition.
+
+2.  **Linear Memory Allocation**:
+    *   The static linker allocates space for the resolved common symbol in the
+        uninitialized data area (conceptually BSS) of the final module's linear
+        memory, which is typically positioned after the initialized data segments.
+    *   Relocations referencing the common symbol (`R_WASM_MEMORY_ADDR_*`) are then
+        resolved to the static memory address allocated for this symbol.
 
 ## Merging Custom Sections
 
