@@ -287,6 +287,8 @@ The current list of valid `type` codes are:
 - `8 / WASM_SYMBOL_TABLE` - Specifies extra information about the symbols present
   in the module.
 
+- `9 / WASM_TARGET_ARCH` - Specifies the target architecture (`wasm32` or `wasm64`).
+
 ### Segment Info Subsection
 
 For `WASM_SEGMENT_INFO` the following fields are present in the
@@ -462,6 +464,16 @@ and where a `comdat_sym` is encoded as:
 |          |                |   * `4 / WASM_COMDAT_TABLE`                 |
 |          |                |   * `5 / WASM_COMDAT_SECTION`               |
 | index    | `varuint32`    | Index of the data segment/function/global/event/table in the Wasm module (depending on kind). The function/global/event/table must not be an import. |
+
+### Target Arch Subsection
+
+For `WASM_TARGET_ARCH` the following fields are present in the
+subsection:
+
+| Field    | Type        | Description                                                          |
+| -------- | ----------- | -------------------------------------------------------------------- |
+| arch_len | `varuint32` | length of `arch_str` in bytes                                        |
+| arch_str | `bytes`     | UTF-8 encoding of the target architecture string (`wasm32` or `wasm64`) |
 
 ## Target Features Section
 

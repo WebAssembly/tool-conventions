@@ -45,6 +45,8 @@ The current list of valid `type` codes are:
 
 - `5 / WASM_DYLINK_RUNTIME_PATH` - Specify the runtime path, corresponding to `DT_RUNPATH` in an ELF `.dynamic` section.
 
+- `6 / WASM_DYLINK_TARGET_ARCH` - Specifies the target architecture (`wasm32` or `wasm64`).
+
 For `WASM_DYLINK_MEM_INFO` the following fields are present in the
 subsection:
 
@@ -126,6 +128,13 @@ subsection:
 | ---------------------- | --------------- | ------------------------------------- |
 | runtime_path_count     | `varuint32`     | Number of runtime_path entries        |
 | runtime_path_entries   | `string*`       | string values of runtime_path entries |
+
+For `WASM_DYLINK_TARGET_ARCH` the following fields are present in the
+subsection:
+
+| Field       | Type     | Description                                           |
+| ----------- | -------- | ----------------------------------------------------- |
+| target_arch | `string` | The target architecture string (`wasm32` or `wasm64`) |
 
 The "dylink" section should be the very first section in the module; this allows
 detection of whether a binary is a dynamic library without having to scan the
