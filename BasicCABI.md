@@ -7,7 +7,7 @@ compiler wishing to be ABI-compatible with it.
 
 The current version of this ABI is *1*.
 
-This ABI is designed to work with Release 1.0 of the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any 
+This ABI is designed to work with Release 1.0 of the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any
 [features](https://github.com/WebAssembly/proposals)
 that have not yet been implemented and standardized. Future versions will depend on
 features such as threads and/or multi-value.
@@ -16,7 +16,7 @@ features such as threads and/or multi-value.
 
 **Scalar Types**
 
-The ABI for the currently-specifed version of WebAssembly (also known as "wasm32") uses an "ILP32" data model, 
+The ABI for the currently-specifed version of WebAssembly (also known as "wasm32") uses an "ILP32" data model,
 where `int`, `long`, and pointer types are 32 bits. It is expected that the proposed extension to allow memories
 larger than 4GB ("wasm64") will use an "LP64" data model, where `int` is 32 bits while `pointer` and `long` are
 64 bits.
@@ -45,7 +45,7 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  Floating point | `double` | 8 | 8 | f64
  Floating point | `long double` | 16 | 16 | (none)
  Floating point | `long double` (Emscripten) | 16 | 8 | (none)
- 
+
  * `long double` values correspond to 128-bit IEEE-754 quad-precision binary128 values.
  Operations on these values are currently implemented as calls to
  compiler-rt library functions.
@@ -122,31 +122,31 @@ to understand them.
 
 ## Locals and the stack frame
 WebAssembly does not have registers in the style of hardware architectures. Instead it has an
-unlimited number of function arguments and local variables, which have wasm value types. These 
+unlimited number of function arguments and local variables, which have wasm value types. These
 local values are generally used as registers would be in a traditional architecture, but there
 are some important differences. Because arguments are modeled explicitly and locals are local
 to a function, there is no need for a concept of callee- or caller-saved locals.
 
 
 ### The linear stack
-WebAssembly is a [Harvard](https://en.wikipedia.org/wiki/Harvard_architecture) architecture; 
+WebAssembly is a [Harvard](https://en.wikipedia.org/wiki/Harvard_architecture) architecture;
 this means that code and data are not in the same memory space. No code or code addresses are
 visible in the wasm linear memory space, the only "address" that a function has is its index
 in the wasm function index space. Additionally the wasm implementation's runtime call stack
 (including the return address and function arguments) is not visible in the linear memory either.
 This means that address-taken local C variables need to be on a separate stack in the linear memory
-(herafter called the "linear stack"). It also means that some functions may not need a frame in the 
+(herafter called the "linear stack"). It also means that some functions may not need a frame in the
 linear stack at all.
 
 Instead of registers visible to all functions, WebAssembly has a table of global variables. One of these
-acts as the stack pointer [TODO: describe how stack pointer is designated here, or in object file section] 
+acts as the stack pointer [TODO: describe how stack pointer is designated here, or in object file section]
 [TODO: discuss mutable global requirement].
 
 Each function may have a frame on the linear stack. This stack grows downward
 [TODO: describe how start position is determined].
-The stack pointer global (`SP`) points to the bottom of the stack frame and always has 16-byte alignment. 
-If there are dynamically-sized objects on the stack, a frame pointer (a local variable, `FP`) is used, 
-and it points to the bottom of the static-size objects (those whose sizes are known at compile time). 
+The stack pointer global (`SP`) points to the bottom of the stack frame and always has 16-byte alignment.
+If there are dynamically-sized objects on the stack, a frame pointer (a local variable, `FP`) is used,
+and it points to the bottom of the static-size objects (those whose sizes are known at compile time).
 If objects in the current frame require alignment greater than 16, then a base pointer (another local, `BP`)
 is used, which points to the bottom of the previous frame.
 The stack also has a "red zone" which extends 128 bytes below the stack pointer. If a function
@@ -164,8 +164,8 @@ Position                     | Contents                       | Frame
  `SP` + *d*<br>...<br>`SP`   | dynamic-size objects           | Current
  ...<br>`SP`-128             | small static-size objects      | Current (red zone)
 
-Note: in other ABIs the frame pointer typically points to a saved frame pointer (and return address) 
-at the top of the current frame. In this ABI the frame pointer points to the bottom of the current frame instead. 
+Note: in other ABIs the frame pointer typically points to a saved frame pointer (and return address)
+at the top of the current frame. In this ABI the frame pointer points to the bottom of the current frame instead.
 This is because the constant offset
 field of Wasm load and store instructions are unsigned; addresses of the form `FP` + *n* can be folded
 into a single insruction, e.g. `i32.load offset=n`. This is also why the stack grows downward (so `SP` + *n*
@@ -184,33 +184,151 @@ making a copy of any indirectly passed data that the callee should not modify.
 Similarly, types can either be returned directly from WebAssembly functions or
 returned indirectly via a pointer parameter prepended to the parameter list.
 
-Type                         | Parameter     | Result   |
------------------------------|---------------|----------|
-scalar[1]                    | direct        | direct   |
-empty struct or union        | ignored       | ignored  |
-singleton struct or union[2] | direct        | direct   |
-other struct or union[3]     | indirect      | indirect |
-array                        | indirect      | N/A      |
-
-[1] `long double` and `__int128` are passed directly as two `i64` values.
-Signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and 16-bit
-scalars are zero-extended before passing or returning.
-
-[2] Any struct or union that recursively (including through nested structs,
-unions, and arrays) contains just a single scalar value and is not specified to
-have greater than natural alignment.
-
-[3] This calling convention was defined before
-[multivalue](https://github.com/WebAssembly/multi-value) was standardized. A new
-default calling convention that changes this behavior and takes advantage of
-multivalue may be introduced in the future.
-
 Varargs are placed in a buffer by the caller and the last parameter to the
 function is a pointer to that buffer. The callee is allowed to modify the
 contents of the buffer, so the caller is responsible for making a copy of any
 varargs data that the callee should not modify. Arguments are arranged in order
 in the buffer, with each argument placed at the lowest appropriately aligned
 address after the previous argument.
+
+There are two calling conventions defined for use at this time. The default
+calling convention is typically referred to as the "C" calling convention and
+was created before [multivalue] was available, thus only
+allows for a single result. The second calling is referred to as
+"wasm-multivalue" and assumes [multivalue] is enabled and additionally applies
+some small tweaks from the previous calling convention learned over time.
+
+The following table shows how all types are passed in both calling conventions:
+
+<table>
+  <tr>
+    <th>Type</type>
+    <th colspan="2">Parameter</th>
+    <th colspan="2">Result</th>
+  </tr>
+  <tr>
+    <th></th>
+    <th>"C"</th>
+    <th>"wasm-multivalue"</th>
+    <th>"C"</th>
+    <th>"wasm-multivalue"</th>
+  </tr>
+  <tr>
+    <td>8 to 64-bit scalars</td>
+    <td>direct</td>
+    <td>direct</td>
+    <td>direct</td>
+    <td>direct</td>
+  </tr>
+  <tr>
+    <td>128-bit scalars</td>
+    <td>direct</td>
+    <td>direct</td>
+    <td>indirect</td>
+    <td>direct</td>
+  </tr>
+  <tr>
+    <td>struct/union - 0 fields</td>
+    <td>ignored</td>
+    <td>ignored</td>
+    <td>ignored</td>
+    <td>ignored</td>
+  </tr>
+  <tr>
+    <td>struct/union - 1 scalar field</td>
+    <td>direct</td>
+    <td>direct</td>
+    <td>direct</td>
+    <td>direct</td>
+  </tr>
+  <tr>
+    <td>struct - 2 scalar fields</td>
+    <td>indirect</td>
+    <td>direct</td>
+    <td>indirect</td>
+    <td>direct</td>
+  </tr>
+  <tr>
+    <td>struct - 3-100 scalar fields</td>
+    <td>indirect</td>
+    <td>indirect</td>
+    <td>indirect</td>
+    <td>direct</td>
+  </tr>
+  <tr>
+    <td>struct/union - other</td>
+    <td>indirect</td>
+    <td>indirect</td>
+    <td>indirect</td>
+    <td>indirect</td>
+  </tr>
+</table>
+
+For scalars, signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and
+16-bit scalars are zero-extended before passing or returning. Passing 128-bit
+scalars directly, such as `long double` and `__int128`, is done with two `i64`
+values.
+
+A "scalar field" of a struct or union is a field which recursively, through
+nested structs, unions, and arrays, contains just a single scalar value and is
+not specified to have greater than natural alignment.
+
+Some example C function signatures, and their corresponding WebAssembly function
+signatures, are:
+
+```c
+
+// [] -> []
+void f1(void);
+
+// [f32 f64] -> [i32]
+int f2(float, double);
+
+// [i32 i64 i64] -> []
+//    |   |   ^ high bits of parameter
+//    |   ^ low bits of parameter
+//    ^ return-pointer
+__int128 f3(long double);
+
+// [] -> []
+struct Foo4 { }
+union Bar4 { }
+Bar4 f4(Foo4);
+
+// [i32] -> [i32]
+struct Foo5 { int a; }
+union Bar5 { int a; }
+Bar5 f5(Foo5);
+
+// [i32 i32] -> []
+//    |   ^ pointer to parameter
+//    ^ return-pointer
+struct Foo6 { int a; int b; }
+Foo6 f6(Foo6);
+
+// [i32 i32] -> [i32 i32]
+struct Foo7 { int a; int b; }
+__wasm_multivalue__
+Foo7 f7(Foo7);
+
+// [] -> [i64 i64]
+__wasm_multivalue__
+__int128 f8(void);
+```
+
+Note that the "C" ABI is the default ABI used in C, and using the
+"wasm-multivalue" ABI requires an explicit opt-in. While the default calling
+convention may change in the future that is not yet planned at this time.
+Additionally note that programs can use either ABI to define functions, but the
+caller and callee calling convention must match when a call is done.
+
+To use the "wasm-multivalue" calling convention the [`multivalue` target
+feature](./Linking.md#target-features-section) must be enabled. It is a complier
+error to use this calling convention when the target feature is not enabled.
+Additionally note that enabling the `multivalue` target feature does not change
+the "C" calling convention, it only enables usage of "wasm-multivalue".
+
+[multivalue]: https://github.com/WebAssembly/multi-value
 
 ## Program startup
 
