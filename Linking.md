@@ -234,15 +234,13 @@ by relocations:
 - For `tagidx`, only `R_WASM_EVENT_INDEX_*` relocations are allowed.
 - For `tableidx`, only `R_WASM_TABLE_NUMBER_*` relocations are allowed.
 
-For `R_WASM_*_OFFSET_I*` relocations, the following condidions must hold for
+For `R_WASM_*_OFFSET_I*` relocations, the following conditions must hold for
 the addend:
 
-- If `index` references the CODE section, the addend must represent an offset
-  of an instruction boundary.
-- If `index` references the DATA section, the addend must represent a valid
-  offset into a data segment's data area.
-- If `index` references the custom section, the addend must represent a valid
-  offset into that custom section's data area.
+- For `R_WASM_FUNCTION_OFFSET_I*`, the addend must represent an offset of an
+  instruction boundary within the referenced function.
+- For `R_WASM_SECTION_OFFSET_I*`, the addend must represent a valid offset into
+  the referenced custom section's data area.
 
 ## Linking Metadata Section
 
@@ -388,7 +386,8 @@ For section symbols:
 | ------------ | -------------- | ------------------------------------------- |
 | section      | `varuint32`    | the index of the target section             |
 
-Section symbols may only reference the CODE section, the DATA section, or custom sections.
+Section symbols must have local binding (`WASM_SYM_BINDING_LOCAL`) and may only
+reference custom sections.
 
 The current set of valid flags for symbols are:
 
