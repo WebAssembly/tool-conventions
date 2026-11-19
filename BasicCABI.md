@@ -336,13 +336,13 @@ unit does not by itself increase the unit's size.
 
 Within an integer unit, each field occupies the same bits that it occupies in
 the object's in-memory representation: a field at offset *o* of size *s*
-bytes occupies bits 8(*o* − *base*) through 8(*o* − *base* + *s*) − 1 of the
-unit's value, following the little-endian in-memory representation. Fields are
-never split across two units. Bits of a unit that are not covered by any field
-(padding, and any bits above the last field's end) have unspecified contents;
-in particular, fields narrower than the unit are not sign- or zero-extended
-within it. Constructing a unit does not require reading padding or bytes
-outside the object.
+bytes occupies bits 8 × (*o* − *base*) through 8 × (*o* − *base* + *s*) − 1
+of the unit's value, counting bits from zero and following the little-endian
+in-memory representation. Fields are never split across two units. Bits of a
+unit that are not covered by any field (padding, and any bits above the last
+field's end) have unspecified contents; in particular, fields narrower than
+the unit are not sign- or zero-extended within it. Constructing a unit does
+not require reading padding or bytes outside the object.
 
 ##### Parameter passing
 
