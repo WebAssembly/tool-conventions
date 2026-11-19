@@ -178,7 +178,7 @@ or in-field crash reporting. Future ABIs may designate a convention for determin
 ### Function arguments and return values
 
 Types can be passed directly via WebAssembly function parameters or indirectly
-via a pointer parameter that points to the value in memory. The callee is
+via a pointer parameter that points to the value in linear memory. The callee is
 allowed to modify the contents of that memory, so the caller is responsible for
 making a copy of any indirectly passed data that the callee should not modify.
 Similarly, types can either be returned directly from WebAssembly functions or
@@ -194,89 +194,197 @@ address after the previous argument.
 There are two calling conventions defined for use at this time. The default
 calling convention is typically referred to as the "C" calling convention and
 was created before [multivalue] was available, thus only
-allows for a single result. The second calling is referred to as
+allows for a single result. The second calling convention is referred to as
 "wasm-multivalue" and assumes [multivalue] is enabled and additionally applies
-some small tweaks from the previous calling convention learned over time.
+some improvements over the previous calling convention learned over time.
 
-The following table shows how all types are passed in both calling conventions:
+In both calling conventions, the way a parameter or result is passed is
+determined by *classifying* its type. Classification assigns to each type
+either the class INDIRECT, in which case the parameter or result is passed
+indirectly as described above, or a (possibly empty) sequence of WebAssembly
+value types, in which case the parameter or result is passed directly as that
+sequence of WebAssembly values, in order, subject to the per-convention limits
+described below.
 
-<table>
-  <tr>
-    <th>Type</type>
-    <th colspan="2">Parameter</th>
-    <th colspan="2">Result</th>
-  </tr>
-  <tr>
-    <th></th>
-    <th>"C"</th>
-    <th>"wasm-multivalue"</th>
-    <th>"C"</th>
-    <th>"wasm-multivalue"</th>
-  </tr>
-  <tr>
-    <td>8 to 64-bit scalars</td>
-    <td>direct</td>
-    <td>direct</td>
-    <td>direct</td>
-    <td>direct</td>
-  </tr>
-  <tr>
-    <td>128-bit scalars</td>
-    <td>direct</td>
-    <td>direct</td>
-    <td>indirect</td>
-    <td>direct</td>
-  </tr>
-  <tr>
-    <td>struct/union - 0 fields</td>
-    <td>ignored</td>
-    <td>ignored</td>
-    <td>ignored</td>
-    <td>ignored</td>
-  </tr>
-  <tr>
-    <td>struct/union - 1 scalar field</td>
-    <td>direct</td>
-    <td>direct</td>
-    <td>direct</td>
-    <td>direct</td>
-  </tr>
-  <tr>
-    <td>struct - 2 scalar fields</td>
-    <td>indirect</td>
-    <td>direct</td>
-    <td>indirect</td>
-    <td>direct</td>
-  </tr>
-  <tr>
-    <td>struct - 3-100 scalar fields</td>
-    <td>indirect</td>
-    <td>indirect</td>
-    <td>indirect</td>
-    <td>direct</td>
-  </tr>
-  <tr>
-    <td>struct/union - other</td>
-    <td>indirect</td>
-    <td>indirect</td>
-    <td>indirect</td>
-    <td>indirect</td>
-  </tr>
-</table>
+For C++ types, the [Itanium-like C++ ABI](ItaniumLikeC++ABI.md) applies in
+addition to these rules. In particular, a class type that is
+[non-trivial for the purposes of calls](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#non-trivial)
+is passed and returned indirectly, regardless of its classification below.
+The C++ ABI also specifies construction and destruction of the objects used
+for these calls.
 
-For scalars, signed 8 and 16-bit scalars are sign-extended, and unsigned 8 and
-16-bit scalars are zero-extended before passing or returning. Passing 128-bit
-scalars directly, such as `long double` and `__int128`, is done with two `i64`
+#### Classification of scalar types
+
+Scalar types are classified identically in both calling conventions:
+
+C type | Classification
+-|-
+`_Bool`/`bool`, 8, 16 and 32-bit integers, `enum`, pointers | i32
+64-bit integers | i64
+`__int128_t` / `__uint128_t` | i64, i64 (low bits, then high bits)
+`float` | f32
+`double` | f64
+`long double` | i64, i64 (low bits, then high bits)
+
+When passed or returned as an individual scalar i32 value, signed 8 and
+16-bit integers are sign-extended and unsigned 8 and 16-bit integers are
+zero-extended.
+
+#### Classification in the "C" calling convention
+
+The "C" calling convention classifies types as follows:
+
+* A scalar type is classified as the sequence of value types given above.
+* A zero-sized struct or union is classified as the empty sequence, meaning
+  that it is ignored and no values are passed for it.
+* A struct or union with a single scalar field is classified as the type of
+  that field. A "scalar field" of a struct or union is a field which
+  recursively, through nested structs, unions, and arrays, contains just a
+  single scalar value and is not specified to have greater than natural
+  alignment.
+* All other struct and union types are classified INDIRECT.
+
+A parameter is passed directly whenever its classification is not INDIRECT.
+
+Because the "C" calling convention predates [multivalue], a function may
+return at most one WebAssembly value. A result whose classification is
+INDIRECT, or whose classification contains more than one value type (such as
+the 128-bit scalars), is returned indirectly.
+
+#### Classification in the "wasm-multivalue" calling convention
+
+The "wasm-multivalue" calling convention classifies an aggregate by
+*flattening* it into its leaf scalar fields and mapping those fields onto a
+sequence of WebAssembly values. Integer fields are *bit-packed* into i32 and
+i64 values, while floating-point fields are kept as individual f32 and f64
 values.
 
-A "scalar field" of a struct or union is a field which recursively, through
-nested structs, unions, and arrays, contains just a single scalar value and is
-not specified to have greater than natural alignment.
+For these rules, the term *integer field* includes fields of integer and enumeration
+types, pointer types (including pointers to functions), and the synthetic integer fields
+described below.
 
-Some example C function signatures, and their corresponding WebAssembly function
-signatures, are:
+##### Flattening
+
+The *flattened fields* of a type are an ordered list of scalar fields, each
+with an assigned byte offset within the object, determined as follows:
+
+* A scalar type flattens to a single field of that type at offset 0.
+* A struct flattens to the flattened fields of its members in declaration
+  order, each at its offset within the struct.
+* An array flattens to the flattened fields of its elements in index order,
+  each at its offset within the array.
+* A union with exactly one member flattens to the flattened fields of that
+  member.
+* A union with more than one member fails to flatten if it is larger than
+  8 bytes or if any member's flattened fields are not all integer fields.
+  Otherwise, it flattens to a single integer field covering the union's size.
+
+If flattening a member or element fails, flattening its containing type also
+fails.
+
+A type whose flattening fails is classified INDIRECT. Flattening also fails
+if any of the following hold:
+
+* the type, or any struct, union, or array it recursively contains, has
+  greater than natural alignment (e.g. via `_Alignas` or
+  `__attribute__((aligned))`), or has a member with less than natural
+  alignment (e.g. via `__attribute__((packed))`),
+* the type recursively contains a bit-field,
+* the type recursively contains a flexible array member.
+
+##### Classification of flattened fields
+
+In these rules, an *integer unit* is a group of one or more integer fields 
+represented by a single WebAssembly integer value.
+
+A zero-sized struct or union is classified as the empty sequence, meaning
+that it is ignored and no values are passed for it. Otherwise, the flattened
+fields are mapped to a sequence of WebAssembly values, in offset order, as
+follows:
+
+* An f32 field is classified as an f32 value, and an f64 field is classified
+  as an f64 value. Floating-point fields are never bit-packed together with
+  other fields.
+* A field wider than 64 bits (`__int128_t`, `__uint128_t`, and `long double`)
+  is treated as two consecutive 8-byte integer fields.
+* Each maximal run of consecutive integer fields is bit-packed into one or
+  more integer units:
+  * The first field of a run begins the *current integer unit*, whose *base*
+    is that field's offset.
+  * For each subsequent field in the run, add it to the current integer unit
+    if the field lies entirely within the 8 bytes starting at that unit's
+    base and the unit would contain at most one field of 4 bytes or more.
+    Otherwise, begin a new current integer unit with that field and set its
+    base to the field's offset.
+  * Each integer unit whose fields all lie within the 4 bytes starting at its
+    base is classified as an i32 value; any other integer unit is classified
+    as an i64 value.
+
+Thus, two 32-bit integer fields cannot share a unit; for example, a struct
+containing only two such fields is classified as two i32 values. Narrower
+fields can still share a unit with a 32-bit field when they fit.
+
+Intervening padding is not removed when packing fields: gaps between fields
+count when determining whether they fit in the same unit and which value type
+the unit uses. Padding before the first field or after the last field of a
+unit does not by itself increase the unit's size.
+
+> Rationale: retaining the fields' relative memory offsets can avoid
+> shifting and masking to compact values that are already in memory. The
+> trade-off is that padding can require more units and cause an aggregate to
+> be passed indirectly.
+
+Within an integer unit, each field occupies the same bits that it occupies in
+the object's in-memory representation: a field at offset *o* of size *s*
+bytes occupies bits 8(*o* − *base*) through 8(*o* − *base* + *s*) − 1 of the
+unit's value, following the little-endian in-memory representation. Fields are
+never split across two units. Bits of a unit that are not covered by any field
+(padding, and any bits above the last field's end) have unspecified contents;
+in particular, fields narrower than the unit are not sign- or zero-extended
+within it. Constructing a unit does not require reading padding or bytes
+outside the object.
+
+##### Parameter passing
+
+A parameter is passed indirectly if its classification is INDIRECT, if its
+classification contains more than 2 integer (i32 or i64) values, or if its
+classification contains more than 4 floating-point (f32 or f64) values.
+All other parameters are passed directly as their sequence of values. These
+limits apply to each parameter individually; the number of parameters of a
+function is not limited.
+
+> Rationale: the limits are chosen so that small aggregates that native ABIs
+> pass in registers — for example an RGBA color made of four 8-bit or 16-bit
+> channels, a pointer-and-length pair, or a vector of four floats — are
+> passed directly, without allowing a single aggregate parameter to expand
+> into an unbounded number of WebAssembly parameters. The integer limit of 2
+> units is inspired by the x86-64 psABI's limit of two eightbytes in
+> general-purpose registers, but it does not imply that every 16-byte
+> integer aggregate is passed directly. The separate floating-point limit
+> of 4 values accommodates common vector types such as `vec4`.
+
+##### Result passing
+
+A result is returned indirectly if its classification is INDIRECT or if its
+classification contains more than 100 values. All other results are returned
+directly as their sequence of values; returning more than one value requires
+[multivalue].
+
+> Rationale: results are classified with the same algorithm as parameters,
+> but with a much higher limit so that any reasonable WebAssembly function
+> signature can be expressed as a C signature, while still ensuring that
+> returning a large struct by value cannot produce a function type exceeding
+> implementation limits on the number of results.
+
+#### Examples
+
+Some example C function signatures, and their corresponding wasm32 function
+signatures, are shown below. `__attribute__((wasm_multivalue))` denotes the
+proposed calling convention and may not yet be implemented; the empty struct
+and union use a C extension.
 
 ```c
+#include <stdint.h>
 
 // [] -> []
 void f1(void);
@@ -291,29 +399,96 @@ int f2(float, double);
 __int128 f3(long double);
 
 // [] -> []
-struct Foo4 { }
-union Bar4 { }
-Bar4 f4(Foo4);
+struct Foo4 { };
+union Bar4 { };
+union Bar4 f4(struct Foo4);
 
 // [i32] -> [i32]
-struct Foo5 { int a; }
-union Bar5 { int a; }
-Bar5 f5(Foo5);
+struct Foo5 { int a; };
+union Bar5 { int a; };
+union Bar5 f5(struct Foo5);
 
 // [i32 i32] -> []
 //    |   ^ pointer to parameter
 //    ^ return-pointer
-struct Foo6 { int a; int b; }
-Foo6 f6(Foo6);
+struct Foo6 { int a; int b; };
+struct Foo6 f6(struct Foo6);
 
 // [i32 i32] -> [i32 i32]
-struct Foo7 { int a; int b; }
-__wasm_multivalue__
-Foo7 f7(Foo7);
+//  32-bit integer fields are not packed together
+struct Foo7 { int a; int b; };
+__attribute__((wasm_multivalue))
+struct Foo7 f7(struct Foo7);
 
 // [] -> [i64 i64]
-__wasm_multivalue__
+__attribute__((wasm_multivalue))
 __int128 f8(void);
+
+// [i32] -> [i32]
+//  bits 0-7 = r, 8-15 = g, 16-23 = b, 24-31 = a
+struct Rgba9 { uint8_t r; uint8_t g; uint8_t b; uint8_t a; };
+__attribute__((wasm_multivalue))
+struct Rgba9 f9(struct Rgba9);
+
+// [i64] -> [i64]
+//  array elements are flattened and bit-packed like ordinary fields
+struct Pixel10 { uint16_t channels[4]; };
+__attribute__((wasm_multivalue))
+struct Pixel10 f10(struct Pixel10);
+
+// [f32 f32 f32 f32] -> [f32 f32 f32 f32]
+//  floating-point fields are passed as individual values, never bit-packed
+struct Vec11 { float x; float y; float z; float w; };
+__attribute__((wasm_multivalue))
+struct Vec11 f11(struct Vec11);
+
+// [f32 i64] -> [f32 i64]
+//  bits 0-15 = id, 16-31 = flags, 32-63 = next
+struct Entity12 { float scale; uint16_t id; uint16_t flags; uint32_t next; };
+__attribute__((wasm_multivalue))
+struct Entity12 f12(struct Entity12);
+
+// [i32] -> [i32]
+//  all members flatten to integer fields and the union is 4 bytes
+union Bits13 { uint32_t word; uint8_t bytes[4]; };
+__attribute__((wasm_multivalue))
+union Bits13 f13(union Bits13);
+
+// [i32] -> [i64 i64 i64]
+//    ^ pointer to parameter (more than 2 integer values)
+struct Big14 { uint64_t a; uint64_t b; uint64_t c; };
+__attribute__((wasm_multivalue))
+struct Big14 f14(struct Big14);
+
+// [i32 i32] -> [i32 i32]
+//  32-bit array elements remain separate values
+struct Pair15 { uint32_t values[2]; };
+__attribute__((wasm_multivalue))
+struct Pair15 f15(struct Pair15);
+
+// [i32] -> [i32 i32 i32]
+//    ^ pointer to parameter (more than 2 integer values)
+struct Triple16 { uint32_t values[3]; };
+__attribute__((wasm_multivalue))
+struct Triple16 f16(struct Triple16);
+
+// [i64 i32] -> [i64 i32]
+//  channels share an i64; tag occupies a separate i32
+struct Pixel17 { uint16_t channels[4]; uint32_t tag; };
+__attribute__((wasm_multivalue))
+struct Pixel17 f17(struct Pixel17);
+
+// [i64 i32] -> [i64 i32]
+//  a and b share an i64 with a padding gap between them; c uses an i32
+struct Mixed18 { uint16_t a; uint32_t b; uint16_t c; };
+__attribute__((wasm_multivalue))
+struct Mixed18 f18(struct Mixed18);
+
+// [i64] -> [i64]
+//  the wasm32 pointer and length share an integer unit
+struct Buffer19 { void *data; uint16_t length; };
+__attribute__((wasm_multivalue))
+struct Buffer19 f19(struct Buffer19);
 ```
 
 Note that the "C" ABI is the default ABI used in C, and using the
