@@ -1,16 +1,19 @@
 This document describes the "Basic" C ABI for WebAssembly. As mentioned in
-[README](README.md), it's not the only possible C ABI. It is the ABI that the
-clang/LLVM WebAssembly backend is currently using, and any other C or C++
-compiler wishing to be ABI-compatible with it.
+[README](README.md), it's not the only possible C ABI. Its "C" calling
+convention is used by the clang/LLVM WebAssembly backend and by other C or C++
+compilers wishing to be ABI-compatible with it. The "wasm-multivalue" calling
+convention described below is a proposal and is not yet implemented in LLVM.
 
 # Versioning and Machine interface
 
 The current version of this ABI is *1*.
 
-This ABI is designed to work with Release 1.0 of the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any
+The version 1 "C" calling convention is designed to work with Release 1.0 of
+the WebAssembly [Specification](https://webassembly.github.io/spec/core/index.html). It does not require any
 [features](https://github.com/WebAssembly/proposals)
-that have not yet been implemented and standardized. Future versions will depend on
-features such as threads and/or multi-value.
+that have not yet been implemented and standardized. The proposed
+"wasm-multivalue" convention requires [multivalue] and does not change the
+version 1 "C" convention.
 
 ## Data Representation
 
@@ -32,8 +35,9 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  Integer | `unsigned char` | 1 | 1 | i32
  Integer | `short` / `signed short` | 2 | 2 | i32
  Integer | `unsigned short` | 2 | 2 | i32
- Integer | `int` / `signed int` / `enum` | 4 | 4 | i32
+ Integer | `int` / `signed int` | 4 | 4 | i32
  Integer | `unsigned int` | 4 | 4 | i32
+ Integer | `enum` | underlying type | underlying type | underlying type
  Integer | `long` / `signed long` | 4 | 4 | i32
  Integer | `unsigned long` | 4 | 4 | i32
  Integer | `long long` / `signed long long` | 8 | 8 | i64
@@ -49,22 +53,34 @@ General type | C Type | `sizeof` | Alignment (bytes) | Wasm Value Type
  * `long double` values correspond to 128-bit IEEE-754 quad-precision binary128 values.
  Operations on these values are currently implemented as calls to
  compiler-rt library functions.
- * A null pointer (for all types) has the value zero
+ * A null object or function pointer has the value zero. C++ pointers to
+   members have distinct representations; in particular, a null pointer to
+   a data member has the value `-1` (see the
+   [Itanium-like C++ ABI](ItaniumLikeC++ABI.md)).
  * The `size_t` type is defined as `unsigned long`.
- * An `enum` is `i32` if all the members of the `enum` can be represented
-   by an `int`.
-   An `enum` is `i32` if all the members of the `enum` can be represented
-   by an `unsigned int`.
-   Otherwise, if a compiler supports such an `enum`, it would use `i64`
-   for the `enum`.
+ * An `enum` uses the size, alignment, and Wasm value type of its underlying
+   integer type. An enum without a fixed underlying type uses a 32-bit type
+   if its values fit in `int` or `unsigned int`; otherwise, if the compiler
+   supports such an enum, it uses a 64-bit type.
  * Emscripten uses 8 byte alignment for `long double`.
  * `__int128_t` and `__uint128_t` are passed as two `i64`s in little-endian
    order, and are otherwise represented in the ABI as a struct containing two
    `i64` fields, in little-endian order.
  * `_Complex` types are represented in the ABI as a struct containing two
    corresponding floating-point fields, real and imaginary.
- * `_BitInt(N)` types are supported up to width 128 and are represented as the
-   smallest same-signedness Integer type with at least as many bits.
+ * `_BitInt(N)` types are supported up to width 128. Their Wasm value types
+   match the smallest same-signedness integer type with at least *N* bits,
+   but their memory size and alignment are as follows:
+
+   Width *N* | Size (bytes) | Alignment (bytes)
+   -|-|-
+   1–8 | 1 | 1
+   9–16 | 2 | 2
+   17–32 | 4 | 4
+   33–64 | 8 | 8
+   65–128 | 16 | 8
+
+   Bits in the storage beyond the declared width may be unspecified.
 
 **Aggregates and Unions**
 
@@ -184,19 +200,40 @@ making a copy of any indirectly passed data that the callee should not modify.
 Similarly, types can either be returned directly from WebAssembly functions or
 returned indirectly via a pointer parameter prepended to the parameter list.
 
-Varargs are placed in a buffer by the caller and the last parameter to the
-function is a pointer to that buffer. The callee is allowed to modify the
-contents of the buffer, so the caller is responsible for making a copy of any
-varargs data that the callee should not modify. Arguments are arranged in order
-in the buffer, with each argument placed at the lowest appropriately aligned
-address after the previous argument.
+The caller places variadic arguments in a buffer and passes a pointer to it as
+the last parameter. Both calling conventions use the same buffer layout,
+independent of how their fixed parameters are passed. For types supported as
+variadic arguments, after the language's default argument promotions, each
+argument is stored in the buffer according to its parameter classification
+in the "C" calling convention:
 
-There are two calling conventions defined for use at this time. The default
-calling convention is typically referred to as the "C" calling convention and
-was created before [multivalue] was available, thus only
-allows for a single result. The second calling convention is referred to as
-"wasm-multivalue" and assumes [multivalue] is enabled and additionally applies
-some improvements over the previous calling convention learned over time.
+* An ignored argument occupies no buffer space.
+* A directly passed argument is stored by value in its memory representation.
+* An indirectly passed argument is represented by a pointer to a
+  caller-provided copy in linear memory; the buffer contains the pointer, not
+  the object itself.
+
+On wasm32, entries are ordered by argument order. Each entry begins at the
+lowest address after the previous entry that is aligned to at least 4 bytes
+and to the alignment of the stored value. An indirect entry stores an i32
+pointer with 4-byte alignment. Each entry occupies its stored value's size
+rounded up to a multiple of 4 bytes. The buffer pointer is at least 4-byte
+aligned. The callee may modify the buffer and indirectly passed objects, so
+the caller must preserve any data that must not be modified. The C++ ABI
+specifies the construction and destruction of non-trivial arguments. Whether
+a C++ class can be passed through an ellipsis is subject to the language and
+implementation.
+
+For example, two one-byte single-field structs are stored in consecutive
+four-byte slots; an indirectly passed two-integer struct following them is
+represented by an i32 pointer in the next slot.
+
+Retrieving an ignored argument neither aligns nor advances `va_list`.
+
+The existing default calling convention is referred to as "C" and was created
+before [multivalue] was available, so it allows only a single result. The
+proposed "wasm-multivalue" convention requires [multivalue] and makes
+additional changes to argument and result passing.
 
 In both calling conventions, the way a parameter or result is passed is
 determined by *classifying* its type. Classification assigns to each type
@@ -206,42 +243,53 @@ value types, in which case the parameter or result is passed directly as that
 sequence of WebAssembly values, in order, subject to the per-convention limits
 described below.
 
-For C++ types, the [Itanium-like C++ ABI](ItaniumLikeC++ABI.md) applies in
-addition to these rules. In particular, a class type that is
-[non-trivial for the purposes of calls](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#non-trivial)
-is passed and returned indirectly, regardless of its classification below.
-The C++ ABI also specifies construction and destruction of the objects used
-for these calls.
+A `void` return type is classified as the empty sequence.
+
+For C++ types, the [Itanium-like C++ ABI](ItaniumLikeC++ABI.md#function-arguments-and-return-values)
+specifies additional rules, including overrides and equivalent types applied
+before the classification and flattening rules below.
 
 #### Classification of scalar types
 
-Scalar types are classified identically in both calling conventions:
+The following scalar types have the same classifications in both calling
+conventions:
 
 C type | Classification
 -|-
-`_Bool`/`bool`, 8, 16 and 32-bit integers, `enum`, pointers | i32
+`_Bool`/`bool`, 8, 16 and 32-bit integers, pointers | i32
 64-bit integers | i64
 `__int128_t` / `__uint128_t` | i64, i64 (low bits, then high bits)
 `float` | f32
 `double` | f64
 `long double` | i64, i64 (low bits, then high bits)
 
-When passed or returned as an individual scalar i32 value, signed 8 and
-16-bit integers are sign-extended and unsigned 8 and 16-bit integers are
-zero-extended.
+An enum is classified as its underlying integer type. A `_BitInt(N)` has the
+same classification as the integer type specified in
+[Data Representation](#data-representation). Its actual memory size and
+alignment, as specified there, are used when flattening aggregates.
+
+When passed or returned as an individual scalar i32 value, signed integers
+narrower than 32 bits are sign-extended and unsigned integers narrower than
+32 bits are zero-extended, including from the declared width of a
+`_BitInt(N)`.
 
 #### Classification in the "C" calling convention
 
 The "C" calling convention classifies types as follows:
 
-* A scalar type is classified as the sequence of value types given above.
+* A scalar type other than `_Complex` is classified as the sequence of value
+  types given above.
+* A `_Complex` type is classified INDIRECT.
 * A zero-sized struct or union is classified as the empty sequence, meaning
   that it is ignored and no values are passed for it.
 * A struct or union with a single scalar field is classified as the type of
   that field. A "scalar field" of a struct or union is a field which
   recursively, through nested structs, unions, and arrays, contains just a
   single scalar value and is not specified to have greater than natural
-  alignment.
+  alignment. Each enclosing record must have the same size as the scalar.
+  Zero-sized fields and unnamed bit-fields do not contribute scalar values,
+  but their storage still counts toward the record's size. C++ base classes
+  and fields are handled as described in the C++ ABI.
 * All other struct and union types are classified INDIRECT.
 
 A parameter is passed directly whenever its classification is not INDIRECT.
@@ -268,7 +316,9 @@ described below.
 The *flattened fields* of a type are an ordered list of scalar fields, each
 with an assigned byte offset within the object, determined as follows:
 
-* A scalar type flattens to a single field of that type at offset 0.
+* A `_Complex` type flattens as a struct with real and imaginary fields of
+  its corresponding floating-point type, in that order.
+* Other scalar types flatten to a single field of that type at offset 0.
 * A struct flattens to the flattened fields of its members in declaration
   order, each at its offset within the struct.
 * An array flattens to the flattened fields of its elements in index order,
@@ -294,7 +344,7 @@ if any of the following hold:
 
 ##### Classification of flattened fields
 
-In these rules, an *integer unit* is a group of one or more integer fields 
+In these rules, an *integer unit* is a group of one or more integer fields
 represented by a single WebAssembly integer value.
 
 A zero-sized struct or union is classified as the empty sequence, meaning
@@ -305,8 +355,9 @@ follows:
 * An f32 field is classified as an f32 value, and an f64 field is classified
   as an f64 value. Floating-point fields are never bit-packed together with
   other fields.
-* A field wider than 64 bits (`__int128_t`, `__uint128_t`, and `long double`)
-  is treated as two consecutive 8-byte integer fields.
+* A field wider than 64 bits (`__int128_t`, `__uint128_t`, `long double`,
+  and `_BitInt(N)` with *N* greater than 64) is treated as two consecutive
+  8-byte integer fields.
 * Each maximal run of consecutive integer fields is bit-packed into one or
   more integer units:
   * The first field of a run begins the *current integer unit*, whose *base*
@@ -351,7 +402,9 @@ classification contains more than 2 integer (i32 or i64) values, or if its
 classification contains more than 4 floating-point (f32 or f64) values.
 All other parameters are passed directly as their sequence of values. These
 limits apply to each parameter individually; the number of parameters of a
-function is not limited.
+function is not limited by this calling convention. Implementations and
+embeddings may impose limits on the total WebAssembly function signature,
+including parameters introduced by indirect results and varargs.
 
 > Rationale: the limits are chosen so that small aggregates that native ABIs
 > pass in registers — for example an RGBA color made of four 8-bit or 16-bit
@@ -371,10 +424,10 @@ directly as their sequence of values; returning more than one value requires
 [multivalue].
 
 > Rationale: results are classified with the same algorithm as parameters,
-> but with a much higher limit so that any reasonable WebAssembly function
-> signature can be expressed as a C signature, while still ensuring that
-> returning a large struct by value cannot produce a function type exceeding
-> implementation limits on the number of results.
+> but with a much higher limit to support functions needing many results.
+> The limit does not guarantee that every desired WebAssembly signature can
+> be expressed or that every implementation supports the resulting function
+> type.
 
 #### Examples
 
@@ -489,19 +542,46 @@ struct Mixed18 f18(struct Mixed18);
 struct Buffer19 { void *data; uint16_t length; };
 __attribute__((wasm_multivalue))
 struct Buffer19 f19(struct Buffer19);
+
+// [i64] -> [i64]
+enum Wide20 { wide_value = 1LL << 40 };
+__attribute__((wasm_multivalue))
+enum Wide20 f20(enum Wide20);
+
+// [f32 f32] -> [f32 f32]
+//  real and imaginary parts are separate floating-point fields
+__attribute__((wasm_multivalue))
+float _Complex f21(float _Complex);
+
+// [i32 i32] -> []
+//  the "C" convention passes the complex argument and result indirectly
+float _Complex f22(float _Complex);
+
+struct Hundred26 { float values[100]; };
+// [i32] -> [100 f32 values]
+//  the argument exceeds the parameter limit, but the result is within its limit
+__attribute__((wasm_multivalue))
+struct Hundred26 f26(struct Hundred26);
+
+struct HundredOne27 { float values[101]; };
+// [i32 i32] -> [] (return pointer, then parameter pointer)
+//  both the argument and result exceed their respective limits
+__attribute__((wasm_multivalue))
+struct HundredOne27 f27(struct HundredOne27);
 ```
 
 Note that the "C" ABI is the default ABI used in C, and using the
-"wasm-multivalue" ABI requires an explicit opt-in. While the default calling
-convention may change in the future that is not yet planned at this time.
-Additionally note that programs can use either ABI to define functions, but the
-caller and callee calling convention must match when a call is done.
+"wasm-multivalue" ABI would require an explicit opt-in. While the default
+calling convention may change in the future, that is not currently planned.
+When the proposed convention is implemented, programs can use either
+convention to define functions, but the caller and callee calling convention
+must match when a call is made.
 
-To use the "wasm-multivalue" calling convention the [`multivalue` target
-feature](./Linking.md#target-features-section) must be enabled. It is a complier
-error to use this calling convention when the target feature is not enabled.
-Additionally note that enabling the `multivalue` target feature does not change
-the "C" calling convention, it only enables usage of "wasm-multivalue".
+To use the proposed "wasm-multivalue" calling convention the [`multivalue`
+target feature](./Linking.md#target-features-section) must be enabled. It is a
+compiler error to use this calling convention when the target feature is not
+enabled. Enabling the `multivalue` target feature does not change the "C"
+calling convention; it only enables usage of "wasm-multivalue".
 
 [multivalue]: https://github.com/WebAssembly/multi-value
 
