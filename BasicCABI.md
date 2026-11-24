@@ -200,35 +200,13 @@ making a copy of any indirectly passed data that the callee should not modify.
 Similarly, types can either be returned directly from WebAssembly functions or
 returned indirectly via a pointer parameter prepended to the parameter list.
 
-The caller places variadic arguments in a buffer and passes a pointer to it as
-the last parameter. Both calling conventions use the same buffer layout,
-independent of how their fixed parameters are passed. For types supported as
-variadic arguments, after the language's default argument promotions, each
-argument is stored in the buffer according to its parameter classification
-in the "C" calling convention:
-
-* An ignored argument occupies no buffer space.
-* A directly passed argument is stored by value in its memory representation.
-* An indirectly passed argument is represented by a pointer to a
-  caller-provided copy in linear memory; the buffer contains the pointer, not
-  the object itself.
-
-On wasm32, entries are ordered by argument order. Each entry begins at the
-lowest address after the previous entry that is aligned to at least 4 bytes
-and to the alignment of the stored value. An indirect entry stores an i32
-pointer with 4-byte alignment. Each entry occupies its stored value's size
-rounded up to a multiple of 4 bytes. The buffer pointer is at least 4-byte
-aligned. The callee may modify the buffer and indirectly passed objects, so
-the caller must preserve any data that must not be modified. The C++ ABI
-specifies the construction and destruction of non-trivial arguments. Whether
-a C++ class can be passed through an ellipsis is subject to the language and
-implementation.
-
-For example, two one-byte single-field structs are stored in consecutive
-four-byte slots; an indirectly passed two-integer struct following them is
-represented by an i32 pointer in the next slot.
-
-Retrieving an ignored argument neither aligns nor advances `va_list`.
+Variadic arguments are placed in a buffer by the caller, and the last
+parameter to the function is a pointer to that buffer. Arguments are arranged
+in order, with each placed at the lowest appropriately aligned address after
+the previous argument. This existing buffer convention is unchanged by
+"wasm-multivalue"; variadic arguments are not flattened using its aggregate
+classification. The callee may modify the buffer, so the caller is responsible
+for making a copy of any data it should not modify.
 
 The existing default calling convention is referred to as "C" and was created
 before [multivalue] was available, so it allows only a single result. The
