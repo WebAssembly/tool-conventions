@@ -208,10 +208,9 @@ the previous argument. This existing buffer convention is unchanged by
 classification. The callee may modify the buffer, so the caller is responsible
 for making a copy of any data it should not modify.
 
-The existing default calling convention is referred to as "C" and was created
-before [multivalue] was available, so it allows only a single result. The
-proposed "wasm-multivalue" convention requires [multivalue] and makes
-additional changes to argument and result passing.
+The existing default calling convention is referred to as "C" and allows only 
+a single result. The proposed "wasm-multivalue" convention requires [multivalue] 
+and makes additional changes to argument and result passing.
 
 In both calling conventions, the way a parameter or result is passed is
 determined by *classifying* its type. Classification assigns to each type
@@ -272,10 +271,10 @@ The "C" calling convention classifies types as follows:
 
 A parameter is passed directly whenever its classification is not INDIRECT.
 
-Because the "C" calling convention predates [multivalue], a function may
-return at most one WebAssembly value. A result whose classification is
-INDIRECT, or whose classification contains more than one value type (such as
-the 128-bit scalars), is returned indirectly.
+In the "C" calling convention, a function may return at most one WebAssembly 
+value. A result whose classification is INDIRECT, or whose classification 
+contains more than one value type (such as the 128-bit scalars), is returned 
+indirectly.
 
 #### Classification in the "wasm-multivalue" calling convention
 
@@ -411,7 +410,7 @@ directly as their sequence of values; returning more than one value requires
 
 Some example C function signatures, and their corresponding wasm32 function
 signatures, are shown below. `__attribute__((wasm_multivalue))` denotes the
-proposed calling convention and may not yet be implemented; the empty struct
+proposed calling convention. The empty struct
 and union use a C extension.
 
 ```c
